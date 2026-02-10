@@ -22,7 +22,11 @@ Real-time visualization of Load vs. Capacity with probabilistic "Fan Charts" sho
 Interactive "What-If" analysis. Users can adjust temperature (-20°C) and wind speeds to see immediate impacts on grid stability.
 ![Scenario Lab Screenshot](./docs/images/scenario.png)
 
-### 3. Historical Event Playback
+### 3. Model Benchmark & Calibration
+Validation of the probabilistic model using Reliability Diagrams and Pinball Loss metrics to ensure the "99% confidence" is statistically accurate.
+![Benchmark Screenshot](./docs/images/benchmark.png)
+
+### 4. Historical Event Playback
 Step-by-step replay of the 2021 Winter Storm, showing how GERT predicts failure hours before the blackout.
 ![Event Playback Screenshot](./docs/images/event.png)
 
