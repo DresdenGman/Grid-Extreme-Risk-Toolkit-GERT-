@@ -11,6 +11,21 @@ GERT is a probabilistic risk assessment platform designed to identify, quantify,
 - **AI-Augmented Analysis**: Integrated Generative AI to provide natural language explanations of risk drivers and recommend mitigation actions.
 - **Model Benchmarking**: Transparency tools including Reliability Diagrams and Pinball Loss metrics to validate model accuracy.
 
+## 📸 Interface Preview
+
+### 1. Risk Dashboard (Live Monitor)
+Real-time visualization of Load vs. Capacity with probabilistic "Fan Charts" showing P50, P90, and P99 tail risks.
+![Dashboard Screenshot](./docs/images/dashboard.png)
+*Above: The dashboard showing an "Extreme" risk event where P99 load exceeds capacity.*
+
+### 2. Scenario Stress Lab
+Interactive "What-If" analysis. Users can adjust temperature (-20°C) and wind speeds to see immediate impacts on grid stability.
+![Scenario Lab Screenshot](./docs/images/scenario.png)
+
+### 3. Historical Event Playback
+Step-by-step replay of the 2021 Winter Storm, showing how GERT predicts failure hours before the blackout.
+![Event Playback Screenshot](./docs/images/event.png)
+
 ## 🛠 Tech Stack
 
 **Frontend**
