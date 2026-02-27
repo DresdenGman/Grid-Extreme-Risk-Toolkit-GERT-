@@ -20,6 +20,9 @@ export interface Diagnostics {
   model_version: string;
   backend_type: string;
   capacity_used?: number;
+  data_source?: 'real_time' | 'simulated';
+  real_load_mw?: number;
+  real_capacity_mw?: number;
 }
 
 export interface FinancialImpact {
@@ -127,4 +130,20 @@ export interface EventPlaybackResponse {
   total_hours: number;
   steps: EventStep[];
   logs: EventLog[];
+}
+
+export interface GridLoadResponse {
+  region: string;
+  current_load_mw: number;
+  capacity_mw: number;
+  utilization_percent: number;
+  timestamp: string;
+  data_source: 'real_time' | 'simulated';
+}
+
+export interface HealthStatus {
+  status: string;
+  backend: string;
+  ai_enabled: boolean;
+  env: string;
 }

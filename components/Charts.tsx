@@ -9,13 +9,76 @@ import {
   CartesianGrid, 
   Tooltip, 
   ReferenceLine,
-  Line
+  ReferenceArea,
+  Line,
+  TooltipProps,
 } from 'recharts';
 import { PredictionOut } from '@/lib/types';
 
 interface QuantileChartProps {
   prediction: PredictionOut;
 }
+
+type PointDatum = {
+  hour: string;
+  q50: number;
+  q25: number;
+  q75: number;
+  q05: number;
+  q95: number;
+  q99: number;
+  capacity: number;
+};
+
+const CAPACITY_MW = 60000;
+
+const QuantileTooltip = ({
+  active,
+  payload,
+  label,
+}: TooltipProps<number, string>) => {
+  if (!active || !payload || payload.length === 0) return null;
+  const d = payload[0].payload as PointDatum;
+  const margin = d.capacity - d.q99;
+
+  return (
+    <div className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs shadow-xl">
+      <div className="mb-1 text-[10px] font-mono text-slate-400">
+        Hour {label}
+      </div>
+      <div className="space-y-1">
+        <div className="flex justify-between">
+          <span className="text-slate-400">P50</span>
+          <span className="font-mono text-slate-100">
+            {(d.q50 / 1000).toFixed(1)} GW
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-slate-400">P99</span>
+          <span className="font-mono text-red-300">
+            {(d.q99 / 1000).toFixed(1)} GW
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-slate-400">Capacity</span>
+          <span className="font-mono text-emerald-300">
+            {(d.capacity / 1000).toFixed(1)} GW
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-slate-400">Margin</span>
+          <span
+            className={`font-mono ${
+              margin < 0 ? 'text-red-400' : 'text-emerald-400'
+            }`}
+          >
+            {(margin / 1000).toFixed(2)} GW
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const QuantileChart = ({ prediction }: QuantileChartProps) => {
   // Synthesize a 24h curve (Fan Chart Logic)
@@ -24,7 +87,7 @@ export const QuantileChart = ({ prediction }: QuantileChartProps) => {
   // 2. Expand uncertainty (spread) as we move away from "now" (simulating forecast horizon)
   // 3. Create bands for P10, P25, P75, P90 based on standard deviation derived from q99-q50.
   
-  const data = Array.from({ length: 24 }, (_, i) => {
+  const data: PointDatum[] = Array.from({ length: 24 }, (_, i) => {
     // Basic daily load shape (sinusoidal)
     const hourFactor = Math.sin((i - 6) / 18 * Math.PI) * 1.5; // Normalized 0 to ~1.5
     const baseCurve = prediction.q50_load_mw * (0.8 + (hourFactor * 0.25)); 
@@ -37,6 +100,8 @@ export const QuantileChart = ({ prediction }: QuantileChartProps) => {
     const volatilityMult = 0.8 + (hourFactor * 0.4); 
 
     const sigma = impliedSigma * volatilityMult;
+
+    const capacity = CAPACITY_MW;
 
     return {
       hour: `${i}:00`,
@@ -54,8 +119,24 @@ export const QuantileChart = ({ prediction }: QuantileChartProps) => {
       // Extreme Tail (P99) -> +2.33 sigma
       q99: baseCurve + (2.33 * sigma),
 
-      capacity: 60000 // Fixed for viz
+      capacity,
     };
+  });
+
+  // Continuous ranges where P99 exceeds capacity, for subtle shading
+  const exceedRanges: { start: string; end: string }[] = [];
+  let rangeStart: string | null = null;
+  data.forEach((d, idx) => {
+    const isExceed = d.q99 > d.capacity;
+    const isLast = idx === data.length - 1;
+    if (isExceed && rangeStart === null) {
+      rangeStart = d.hour;
+    }
+    if ((!isExceed || isLast) && rangeStart !== null) {
+      const endLabel = isExceed && isLast ? d.hour : data[idx - 1].hour;
+      exceedRanges.push({ start: rangeStart, end: endLabel });
+      rangeStart = null;
+    }
   });
 
   return (
@@ -90,14 +171,32 @@ export const QuantileChart = ({ prediction }: QuantileChartProps) => {
             domain={['auto', 'auto']}
             tickFormatter={(value) => `${(value/1000).toFixed(0)}k`}
           />
-          <Tooltip 
-            contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-            itemStyle={{ fontSize: '12px', padding: 0 }}
-            labelStyle={{ color: '#94a3b8', marginBottom: '8px' }}
-            formatter={(value: number) => [`${(value/1000).toFixed(1)} GW`, '']}
-          />
+          <Tooltip content={<QuantileTooltip />} />
           
-          <ReferenceLine y={60000} stroke="#10b981" strokeDasharray="3 3" label={{ value: "Max Capacity", fill: "#10b981", fontSize: 12, position: 'insideTopRight' }} />
+          <ReferenceLine
+            y={CAPACITY_MW}
+            stroke="#10b981"
+            strokeDasharray="3 3"
+            label={{
+              value: 'Max Capacity',
+              fill: '#10b981',
+              fontSize: 12,
+              position: 'insideTopRight',
+            }}
+          />
+
+          {exceedRanges.map((r) => (
+            <ReferenceArea
+              key={`${r.start}-${r.end}`}
+              x1={r.start}
+              x2={r.end}
+              y1={0}
+              y2="auto"
+              fill="#ef4444"
+              fillOpacity={0.04}
+              strokeOpacity={0}
+            />
+          ))}
           
           {/* Layer 1: 90% Confidence Interval (Wide) - Represented as area between Q05 and Q95 */}
           {/* Recharts Area `dataKey` is the top line. To do a band, we often stack or use custom shapes. 

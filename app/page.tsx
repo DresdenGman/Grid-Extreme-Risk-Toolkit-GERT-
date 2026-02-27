@@ -2,14 +2,19 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '@/lib/api';
-import { WeatherFeatures, PredictionOut, Region, AIAnalysisResponse } from '@/lib/types';
+import { WeatherFeatures, PredictionOut, Region } from '@/lib/types';
 import { Card, Badge } from '@/components/ui';
 import { QuantileChart } from '@/components/Charts';
 import GridMap from '@/components/GridMap';
-import { 
-  Thermometer, Wind, Sun, RefreshCw, Zap, 
-  MapPin, Clock, CloudLightning, Activity, 
-  ArrowUpRight, AlertTriangle, ShieldCheck 
+import {
+  Thermometer,
+  Wind,
+  Sun,
+  RefreshCw,
+  Zap,
+  AlertTriangle,
+  ShieldCheck,
+  Activity,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -22,8 +27,16 @@ export default function Home() {
     wind_speed: 15,
     solar_irradiance: 800
   });
+  const [draftInputs, setDraftInputs] = useState<WeatherFeatures>({
+    temperature: 32,
+    wind_speed: 15,
+    solar_irradiance: 800
+  });
+  const [liveSnapshot, setLiveSnapshot] = useState<WeatherFeatures | null>(null);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<PredictionOut | null>(null);
+  const [prevData, setPrevData] = useState<PredictionOut | null>(null);
+  const [showWhy, setShowWhy] = useState(false);
   const mountedRef = useRef(true);
 
   // Sync Live Weather on mount and region change
@@ -31,27 +44,38 @@ export default function Home() {
     const syncWeather = async () => {
         try {
             const realWeather = await api.liveWeather(region);
-            if (mountedRef.current) setInputs(realWeather);
+            if (mountedRef.current) {
+              setInputs(realWeather);
+              setDraftInputs(realWeather);
+              setLiveSnapshot(realWeather);
+            }
         } catch(e) { console.error(e); }
     };
     syncWeather();
   }, [region]);
 
-  const fetchPrediction = useCallback(async () => {
+  const fetchPrediction = useCallback(
+    async (featuresOverride?: WeatherFeatures) => {
+      const featuresToUse = featuresOverride ?? inputs;
     setLoading(true);
     try {
       const res = await api.predict({
         region: region,
         date: new Date().toISOString(),
-        weather_features: inputs
+          weather_features: featuresToUse
       });
-      if (mountedRef.current) setData(res);
+        if (mountedRef.current) {
+          setPrevData((prev) => data ?? prev);
+          setData(res);
+        }
     } catch (err) {
       console.error(err);
     } finally {
       if (mountedRef.current) setLoading(false);
     }
-  }, [inputs, region]);
+    },
+    [inputs, region, data]
+  );
 
   useEffect(() => {
     fetchPrediction();
@@ -66,6 +90,31 @@ export default function Home() {
                : data?.risk_level === 'HIGH' ? 'bg-orange-500/10 border-orange-500/20' 
                : 'bg-emerald-500/10 border-emerald-500/20';
 
+  const riskDelta = data && prevData ? data.risk_score - prevData.risk_score : null;
+  const capacityUsed = (data?.diagnostics?.capacity_used ?? 60000);
+  const marginMw = data ? capacityUsed - data.q99_load_mw : null;
+  const marginLabel =
+    marginMw === null
+      ? null
+      : marginMw < 0
+        ? 'OVER CAPACITY'
+        : marginMw < 2000
+          ? 'TIGHT'
+          : 'COMFORTABLE';
+
+  const handleApplyScenario = () => {
+    setInputs(draftInputs);
+    fetchPrediction(draftInputs);
+  };
+
+  const handleResetScenario = () => {
+    if (liveSnapshot) {
+      setDraftInputs(liveSnapshot);
+    } else {
+      setDraftInputs(inputs);
+    }
+  };
+
   return (
     <div className="space-y-6">
       
@@ -79,6 +128,27 @@ export default function Home() {
           <p className="text-slate-500 text-sm mt-1 font-mono">
              {region.replace('_', ' ')} • Last Updated: {new Date().toLocaleTimeString()}
           </p>
+          {data?.diagnostics?.data_source && (
+            <div className="mt-1 flex items-center gap-2">
+              <span className={clsx(
+                "text-[10px] px-2 py-0.5 rounded font-mono",
+                data.diagnostics.data_source === 'real_time' 
+                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                  : "bg-slate-700/50 text-slate-400 border border-slate-600/30"
+              )}>
+                {data.diagnostics.data_source === 'real_time' ? '✓ Real-Time Data' : '⚠ Simulated Data'}
+              </span>
+              {data && (
+                <button
+                  type="button"
+                  onClick={() => setShowWhy((v) => !v)}
+                  className="text-[10px] font-mono text-slate-400 underline-offset-2 hover:text-slate-200 hover:underline"
+                >
+                  Why?
+                </button>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex gap-3">
              <button 
@@ -91,6 +161,53 @@ export default function Home() {
              </button>
         </div>
       </div>
+
+      {showWhy && data && (
+        <div className="border border-slate-800 bg-slate-900/80 rounded-lg p-3 text-xs text-slate-300 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-slate-200">Why this risk level?</span>
+            <span className="font-mono text-[10px] text-slate-500">
+              Risk {data.risk_score.toFixed(1)}/100 • Margin {marginMw !== null ? (marginMw / 1000).toFixed(2) : '--'} GW
+            </span>
+          </div>
+          <ul className="list-disc list-inside space-y-0.5">
+            {marginMw !== null && (
+              <li>
+                P99 load is {marginMw < 0 ? 'above' : 'below'} capacity by{' '}
+                <span className={marginMw < 0 ? 'text-red-400 font-mono' : 'text-emerald-400 font-mono'}>
+                  {Math.abs(marginMw / 1000).toFixed(2)} GW
+                </span>
+                .
+              </li>
+            )}
+            <li>
+              Ambient temperature at{' '}
+              <span className="font-mono">
+                {inputs.temperature.toFixed(1)}°C
+              </span>{' '}
+              with wind{' '}
+              <span className="font-mono">
+                {inputs.wind_speed.toFixed(1)} m/s
+              </span>{' '}
+              is driving {' '}
+              {inputs.temperature < 0 ? 'heating' : inputs.temperature > 30 ? 'cooling' : 'moderate'}
+              {' '}load.
+            </li>
+            <li>
+              Risk trend vs last run:{' '}
+              {riskDelta === null ? (
+                <span className="text-slate-400">no prior snapshot.</span>
+              ) : riskDelta > 0 ? (
+                <span className="text-red-400 font-mono">↗ +{riskDelta.toFixed(1)} points (worsening)</span>
+              ) : riskDelta < 0 ? (
+                <span className="text-emerald-400 font-mono">↘ {riskDelta.toFixed(1)} points (improving)</span>
+              ) : (
+                <span className="text-slate-400 font-mono">no change</span>
+              )}
+            </li>
+          </ul>
+        </div>
+      )}
 
       {/* 2. KPI Cards (Conclusion First) */}
       {data && (
@@ -107,6 +224,15 @@ export default function Home() {
                     </span>
                     <span className="text-slate-500 text-sm">/ 100</span>
                 </div>
+                {riskDelta !== null && (
+                  <div className="mt-1 text-[11px] font-mono text-slate-400">
+                    <span className={riskDelta > 0 ? 'text-red-400' : riskDelta < 0 ? 'text-emerald-400' : 'text-slate-400'}>
+                      {riskDelta > 0 ? '↗ +' : riskDelta < 0 ? '↘ ' : '— '}
+                      {Math.abs(riskDelta).toFixed(1)}
+                    </span>
+                    <span className="ml-1">vs last run</span>
+                  </div>
+                )}
             </Card>
 
             {/* P99 Load */}
@@ -129,10 +255,26 @@ export default function Home() {
                 </div>
                 <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-bold text-white tracking-tighter">
-                        {((60000 - data.q99_load_mw) / 1000).toFixed(2)}
+                        {marginMw !== null ? (marginMw / 1000).toFixed(2) : '--'}
                     </span>
                     <span className="text-slate-500 text-sm">GW</span>
                 </div>
+                {marginLabel && (
+                  <div className="mt-1 text-[11px] font-mono">
+                    <span
+                      className={clsx(
+                        marginMw !== null && marginMw < 0
+                          ? 'text-red-400'
+                          : marginMw !== null && marginMw < 2000
+                            ? 'text-amber-300'
+                            : 'text-emerald-400'
+                      )}
+                    >
+                      {marginLabel}
+                    </span>
+                    <span className="ml-1 text-slate-500">vs capacity</span>
+                  </div>
+                )}
             </Card>
 
             {/* Weather Driver */}
@@ -213,33 +355,70 @@ export default function Home() {
                 <Thermometer className="h-4 w-4 text-slate-500" />
                 <input 
                     type="range" min="-10" max="45" step="0.1"
-                    value={inputs.temperature}
-                    onChange={(e) => setInputs({...inputs, temperature: Number(e.target.value)})}
+                    value={draftInputs.temperature}
+                    onChange={(e) => setDraftInputs({...draftInputs, temperature: Number(e.target.value)})}
                     className="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                 />
+              <div className="text-[10px] font-mono text-slate-500 w-28">
+                <div>Now: {draftInputs.temperature.toFixed(1)}°C</div>
+                {liveSnapshot && (
+                  <div className="text-slate-600">Live: {liveSnapshot.temperature.toFixed(1)}°C</div>
+                )}
+              </div>
             </div>
              <div className="flex items-center gap-4">
                 <Wind className="h-4 w-4 text-slate-500" />
                 <input 
                     type="range" min="0" max="40" step="0.1"
-                    value={inputs.wind_speed}
-                    onChange={(e) => setInputs({...inputs, wind_speed: Number(e.target.value)})}
+                    value={draftInputs.wind_speed}
+                    onChange={(e) => setDraftInputs({...draftInputs, wind_speed: Number(e.target.value)})}
                     className="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                 />
+                <div className="text-[10px] font-mono text-slate-500 w-28">
+                  <div>Now: {draftInputs.wind_speed.toFixed(1)} m/s</div>
+                  {liveSnapshot && (
+                    <div className="text-slate-600">Live: {liveSnapshot.wind_speed.toFixed(1)} m/s</div>
+                  )}
+                </div>
             </div>
              <div className="flex items-center gap-4">
                 <Sun className="h-4 w-4 text-slate-500" />
                 <input 
                     type="range" min="0" max="1200" step="10"
-                    value={inputs.solar_irradiance}
-                    onChange={(e) => setInputs({...inputs, solar_irradiance: Number(e.target.value)})}
+                    value={draftInputs.solar_irradiance}
+                    onChange={(e) => setDraftInputs({...draftInputs, solar_irradiance: Number(e.target.value)})}
                     className="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                 />
+                <div className="text-[10px] font-mono text-slate-500 w-32">
+                  <div>Now: {draftInputs.solar_irradiance.toFixed(0)} W/m²</div>
+                  {liveSnapshot && (
+                    <div className="text-slate-600">Live: {liveSnapshot.solar_irradiance.toFixed(0)} W/m²</div>
+                  )}
+                </div>
             </div>
          </div>
          
-         <div className="text-xs font-mono text-slate-500 whitespace-nowrap">
-            Auto-Sync: <span className="text-emerald-500">ON</span>
+         <div className="flex flex-col items-end gap-2 text-xs">
+            <div className="text-xs font-mono text-slate-500 whitespace-nowrap">
+              Auto-Sync: <span className="text-emerald-500">ON</span>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleResetScenario}
+                className="px-3 py-1 rounded border border-slate-700 text-slate-300 hover:bg-slate-800 text-xs"
+              >
+                Reset to Live
+              </button>
+              <button
+                type="button"
+                onClick={handleApplyScenario}
+                disabled={loading}
+                className="px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs"
+              >
+                Apply Scenario
+              </button>
+            </div>
          </div>
       </div>
 

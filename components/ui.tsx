@@ -19,3 +19,11 @@ export const Badge = ({ level }: { level: string }) => {
     </span>
   );
 };
+
+export const SkeletonCard = ({ className = "" }: { className?: string }) => (
+  <div className={`bg-slate-900 border border-slate-800 rounded-lg p-6 shadow-xl animate-pulse ${className}`}>
+    <div className="h-4 w-1/3 rounded bg-slate-800 mb-3" />
+    <div className="h-6 w-1/2 rounded bg-slate-800 mb-2" />
+    <div className="h-3 w-2/3 rounded bg-slate-800" />
+  </div>
+);

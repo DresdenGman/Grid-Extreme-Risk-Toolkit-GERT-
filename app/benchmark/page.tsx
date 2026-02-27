@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { BacktestResponse } from '@/lib/types';
-import { Card } from '@/components/ui';
+import { Card, SkeletonCard } from '@/components/ui';
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -23,6 +23,7 @@ import { Trophy, TrendingDown, ShieldCheck, Target } from 'lucide-react';
 export default function BenchmarkPage() {
   const [data, setData] = useState<BacktestResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [bucketMode, setBucketMode] = useState<'OVERALL' | 'TEMP' | 'REGION'>('OVERALL');
 
   useEffect(() => {
     api.backtest()
@@ -31,14 +32,31 @@ export default function BenchmarkPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="p-8 text-slate-500">Running backtest simulations...</div>;
+  if (loading) {
+    return (
+      <div className="space-y-6 p-6">
+        <div className="h-6 w-64 rounded bg-slate-800 animate-pulse" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      </div>
+    );
+  }
   if (!data) return <div className="p-8 text-red-500">Failed to load benchmark data.</div>;
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold mb-2">Model Benchmark & Calibration</h1>
-        <p className="text-slate-400">
+        <p className="text-slate-300 text-sm mb-1">
+          GERT maintains near-nominal P99 coverage during extreme spikes, while mean models under-cover tail events.
+        </p>
+        <p className="text-slate-500 text-sm">
           Validating GERT's probabilistic guarantees using historical backtests.
         </p>
       </div>
@@ -105,10 +123,24 @@ export default function BenchmarkPage() {
 
         {/* Visualization: Calibration / Reliability */}
         <Card>
-            <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                <Target className="h-5 w-5 text-emerald-400"/>
-                Reliability Diagram (Calibration)
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Target className="h-5 w-5 text-emerald-400"/>
+                  Reliability Diagram (Calibration)
+              </h3>
+              <div className="flex items-center gap-2 text-xs text-slate-400">
+                <span className="text-[10px] uppercase tracking-wide">Bucket Mode</span>
+                <select
+                  value={bucketMode}
+                  onChange={(e) => setBucketMode(e.target.value as typeof bucketMode)}
+                  className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs"
+                >
+                  <option value="OVERALL">Overall</option>
+                  <option value="TEMP">By Temperature (planned)</option>
+                  <option value="REGION">By Region (planned)</option>
+                </select>
+              </div>
+            </div>
             <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data.calibration_curve}>

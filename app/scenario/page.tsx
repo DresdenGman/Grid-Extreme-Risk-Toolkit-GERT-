@@ -2,9 +2,16 @@
 
 import { useState } from 'react';
 import { api } from '@/lib/api';
-import { ScenarioResponse, AIAnalysisResponse } from '@/lib/types';
+import { ScenarioResponse, AIAnalysisResponse, RiskLevel } from '@/lib/types';
 import { Card, Badge } from '@/components/ui';
 import { ArrowRight, AlertTriangle, CloudSnow, Sun, CloudRain, BrainCircuit, Sparkles, RefreshCw } from 'lucide-react';
+
+function scoreToLevel(score: number): RiskLevel {
+  if (score >= 90) return 'EXTREME';
+  if (score >= 75) return 'HIGH';
+  if (score >= 40) return 'MODERATE';
+  return 'LOW';
+}
 
 export default function ScenarioLab() {
   // Scenario Parameters
@@ -151,7 +158,24 @@ export default function ScenarioLab() {
 
       {result && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          
+          {(() => {
+            const baselineLevel = scoreToLevel(result.baseline_risk_score);
+            const scenarioLevel = scoreToLevel(result.scenario_risk_score);
+            const order: RiskLevel[] = ['LOW', 'MODERATE', 'HIGH', 'EXTREME'];
+            const escalated =
+              order.indexOf(scenarioLevel) > order.indexOf(baselineLevel);
+            return (
+              escalated && (
+                <div className="flex justify-center">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-amber-950/40 border border-amber-500/60 px-3 py-1 text-xs font-mono text-amber-200">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    Escalation: {baselineLevel} → {scenarioLevel}
+                  </div>
+                </div>
+              )
+            );
+          })()}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             {/* Before */}
             <div className="text-center opacity-50">
@@ -175,6 +199,29 @@ export default function ScenarioLab() {
                 <div className="inline-flex items-center gap-2 text-indigo-400 bg-indigo-950/50 px-3 py-1 rounded-full text-sm">
                   <AlertTriangle className="h-4 w-4" />
                   Delta: +{result.risk_delta}
+                </div>
+                <div className="mt-3 text-xs text-slate-400 text-left max-w-md mx-auto">
+                  <p className="font-semibold text-slate-300 mb-1">Why did risk change?</p>
+                  <ul className="space-y-1">
+                    {tempDrop !== 0 && (
+                      <li>
+                        • Temperature {tempDrop > 0 ? '↓' : '↑'}{' '}
+                        {Math.abs(tempDrop)}°C → load tail{' '}
+                        {tempDrop > 0 ? 'increases (heating demand)' : 'shifts with cooling demand'}
+                      </li>
+                    )}
+                    {windChange !== 0 && (
+                      <li>
+                        • Wind {windChange > 0 ? '↑' : '↓'} {Math.abs(windChange)} m/s →{' '}
+                        {windChange < 0
+                          ? 'lower renewables & higher uncertainty'
+                          : 'potentially higher renewable contribution'}
+                      </li>
+                    )}
+                    <li>
+                      • P99 vs capacity gap reflected as reserve shortfall and financial impact below
+                    </li>
+                  </ul>
                 </div>
               </div>
             </Card>
