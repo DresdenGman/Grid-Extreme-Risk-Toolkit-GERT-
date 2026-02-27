@@ -152,7 +152,7 @@ export default function Home() {
         </div>
         <div className="flex gap-3">
              <button 
-                onClick={fetchPrediction}
+                onClick={() => fetchPrediction()}
                 disabled={loading}
                 className="flex items-center gap-2 px-4 py-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 rounded text-sm font-medium transition-colors"
              >
