@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
+import { ToastProvider } from "@/components/ToastProvider";
 import React from "react";
 
 export const metadata: Metadata = {
@@ -16,15 +17,17 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="font-sans text-slate-300 bg-slate-950 flex h-screen overflow-hidden selection:bg-indigo-500/30">
-        {/* Fixed Sidebar */}
-        <Sidebar />
-        
-        {/* Main Scrollable Area */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden relative scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
-          <div className="max-w-[1600px] mx-auto px-6 py-8">
-            {children}
-          </div>
-        </main>
+        <ToastProvider>
+          {/* Fixed Sidebar */}
+          <Sidebar />
+          
+          {/* Main Scrollable Area */}
+          <main className="flex-1 overflow-y-auto overflow-x-hidden relative scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+            <div className="max-w-[1600px] mx-auto px-6 py-8">
+              {children}
+            </div>
+          </main>
+        </ToastProvider>
       </body>
     </html>
   );

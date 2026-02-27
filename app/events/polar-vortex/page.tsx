@@ -2,10 +2,29 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { api } from '@/lib/api';
-import { EventPlaybackResponse, EventStep, EventLog } from '@/lib/types';
-import { Card, Badge } from '@/components/ui';
-import { Play, Pause, FastForward, Rewind, AlertTriangle, Snowflake, Clock, Newspaper, Activity } from 'lucide-react';
-import { ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, Area } from 'recharts';
+import { EventPlaybackResponse } from '@/lib/types';
+import { Card } from '@/components/ui';
+import { LoadingState } from '@/components/LoadingState';
+import {
+  Play,
+  Pause,
+  Rewind,
+  Snowflake,
+  Clock,
+  Newspaper,
+} from 'lucide-react';
+import {
+  ResponsiveContainer,
+  ComposedChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ReferenceLine,
+  Area,
+  ReferenceDot,
+} from 'recharts';
 import { clsx } from 'clsx';
 
 export default function EventReplay() {
@@ -13,6 +32,7 @@ export default function EventReplay() {
   const [currentHour, setCurrentHour] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1000); // ms per step
+  const [severityFilter, setSeverityFilter] = useState<'ALL' | 'INFO' | 'WARNING' | 'CRITICAL'>('ALL');
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -46,7 +66,7 @@ export default function EventReplay() {
     setCurrentHour(0);
   };
 
-  if (!data) return <div className="p-12 text-center text-slate-500 animate-pulse">Loading Historical Data...</div>;
+  if (!data) return <LoadingState label="Loading historical event data..." variant="full" />;
 
   const currentStep = data.steps[currentHour];
   
@@ -54,7 +74,14 @@ export default function EventReplay() {
   const chartData = data.steps.slice(0, currentHour + 1);
   
   // Filter logs that have happened up to this hour
-  const visibleLogs = data.logs.filter(l => l.hour <= currentHour).reverse();
+  const visibleLogs = data.logs
+    .filter(l => l.hour <= currentHour)
+    .filter(l => severityFilter === 'ALL' ? true : l.severity === severityFilter)
+    .reverse();
+
+  const firstHighHour = data.steps.find(s => s.risk_score >= 75)?.hour;
+  const firstExtremeHour = data.steps.find(s => s.risk_score >= 90)?.hour;
+  const firstBreachHour = data.steps.find(s => s.gert_p99_load_mw > s.capacity_mw)?.hour;
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -110,6 +137,34 @@ export default function EventReplay() {
                             
                             {/* Current Time Indicator */}
                             <ReferenceLine x={currentHour} stroke="#6366f1" strokeDasharray="3 3" />
+
+                            {firstHighHour !== undefined && (
+                              <ReferenceDot
+                                x={firstHighHour}
+                                y={currentStep.capacity_mw}
+                                r={3}
+                                stroke="#f97316"
+                                fill="#f97316"
+                              />
+                            )}
+                            {firstExtremeHour !== undefined && (
+                              <ReferenceDot
+                                x={firstExtremeHour}
+                                y={currentStep.capacity_mw + 500}
+                                r={3}
+                                stroke="#ef4444"
+                                fill="#ef4444"
+                              />
+                            )}
+                            {firstBreachHour !== undefined && (
+                              <ReferenceDot
+                                x={firstBreachHour}
+                                y={currentStep.capacity_mw - 500}
+                                r={3}
+                                stroke="#eab308"
+                                fill="#eab308"
+                              />
+                            )}
                         </ComposedChart>
                     </ResponsiveContainer>
                 </div>
@@ -179,9 +234,27 @@ export default function EventReplay() {
 
         {/* Sidebar: Event Log (Span 1) */}
         <div className="space-y-4 h-[600px] flex flex-col">
-            <h3 className="text-sm font-bold uppercase text-slate-500 flex items-center gap-2">
-                <Newspaper className="h-4 w-4" /> Control Room Feed
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold uppercase text-slate-500 flex items-center gap-2">
+                  <Newspaper className="h-4 w-4" /> Control Room Feed
+              </h3>
+              <div className="flex gap-1 text-[10px]">
+                {(['ALL','INFO','WARNING','CRITICAL'] as const).map(level => (
+                  <button
+                    key={level}
+                    onClick={() => setSeverityFilter(level)}
+                    className={clsx(
+                      'px-2 py-0.5 rounded border text-[10px] font-mono',
+                      severityFilter === level
+                        ? 'bg-slate-800 border-slate-500 text-slate-100'
+                        : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-200'
+                    )}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+            </div>
             
             <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-slate-700">
                 {visibleLogs.length === 0 && (

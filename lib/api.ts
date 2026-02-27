@@ -1,4 +1,4 @@
-import { PredictRequest, PredictionOut, ScenarioRequest, ScenarioResponse, BacktestResponse, AIAnalysisResponse, WeatherFeatures, EventPlaybackResponse } from "./types";
+import { PredictRequest, PredictionOut, ScenarioRequest, ScenarioResponse, BacktestResponse, AIAnalysisResponse, WeatherFeatures, EventPlaybackResponse, HealthStatus, GridLoadResponse } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -103,7 +103,12 @@ const MOCK_WEATHER: WeatherFeatures = {
 
 // --- FETCH WRAPPER WITH FALLBACK ---
 
-async function fetchJson<T>(endpoint: string, options: RequestInit, mockData: T): Promise<T> {
+async function fetchJson<T>(
+  endpoint: string, 
+  options: RequestInit, 
+  mockData: T,
+  showErrorToast?: (message: string) => void
+): Promise<T> {
   try {
     // Set a short timeout for the demo so it falls back quickly if backend is missing
     const controller = new AbortController();
@@ -121,13 +126,34 @@ async function fetchJson<T>(endpoint: string, options: RequestInit, mockData: T)
     clearTimeout(timeoutId);
 
     if (!res.ok) {
-      throw new Error(`API status: ${res.status}`);
+      const errorText = await res.text();
+      let errorMessage = `API Error (${res.status})`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.detail || errorMessage;
+      } catch {
+        errorMessage = errorText || errorMessage;
+      }
+      
+      if (showErrorToast) {
+        showErrorToast(errorMessage);
+      }
+      throw new Error(errorMessage);
     }
 
     return await res.json();
   } catch (error) {
-    console.warn(`Backend unreachable (${endpoint}), using Mock Data for preview.`, error);
-    // In production, you might want to throw. For this Preview MVP, we return mock data.
+    if (error instanceof Error && error.name !== 'AbortError') {
+      // Network error or API error
+      const errorMessage = error.message || `Failed to connect to backend (${endpoint})`;
+      if (showErrorToast) {
+        showErrorToast(errorMessage);
+      }
+      console.warn(`Backend unreachable (${endpoint}), using Mock Data for preview.`, error);
+      // In production, you might want to throw. For this Preview MVP, we return mock data.
+      return Promise.resolve(mockData);
+    }
+    // Timeout or abort - use mock data silently
     return Promise.resolve(mockData);
   }
 }
@@ -148,7 +174,16 @@ export const api = {
   backtest: () =>
     fetchJson<BacktestResponse>('/backtest', { method: 'GET' }, MOCK_BACKTEST),
     
-  health: () => fetchJson<{status: string}>('/health', { method: 'GET' }, { status: 'mock-ok' }),
+  health: () => fetchJson<HealthStatus>(
+    '/health',
+    { method: 'GET' },
+    {
+      status: 'mock-ok',
+      backend: 'stub-v1',
+      ai_enabled: false,
+      env: 'dev'
+    }
+  ),
 
   fetchEventPlayback: (id: string) =>
     fetchJson<EventPlaybackResponse>(`/events/playback/${id}`, { method: 'GET' }, {
@@ -157,5 +192,15 @@ export const api = {
       total_hours: 24,
       steps: [],
       logs: []
+    }),
+
+  getCurrentLoad: (region: string) =>
+    fetchJson<GridLoadResponse>(`/load/current?region=${region}`, { method: 'GET' }, {
+      region: region,
+      current_load_mw: 45000,
+      capacity_mw: 65000,
+      utilization_percent: 69.2,
+      timestamp: new Date().toISOString(),
+      data_source: 'simulated'
     })
 };
