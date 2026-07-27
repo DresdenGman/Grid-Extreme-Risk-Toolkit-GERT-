@@ -37,6 +37,7 @@ export default function Home() {
   const [data, setData] = useState<PredictionOut | null>(null);
   const [prevData, setPrevData] = useState<PredictionOut | null>(null);
   const [showWhy, setShowWhy] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string>('');
   const mountedRef = useRef(true);
 
   // Sync Live Weather on mount and region change
@@ -53,6 +54,10 @@ export default function Home() {
     };
     syncWeather();
   }, [region]);
+
+  useEffect(() => {
+    setLastUpdated(new Date().toLocaleTimeString());
+  }, [data]);
 
   const fetchPrediction = useCallback(
     async (featuresOverride?: WeatherFeatures) => {
@@ -126,7 +131,7 @@ export default function Home() {
             <Badge level={data?.risk_level || 'LOW'} />
           </h1>
           <p className="text-slate-500 text-sm mt-1 font-mono">
-             {region.replace('_', ' ')} • Last Updated: {new Date().toLocaleTimeString()}
+             {region.replace('_', ' ')} • Last Updated: {lastUpdated}
           </p>
           {data?.diagnostics?.data_source && (
             <div className="mt-1 flex items-center gap-2">
