@@ -256,6 +256,8 @@ async def predict_risk(req: PredictRequest, request: Request, db: Session = Depe
                 logger.warning(f"Alert scheduling failed: {e}")
             
         return result
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Prediction Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
