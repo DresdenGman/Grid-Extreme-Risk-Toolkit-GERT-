@@ -43,7 +43,7 @@ export default function ScenarioLab() {
     setLoading(true);
     setAnalysis(null);
     try {
-      const res = await api.scenario({
+      const env = await api.scenario({
         baseline_request: {
           region: 'ERCOT_NORTH',
           date: new Date().toISOString(),
@@ -54,7 +54,7 @@ export default function ScenarioLab() {
           wind_speed: 10 + windChange
         }
       });
-      setResult(res);
+      setResult(env.data);
     } catch (e) {
       console.error(e);
     } finally {
@@ -66,10 +66,7 @@ export default function ScenarioLab() {
       if (!result) return;
       setAnalyzing(true);
       try {
-        // Construct a PredictRequest from the scenario result to feed into the analyzer
-        // In a real app, we might have a specific endpoint for analyzing scenario diffs,
-        // but re-using the analyze endpoint works if we pass the perturbed state.
-        const res = await api.analyze({
+        const env = await api.analyze({
           region: 'ERCOT_NORTH',
           date: new Date().toISOString(),
           weather_features: { 
@@ -78,7 +75,7 @@ export default function ScenarioLab() {
               solar_irradiance: 500
           }
         });
-        setAnalysis(res);
+        setAnalysis(env.data);
       } catch (e) {
         console.error(e);
         alert("AI Analysis failed.");

@@ -23,8 +23,8 @@ export default function Sidebar() {
   useEffect(() => {
     let cancelled = false;
     api.health()
-      .then((h) => {
-        if (!cancelled) setHealth(h);
+      .then((env) => {
+        if (!cancelled) setHealth(env.data);
       })
       .catch((e) => console.warn('Health check failed', e));
     return () => {

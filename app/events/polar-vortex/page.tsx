@@ -38,7 +38,7 @@ export default function EventReplay() {
 
   useEffect(() => {
     // Load Event Data
-    api.fetchEventPlayback('polar-vortex').then(setData).catch(console.error);
+    api.fetchEventPlayback('polar-vortex').then((env) => setData(env.data)).catch(console.error);
   }, []);
 
   // Playback Logic

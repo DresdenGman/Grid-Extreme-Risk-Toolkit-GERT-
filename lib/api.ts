@@ -1,15 +1,24 @@
-import { PredictRequest, PredictionOut, ScenarioRequest, ScenarioResponse, BacktestResponse, AIAnalysisResponse, WeatherFeatures, EventPlaybackResponse, HealthStatus, GridLoadResponse } from "./types";
+import {
+  PredictRequest, PredictionOut, ScenarioRequest, ScenarioResponse,
+  BacktestResponse, AIAnalysisResponse, WeatherFeatures,
+  EventPlaybackResponse, HealthStatus, GridLoadResponse,
+  ApiClientError, ApiErrorKind, DataMode, DataEnvelope, Provenance
+} from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-class APIError extends Error {
-  constructor(public status: number, message: string) {
-    super(message);
-    this.name = 'APIError';
+function getDataMode(): DataMode {
+  const raw = process.env.NEXT_PUBLIC_DATA_MODE;
+  if (raw === 'live') return 'live';
+  if (raw === 'demo') return 'demo';
+  if (raw !== undefined) {
+    console.warn(`Invalid NEXT_PUBLIC_DATA_MODE="${raw}". Treating as "live".`);
   }
+  return 'live';
 }
 
 // --- MOCK DATA FOR DEMO MODE ---
+
 const MOCK_PREDICTION: PredictionOut = {
   timestamp: new Date().toISOString(),
   q50_load_mw: 42500,
@@ -54,8 +63,8 @@ const MOCK_BACKTEST: BacktestResponse = {
     return {
       hour: i,
       actual_load: actual,
-      baseline_p99: base + 4000, // Flat envelope
-      gert_p99: base + (isSpike ? 18000 : 6000) // Reactive envelope
+      baseline_p99: base + 4000,
+      gert_p99: base + (isSpike ? 18000 : 6000)
     };
   }),
   metrics: [
@@ -101,19 +110,70 @@ const MOCK_WEATHER: WeatherFeatures = {
     solar_irradiance: 800.0
 };
 
-// --- FETCH WRAPPER WITH FALLBACK ---
+// --- DEMO MODE: return mock data with envelope ---
 
-async function fetchJson<T>(
-  endpoint: string, 
-  options: RequestInit, 
-  mockData: T,
-  showErrorToast?: (message: string) => void
-): Promise<T> {
+function demoEnvelope<T>(data: T): DataEnvelope<T> {
+  return {
+    data,
+    source: 'simulated_demo',
+    fetchedAt: new Date().toISOString(),
+  };
+}
+
+// --- LIVE MODE: fetch with typed error classification ---
+
+function classifyError(error: unknown, endpoint: string): ApiClientError {
+  if (error instanceof ApiClientError) return error;
+
+  const message = error instanceof Error ? error.message : String(error);
+  const name = error instanceof Error ? error.name : '';
+
+  if (name === 'AbortError') {
+    return new ApiClientError(
+      `Request to ${endpoint} timed out after 8 seconds.`,
+      'timeout'
+    );
+  }
+
+  // Check for HTTP status embedded in message
+  const statusMatch = message.match(/API Error \((\d+)\)/);
+  if (statusMatch) {
+    const status = parseInt(statusMatch[1]);
+    if (status === 429) {
+      return new ApiClientError(
+        `Prediction service is rate-limited. Try again later.`,
+        'rate_limit',
+        { status }
+      );
+    }
+    return new ApiClientError(
+      `Prediction service returned an error (${status}).`,
+      'http',
+      { status }
+    );
+  }
+
+  if (message.includes('Failed to fetch') || message.includes('fetch failed') || message.includes('NetworkError')) {
+    return new ApiClientError(
+      'Cannot reach the prediction service.',
+      'network'
+    );
+  }
+
+  return new ApiClientError(
+    `Unexpected error from ${endpoint}: ${message}`,
+    'network'
+  );
+}
+
+async function liveFetch<T>(
+  endpoint: string,
+  options: RequestInit,
+): Promise<DataEnvelope<T>> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+
   try {
-    // Set a short timeout for the demo so it falls back quickly if backend is missing
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // Increased timeout for AI
-    
     const res = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
       signal: controller.signal,
@@ -122,85 +182,92 @@ async function fetchJson<T>(
         ...options.headers,
       },
     });
-    
+
     clearTimeout(timeoutId);
 
     if (!res.ok) {
-      const errorText = await res.text();
-      let errorMessage = `API Error (${res.status})`;
+      let detail = `API Error (${res.status})`;
       try {
-        const errorJson = JSON.parse(errorText);
-        errorMessage = errorJson.detail || errorMessage;
-      } catch {
-        errorMessage = errorText || errorMessage;
-      }
-      
-      if (showErrorToast) {
-        showErrorToast(errorMessage);
-      }
-      throw new Error(errorMessage);
+        const errorJson = await res.text().then(t => JSON.parse(t));
+        detail = errorJson.detail || detail;
+      } catch { /* use default */ }
+      throw new ApiClientError(
+        detail,
+        res.status === 429 ? 'rate_limit' : 'http',
+        { status: res.status }
+      );
     }
 
-    return await res.json();
-  } catch (error) {
-    if (error instanceof Error && error.name !== 'AbortError') {
-      // Network error or API error
-      const errorMessage = error.message || `Failed to connect to backend (${endpoint})`;
-      if (showErrorToast) {
-        showErrorToast(errorMessage);
-      }
-      console.warn(`Backend unreachable (${endpoint}), using Mock Data for preview.`, error);
-      // In production, you might want to throw. For this Preview MVP, we return mock data.
-      return Promise.resolve(mockData);
-    }
-    // Timeout or abort - use mock data silently
-    return Promise.resolve(mockData);
+    const data: T = await res.json();
+    return {
+      data,
+      source: 'live_api' as Provenance,
+      fetchedAt: new Date().toISOString(),
+    };
+  } catch (error: unknown) {
+    clearTimeout(timeoutId);
+    throw classifyError(error, endpoint);
   }
 }
 
+// --- PUBLIC API ---
+
 export const api = {
-  predict: (data: PredictRequest) => 
-    fetchJson<PredictionOut>('/predict', { method: 'POST', body: JSON.stringify(data) }, MOCK_PREDICTION),
-  
-  scenario: (data: ScenarioRequest) => 
-    fetchJson<ScenarioResponse>('/scenario', { method: 'POST', body: JSON.stringify(data) }, MOCK_SCENARIO),
+  predict: (data: PredictRequest): Promise<DataEnvelope<PredictionOut>> =>
+    getDataMode() === 'demo'
+      ? Promise.resolve(demoEnvelope(MOCK_PREDICTION))
+      : liveFetch<PredictionOut>('/predict', { method: 'POST', body: JSON.stringify(data) }),
 
-  analyze: (data: PredictRequest) =>
-    fetchJson<AIAnalysisResponse>('/analyze', { method: 'POST', body: JSON.stringify(data) }, MOCK_ANALYSIS),
+  scenario: (data: ScenarioRequest): Promise<DataEnvelope<ScenarioResponse>> =>
+    getDataMode() === 'demo'
+      ? Promise.resolve(demoEnvelope(MOCK_SCENARIO))
+      : liveFetch<ScenarioResponse>('/scenario', { method: 'POST', body: JSON.stringify(data) }),
 
-  liveWeather: (region: string) => 
-    fetchJson<WeatherFeatures>(`/weather/live?region=${region}`, { method: 'GET' }, MOCK_WEATHER),
+  analyze: (data: PredictRequest): Promise<DataEnvelope<AIAnalysisResponse>> =>
+    getDataMode() === 'demo'
+      ? Promise.resolve(demoEnvelope(MOCK_ANALYSIS))
+      : liveFetch<AIAnalysisResponse>('/analyze', { method: 'POST', body: JSON.stringify(data) }),
 
-  backtest: () =>
-    fetchJson<BacktestResponse>('/backtest', { method: 'GET' }, MOCK_BACKTEST),
-    
-  health: () => fetchJson<HealthStatus>(
-    '/health',
-    { method: 'GET' },
-    {
-      status: 'mock-ok',
-      backend: 'stub-v1',
-      ai_enabled: false,
-      env: 'dev'
-    }
-  ),
+  liveWeather: (region: string): Promise<DataEnvelope<WeatherFeatures>> =>
+    getDataMode() === 'demo'
+      ? Promise.resolve(demoEnvelope(MOCK_WEATHER))
+      : liveFetch<WeatherFeatures>(`/weather/live?region=${region}`, { method: 'GET' }),
 
-  fetchEventPlayback: (id: string) =>
-    fetchJson<EventPlaybackResponse>(`/events/playback/${id}`, { method: 'GET' }, {
-      event_id: 'mock',
-      title: 'Mock Event',
-      total_hours: 24,
-      steps: [],
-      logs: []
-    }),
+  backtest: (): Promise<DataEnvelope<BacktestResponse>> =>
+    getDataMode() === 'demo'
+      ? Promise.resolve(demoEnvelope(MOCK_BACKTEST))
+      : liveFetch<BacktestResponse>('/backtest', { method: 'GET' }),
 
-  getCurrentLoad: (region: string) =>
-    fetchJson<GridLoadResponse>(`/load/current?region=${region}`, { method: 'GET' }, {
-      region: region,
-      current_load_mw: 45000,
-      capacity_mw: 65000,
-      utilization_percent: 69.2,
-      timestamp: new Date().toISOString(),
-      data_source: 'simulated'
-    })
+  health: async (): Promise<DataEnvelope<HealthStatus>> =>
+    getDataMode() === 'demo'
+      ? Promise.resolve(demoEnvelope({
+          status: 'mock-ok',
+          backend: 'stub-v1',
+          ai_enabled: false,
+          env: 'dev'
+        }))
+      : liveFetch<HealthStatus>('/health', { method: 'GET' }),
+
+  fetchEventPlayback: (id: string): Promise<DataEnvelope<EventPlaybackResponse>> =>
+    getDataMode() === 'demo'
+      ? Promise.resolve(demoEnvelope({
+          event_id: 'mock',
+          title: 'Mock Event',
+          total_hours: 24,
+          steps: [],
+          logs: []
+        }))
+      : liveFetch<EventPlaybackResponse>(`/events/playback/${id}`, { method: 'GET' }),
+
+  getCurrentLoad: (region: string): Promise<DataEnvelope<GridLoadResponse>> =>
+    getDataMode() === 'demo'
+      ? Promise.resolve(demoEnvelope({
+          region,
+          current_load_mw: 45000,
+          capacity_mw: 65000,
+          utilization_percent: 69.2,
+          timestamp: new Date().toISOString(),
+          data_source: 'simulated'
+        }))
+      : liveFetch<GridLoadResponse>(`/load/current?region=${region}`, { method: 'GET' }),
 };
