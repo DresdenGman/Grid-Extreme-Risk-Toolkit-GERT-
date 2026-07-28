@@ -23,6 +23,7 @@ COPY db/ db/
 COPY domain/ domain/
 COPY alerts/ alerts/
 COPY bulletin/ bulletin/
+COPY generate_bulletin.py .
 COPY main.py .
 COPY requirements.txt .
 COPY .env.example .
