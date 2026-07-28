@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: gert-backend
+    runtime: docker
+    plan: starter
+    numInstances: 1
+    autoDeployTrigger: off
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /ready
+    maxShutdownDelaySeconds: 30
+    disk:
+      name: gert-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: "8000"
+      - key: ALLOWED_ORIGINS
+        value: https://gert-kappa.vercel.app
+      - key: DATABASE_URL
+        value: sqlite:////data/gert.db
+      - key: MODEL_BACKEND
+        value: stub
