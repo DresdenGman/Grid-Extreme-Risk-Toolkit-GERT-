@@ -8,7 +8,6 @@ from domain.types import RiskLevel
 from features.weather import WeatherFeatureBuilder
 from models.factory import get_model_service
 from models.quantiles import enforce_quantile_monotonicity
-from models.real_adapter import RealModelAdapter
 from models.stub import QuantileModelStub
 from risk.scoring import RiskScorer
 from bulletin.context import build_bulletin_context
@@ -28,14 +27,6 @@ def test_stub_monotonicity():
     res = model.predict(features)
     assert res["q99"] >= res["q95"] >= res["q90"] >= res["q50"]
 
-def test_real_adapter_monotonicity():
-    """Ensure real adapter maintains q99 >= q95 >= q90 >= q50"""
-    model = RealModelAdapter()
-    features = WeatherFeatures(temperature=35, wind_speed=20, solar_irradiance=500)
-    res = model.predict(features)
-    assert res["q99"] >= res["q95"] >= res["q90"] >= res["q50"]
-    # Verify version string
-    assert "real" in model.get_version()
 
 def test_risk_logic():
     """Test the decision rule engine boundaries (business rule)"""
@@ -98,7 +89,6 @@ def test_scenario_comparator_delta_and_shortfall():
     scenario["risk_score"] = 55.5
     scenario["q99_load_mw"] = capacity + 1000
 
-    # Construct minimal PredictionOut objects via Pydantic (schema-level)
     from api.schemas import PredictionOut
     b = PredictionOut(**baseline)
     s = PredictionOut(**scenario)
@@ -113,37 +103,47 @@ def test_bulletin_context_has_required_fields():
         assert k in ctx
 
 # ==========================
-# Integration Tests: Switching
+# Integration Tests: Backend Switching
 # ==========================
 
 def test_factory_default_stub(monkeypatch):
-    """Test that default without env var is Stub"""
+    """Test that unset MODEL_BACKEND returns Stub."""
     monkeypatch.delenv("MODEL_BACKEND", raising=False)
     service = get_model_service()
     assert isinstance(service, QuantileModelStub)
-    assert "stub" in service.get_version()
 
-def test_factory_real_backend(monkeypatch):
-    """Test switching to Real backend via env var"""
-    monkeypatch.setenv("MODEL_BACKEND", "real")
-    service = get_model_service()
-    assert isinstance(service, RealModelAdapter)
-    assert "real" in service.get_version()
 
-def test_factory_fallback(monkeypatch):
-    """Test fallback to stub on unknown backend"""
-    monkeypatch.setenv("MODEL_BACKEND", "unknown_nonsense")
+def test_factory_stub_explicit(monkeypatch):
+    """Test that MODEL_BACKEND=stub returns Stub."""
+    monkeypatch.setenv("MODEL_BACKEND", "stub")
     service = get_model_service()
     assert isinstance(service, QuantileModelStub)
+
+
+def test_factory_real_missing_dir_raises(monkeypatch):
+    """Test that MODEL_BACKEND=real without MODEL_ARTIFACT_DIR raises explicit error."""
+    monkeypatch.setenv("MODEL_BACKEND", "real")
+    monkeypatch.delenv("MODEL_ARTIFACT_DIR", raising=False)
+    with pytest.raises(RuntimeError) as exc_info:
+        get_model_service()
+    assert "MODEL_ARTIFACT_DIR" in str(exc_info.value)
+
+
+def test_factory_unknown_raises(monkeypatch):
+    """Test that unknown backend raises configuration error."""
+    monkeypatch.setenv("MODEL_BACKEND", "typo_backend")
+    with pytest.raises(RuntimeError) as exc_info:
+        get_model_service()
+    assert "Unsupported" in str(exc_info.value)
 
 # ==========================
 # API Integration Tests
 # ==========================
 
 def test_api_predict_flow():
-    """Test the full API flow"""
+    """Test the full API flow with valid region."""
     payload = {
-        "region": "TEST_REGION",
+        "region": "ERCOT_NORTH",
         "date": datetime.now().isoformat(),
         "weather_features": {
             "temperature": 30.0,
@@ -156,3 +156,21 @@ def test_api_predict_flow():
     data = response.json()
     assert "q99_load_mw" in data
     assert "risk_score" in data
+
+
+def test_api_predict_rejects_invalid_region():
+    """Test that invalid region returns 422 with supported regions listed."""
+    payload = {
+        "region": "TEST_REGION",
+        "date": datetime.now().isoformat(),
+        "weather_features": {
+            "temperature": 30.0,
+            "wind_speed": 10.0,
+            "solar_irradiance": 800.0
+        }
+    }
+    response = client.post("/predict", json=payload)
+    assert response.status_code == 422
+    data = response.json()
+    assert "TEST_REGION" in str(data)
+    assert "ERCOT_NORTH" in str(data)

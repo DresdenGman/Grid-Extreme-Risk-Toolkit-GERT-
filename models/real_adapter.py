@@ -1,9 +1,21 @@
+"""Real model adapter — loads a trained artifact bundle via the artifact contract."""
+
 from __future__ import annotations
 
 import logging
-from typing import Dict
+import os
+from pathlib import Path
+from typing import Any, Dict, List, Union
+
+import numpy as np
 
 from api.schemas import WeatherFeatures
+from models.artifacts import (
+    ModelArtifactError,
+    ModelMetadata,
+    load_model_artifact,
+    LoadedModelArtifact,
+)
 from models.interfaces import ModelInterface
 from models.quantiles import enforce_quantile_monotonicity
 
@@ -11,29 +23,182 @@ logger = logging.getLogger("gert_backend")
 
 
 class RealModelAdapter(ModelInterface):
-    """
-    Placeholder for a real model adapter.
-    Still runs quantile monotonicity enforcement to keep post-processing consistent.
+    """Loads a versioned artifact bundle and serves predictions.
+
+    Instantiation requires ``MODEL_ARTIFACT_DIR`` to be set and to point
+    at a directory containing ``metadata.json``, ``metrics.json``, and
+    ``model.joblib`` conforming to the artifact schema.
     """
 
-    def __init__(self, model_path: str = "models/gert_latest.pkl"):
-        self.model_path = model_path
-        self._load_model()
+    def __init__(
+        self,
+        artifact_dir: str | None = None,
+    ) -> None:
+        env_dir = artifact_dir or os.getenv("MODEL_ARTIFACT_DIR")
+        if not env_dir or not env_dir.strip():
+            raise RuntimeError(
+                "MODEL_ARTIFACT_DIR is required when MODEL_BACKEND=real, "
+                "but is unset or empty."
+            )
 
-    def _load_model(self) -> None:
-        logger.info(f"Loading REAL model from {self.model_path}...")
-        self.loaded = True
+        path = Path(env_dir.strip())
+        if not path.is_absolute():
+            raise RuntimeError(
+                f"MODEL_ARTIFACT_DIR must be an absolute path, got: {env_dir}"
+            )
+
+        self._loaded: LoadedModelArtifact = load_model_artifact(path)
+        self._meta: ModelMetadata = self._loaded.metadata
+        self._bundle: Any = _lazy_load_bundle(self._loaded.model_path)
+
+        logger.info(
+            "RealModelAdapter initialized",
+            extra={
+                "model_name": self._meta.model_name,
+                "model_version": self._meta.model_version,
+                "artifact_path": str(path),
+            },
+        )
 
     def get_version(self) -> str:
-        return "real-adapter-v2"
+        return self._meta.model_version
 
     def predict(self, features: WeatherFeatures) -> Dict[str, float]:
-        if not getattr(self, "loaded", False):
-            raise RuntimeError("Model not loaded")
-        base = 42000 + (features.temperature * 100)
-        q50 = base
-        q90 = base + 2000 + (features.wind_speed * 50)
-        q95 = base + 3000 + (features.wind_speed * 80)
-        q99 = base + 5000 + (features.wind_speed * 150)
-        return enforce_quantile_monotonicity({"q50": q50, "q90": q90, "q95": q95, "q99": q99})
+        feature_row = [
+            features.temperature,
+            features.wind_speed,
+            features.solar_irradiance,
+        ]
 
+        try:
+            if hasattr(self._bundle, "predict_quantiles"):
+                raw = self._bundle.predict_quantiles([feature_row])
+            elif isinstance(self._bundle, dict):
+                raw = {
+                    key: estimator.predict([feature_row])
+                    for key, estimator in self._bundle.items()
+                }
+            else:
+                raise ModelArtifactError(
+                    f"Unsupported bundle type: {type(self._bundle).__name__}."
+                )
+        except ModelArtifactError:
+            raise
+        except Exception as exc:
+            raise ModelArtifactError(
+                f"Prediction failed for model {self._meta.model_version}: "
+                f"{exc}"
+            ) from exc
+
+        result = _normalize_quantile_output(raw)
+
+        # Detect and correct quantile crossing
+        corrected = enforce_quantile_monotonicity(result)
+        if corrected != result:
+            logger.warning(
+                "Quantile crossing corrected in prediction",
+                extra={
+                    "model_version": self._meta.model_version,
+                    "before": result,
+                    "after": corrected,
+                },
+            )
+
+        return corrected
+
+
+# ---------------------------------------------------------------------------
+#  Helpers
+# ---------------------------------------------------------------------------
+
+
+def _lazy_load_bundle(model_path: Path) -> Any:
+    """Load the serialized model bundle from disk."""
+    import joblib
+
+    try:
+        obj = joblib.load(model_path)
+    except Exception as exc:
+        raise ModelArtifactError(
+            f"Failed to load model at {model_path}: {exc}"
+        ) from exc
+    return obj
+
+
+def _extract_scalar(value: Any) -> float:
+    """Reduce a prediction output to a single float, or raise."""
+    if isinstance(value, bool):
+        raise ModelArtifactError(
+            f"Prediction output is boolean ({value}), not a numeric scalar."
+        )
+
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    # List / tuple / ndarray …
+    if isinstance(value, (list, tuple)):
+        if len(value) == 0:
+            raise ModelArtifactError("Prediction output is empty.")
+        if len(value) > 1:
+            raise ModelArtifactError(
+                f"Prediction output has {len(value)} elements, expected exactly 1."
+            )
+        return _extract_scalar(value[0])
+
+    # NumPy-like array
+    if hasattr(value, "tolist"):
+        return _extract_scalar(value.tolist())
+
+    raise ModelArtifactError(
+        f"Cannot convert prediction output to scalar: {type(value).__name__}"
+    )
+
+
+def _normalize_quantile_output(raw: Any) -> Dict[str, float]:
+    """Normalise raw prediction output to ``{q50, q90, q95, q99}``."""
+    expected_keys = {"q50", "q90", "q95", "q99"}
+
+    if isinstance(raw, dict):
+        actual_keys = set(raw.keys())
+        missing = expected_keys - actual_keys
+        extra = actual_keys - expected_keys
+        if missing:
+            raise ModelArtifactError(
+                f"Prediction output missing quantile keys: {sorted(missing)}"
+            )
+        if extra:
+            raise ModelArtifactError(
+                f"Prediction output has unexpected keys: {sorted(extra)}"
+            )
+        result: Dict[str, float] = {}
+        for key in ("q50", "q90", "q95", "q99"):
+            result[key] = _extract_scalar(raw[key])
+        return result
+
+    if hasattr(raw, "keys") and hasattr(raw, "__getitem__"):
+        # Duck-type dict-like
+        return _normalize_quantile_output(dict(raw))
+
+    raise ModelArtifactError(
+        f"Unrecognised prediction output type: {type(raw).__name__}. "
+        "Expected dict with q50/q90/q95/q99."
+    )
+
+
+def _validate_finite(result: Dict[str, float]) -> None:
+    """Check all values are finite numbers."""
+    import math
+
+    for key, value in result.items():
+        if not isinstance(value, (int, float)):
+            raise ModelArtifactError(
+                f"Prediction output '{key}' is {type(value).__name__}, not numeric."
+            )
+        if math.isnan(value):
+            raise ModelArtifactError(
+                f"Prediction output '{key}' is NaN."
+            )
+        if math.isinf(value):
+            raise ModelArtifactError(
+                f"Prediction output '{key}' is infinite ({value})."
+            )

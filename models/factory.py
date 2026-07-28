@@ -11,12 +11,23 @@ logger = logging.getLogger("gert_backend")
 
 
 def get_model_service() -> ModelInterface:
+    """Return a ModelInterface implementation based on MODEL_BACKEND env var.
+
+    Accepted values:
+        unset / "stub" — QuantileModelStub (demonstration backend)
+        "real"         — RealModelAdapter (loads artifact from MODEL_ARTIFACT_DIR)
+
+    Any other value raises a configuration error.
+    """
     backend = os.getenv("MODEL_BACKEND", "stub").lower()
-    if backend == "real":
-        return RealModelAdapter()
+
     if backend == "stub":
         return QuantileModelStub()
 
-    logger.warning(f"Unknown backend '{backend}', falling back to stub.")
-    return QuantileModelStub()
+    if backend == "real":
+        return RealModelAdapter()
 
+    raise RuntimeError(
+        f"Unsupported MODEL_BACKEND value: '{backend}'. "
+        "Accepted values: stub, real."
+    )

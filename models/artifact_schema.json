@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GERT Model Artifact Metadata",
+  "description": "Schema for the metadata.json that must accompany every trained model artifact loaded by RealModelAdapter.",
+  "type": "object",
+  "required": [
+    "artifact_schema_version",
+    "model_name",
+    "model_version",
+    "model_type",
+    "created_at",
+    "training_period",
+    "forecast_contract",
+    "feature_names",
+    "feature_units",
+    "quantiles",
+    "supported_regions"
+  ],
+  "properties": {
+    "artifact_schema_version": {
+      "type": "string",
+      "enum": ["1.0"],
+      "description": "Version of this schema definition."
+    },
+    "model_name": {
+      "type": "string",
+      "description": "Human-readable name for the model."
+    },
+    "model_version": {
+      "type": "string",
+      "description": "Semantic version of this particular trained artifact."
+    },
+    "model_type": {
+      "type": "string",
+      "description": "Archtecture identifier, e.g. 'sklearn_quantile_bundle'."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp when the artifact was created."
+    },
+    "training_period": {
+      "type": "object",
+      "required": ["start", "end"],
+      "properties": {
+        "start": {"type": "string", "description": "Start of training data (ISO-8601)."},
+        "end": {"type": "string", "description": "End of training data (ISO-8601)."}
+      }
+    },
+    "forecast_contract": {
+      "type": "object",
+      "required": ["forecast_origin", "target_horizon_hours", "target_variable"],
+      "properties": {
+        "forecast_origin": {"type": "string"},
+        "target_horizon_hours": {"type": "integer", "minimum": 0},
+        "target_variable": {"type": "string"}
+      }
+    },
+    "feature_names": {
+      "type": "array",
+      "items": {"type": "string"},
+      "minItems": 1
+    },
+    "feature_units": {
+      "type": "object",
+      "description": "Mapping from each feature name to its unit string."
+    },
+    "quantiles": {
+      "type": "array",
+      "items": {"type": "number", "minimum": 0, "maximum": 1},
+      "minItems": 1,
+      "description": "Sorted list of quantile levels the model outputs."
+    },
+    "supported_regions": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "ISO region codes this model supports."
+    },
+    "training_data": {
+      "type": "object",
+      "properties": {
+        "source": {"type": "string"},
+        "provenance": {"type": "string"}
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "properties": {
+        "python_version": {"type": "string"},
+        "scikit_learn_version": {"type": "string"}
+      }
+    }
+  }
+}
