@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '@/lib/api';
-import { WeatherFeatures, PredictionOut, Region } from '@/lib/types';
+import { WeatherFeatures, PredictionOut, Region, ApiClientError, Provenance } from '@/lib/types';
 import { Card, Badge } from '@/components/ui';
 import { QuantileChart } from '@/components/Charts';
 import GridMap from '@/components/GridMap';
@@ -38,17 +38,19 @@ export default function Home() {
   const [prevData, setPrevData] = useState<PredictionOut | null>(null);
   const [showWhy, setShowWhy] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>('');
+  const [provenance, setProvenance] = useState<Provenance | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
   // Sync Live Weather on mount and region change
   useEffect(() => {
     const syncWeather = async () => {
         try {
-            const realWeather = await api.liveWeather(region);
+            const envelope = await api.liveWeather(region);
             if (mountedRef.current) {
-              setInputs(realWeather);
-              setDraftInputs(realWeather);
-              setLiveSnapshot(realWeather);
+              setInputs(envelope.data);
+              setDraftInputs(envelope.data);
+              setLiveSnapshot(envelope.data);
             }
         } catch(e) { console.error(e); }
     };
@@ -64,16 +66,23 @@ export default function Home() {
       const featuresToUse = featuresOverride ?? inputs;
     setLoading(true);
     try {
-      const res = await api.predict({
+      const envelope = await api.predict({
         region: region,
         date: new Date().toISOString(),
           weather_features: featuresToUse
       });
         if (mountedRef.current) {
           setPrevData((prev) => data ?? prev);
-          setData(res);
+          setData(envelope.data);
+          setProvenance(envelope.source);
+          setError(null);
         }
     } catch (err) {
+      if (err instanceof ApiClientError) {
+        setError(err.message);
+      } else {
+        setError('Prediction failed.');
+      }
       console.error(err);
     } finally {
       if (mountedRef.current) setLoading(false);
@@ -133,6 +142,26 @@ export default function Home() {
           <p className="text-slate-500 text-sm mt-1 font-mono">
              {region.replace('_', ' ')} • Last Updated: {lastUpdated}
           </p>
+          {provenance && (
+            <span className={clsx(
+              "text-[10px] px-2 py-0.5 rounded font-mono inline-block mt-1",
+              provenance === 'live_api'
+                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+            )}>
+              {provenance === 'live_api' ? '✓ LIVE API' : '⚠ SIMULATED DEMO DATA — Not for operational use'}
+            </span>
+          )}
+          {error && !data && (
+            <div className="mt-2 text-xs text-red-400 font-mono">
+              DATA UNAVAILABLE — {error}
+            </div>
+          )}
+          {error && data && (
+            <div className="mt-1 text-xs text-amber-400 font-mono">
+              STALE DATA — {error}
+            </div>
+          )}
           {data?.diagnostics?.data_source && (
             <div className="mt-1 flex items-center gap-2">
               <span className={clsx(

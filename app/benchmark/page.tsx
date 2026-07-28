@@ -27,7 +27,7 @@ export default function BenchmarkPage() {
 
   useEffect(() => {
     api.backtest()
-      .then(setData)
+      .then((env) => setData(env.data))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);

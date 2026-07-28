@@ -147,3 +147,47 @@ export interface HealthStatus {
   ai_enabled: boolean;
   env: string;
 }
+
+// --- Data Provenance ---
+
+export type DataMode = 'live' | 'demo';
+
+export type Provenance = 'live_api' | 'simulated_demo';
+
+export interface DataEnvelope<T> {
+  data: T;
+  source: Provenance;
+  fetchedAt: string;
+}
+
+// --- API Error Types ---
+
+export type ApiErrorKind =
+  | 'timeout'
+  | 'rate_limit'
+  | 'http'
+  | 'network'
+  | 'invalid_response'
+  | 'configuration';
+
+export class ApiClientError extends Error {
+  readonly kind: ApiErrorKind;
+  readonly status?: number;
+  readonly retryAfterSeconds?: number;
+
+  constructor(
+    message: string,
+    kind: ApiErrorKind,
+    options?: {
+      status?: number;
+      retryAfterSeconds?: number;
+      cause?: unknown;
+    },
+  ) {
+    super(message, { cause: options?.cause });
+    this.name = 'ApiClientError';
+    this.kind = kind;
+    this.status = options?.status;
+    this.retryAfterSeconds = options?.retryAfterSeconds;
+  }
+}
