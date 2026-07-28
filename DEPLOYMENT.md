@@ -17,7 +17,7 @@ chmod +x start.sh
 # Activate virtual environment
 source .venv/bin/activate
 
-# Start backend (port 8000)
+# Start backend (port 8000 by default — set PORT env var to customise)
 python main.py
 ```
 

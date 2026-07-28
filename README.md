@@ -70,12 +70,11 @@ pip install -r requirements.txt
 ```
 
 - **Frontend**: Accessible at `http://localhost:3000`
-- **Backend API Docs**: Accessible at `http://localhost:8000/docs`
+- **Backend API Docs**: Accessible at `http://localhost:8000/docs` (default — configurable via PORT env var)
 
 ## 🧠 Methodology
 
-**Why Quantile Regression?**
-Grid reliability relies on understanding the "tail risk"—the low-probability, high-impact events. Standard regression models (OLS) predict the mean, often underestimating the volatility seen during extreme weather. GERT predicts specific quantiles (e.g., the 99th percentile), providing a statistical upper bound for load demand that helps operators plan reserves more effectively.
+**Current Backend:** The default prediction model (`MODEL_BACKEND=stub`) is a demonstration backend using rule-based quantile estimation from weather features. It is suitable for UI development and conceptual validation but is **not** a trained operational forecasting model. The `MODEL_BACKEND=real` path is reserved for a future trained artifact and currently raises an explicit error if selected.
 
 **Risk Scoring**
 The Risk Score is a function of the **Capacity Margin** (Available Generation - P99 Load).
