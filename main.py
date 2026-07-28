@@ -1,17 +1,22 @@
 """
 GERT backend entrypoint.
 
-The production code has been refactored into layered modules:
-- api/        HTTP layer (routers + schemas + app wiring)
-- services/   business logic (prediction/scoring/scenarios)
-- models/     model adapters + quantile post-processing
-- features/   feature engineering
-- risk/       decision rules (scoring + financials)
+Uses centralized configuration from ``api.config``.
 """
 
 from api.app import app
+from api.config import config
+
 
 if __name__ == "__main__":
     import uvicorn
-    # Local development entry point
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+    uvicorn.run(
+        "api.app:app",
+        host=config.host,
+        port=config.port,
+        reload=config.is_development,
+        log_level="info" if config.is_production else "debug",
+    )
+    print(f"GERT backend starting on {config.host}:{config.port} "
+          f"(env={config.app_env}, model={config.model_backend})")

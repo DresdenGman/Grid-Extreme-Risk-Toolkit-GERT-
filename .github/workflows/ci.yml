@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Lint (compile)
+        run: python -m compileall api models services risk features db
+      - name: Tests
+        run: python -m pytest -vv --tb=line
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        run: npm ci
+      - name: Frontend tests
+        run: npm run test:frontend
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+          NEXT_PUBLIC_DATA_MODE: demo
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build --no-cache -t gert-backend:ci .
+      - name: Inspect image
+        run: |
+          docker image inspect gert-backend:ci \
+            --format 'user={{.Config.User}} size={{.Size}}'
+      - name: Start container
+        run: |
+          docker run -d \
+            --name gert-backend-ci \
+            -p 8001:8000 \
+            -e APP_ENV=production \
+            -e HOST=0.0.0.0 \
+            -e PORT=8000 \
+            -e ALLOWED_ORIGINS=https://gert-kappa.vercel.app \
+            -e MODEL_BACKEND=stub \
+            -e DATABASE_URL=sqlite:////data/gert.db \
+            gert-backend:ci
+      - name: Wait for readiness
+        run: |
+          for i in $(seq 1 30); do
+            curl -s -o /dev/null -w "%{http_code}" http://localhost:8001/ready && break
+            sleep 1
+          done
+      - name: Verify endpoints
+        run: |
+          echo "=== /health ==="
+          curl -i --max-time 10 http://localhost:8001/health
+          echo ""
+          echo "=== /ready ==="
+          curl -i --max-time 10 http://localhost:8001/ready
+          echo ""
+          echo "=== POST /predict ==="
+          curl -i --max-time 10 \
+            -X POST http://localhost:8001/predict \
+            -H 'Content-Type: application/json' \
+            -d '{"region":"ERCOT_NORTH","date":"2026-01-01T00:00:00","weather_features":{"temperature":30,"wind_speed":5,"solar_irradiance":600}}'
+      - name: Verify CORS
+        run: |
+          echo "=== Trusted origin ==="
+          curl -i --max-time 10 \
+            -X OPTIONS http://localhost:8001/predict \
+            -H 'Origin: https://gert-kappa.vercel.app' \
+            -H 'Access-Control-Request-Method: POST' \
+            -H 'Access-Control-Request-Headers: content-type' 2>&1 | grep -i access-control-allow-origin
+          echo "=== Untrusted origin (should NOT return vercel) ==="
+          curl -i --max-time 10 \
+            -X OPTIONS http://localhost:8001/predict \
+            -H 'Origin: https://untrusted.example' \
+            -H 'Access-Control-Request-Method: POST' \
+            -H 'Access-Control-Request-Headers: content-type' 2>&1 | grep -i access-control-allow-origin || echo "No CORS header returned (correct)"
+      - name: Show container logs
+        if: always()
+        run: docker logs gert-backend-ci || true
+      - name: Clean up container
+        if: always()
+        run: docker rm -f gert-backend-ci || true
