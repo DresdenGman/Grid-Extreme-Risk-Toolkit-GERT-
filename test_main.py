@@ -188,6 +188,13 @@ def test_ercot_load_parser_rejects_missing_total():
         ERCOTAdapter._latest_total_mw({"data": [{"north": 1000}]})
 
 
+def test_ercot_adequacy_parser_reads_available_generation_capacity():
+    from data.ercot import ERCOTAdapter
+
+    payload = {"data": [{"availCapGen": "84321.0", "capREGUP": "1000"}]}
+    assert ERCOTAdapter._latest_available_generation_mw(payload) == 84321.0
+
+
 def test_ercot_token_is_cached(monkeypatch):
     """A valid ERCOT token should not trigger repeated authentication requests."""
     from data.ercot import ERCOTAdapter

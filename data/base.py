@@ -9,6 +9,7 @@ from typing import Literal, Optional
 
 
 DataSource = Literal["official_live", "estimated_fallback"]
+CapacitySource = Literal["official_adequacy", "configured_reference"]
 
 
 @dataclass
@@ -34,6 +35,11 @@ class GridLoadData:
     # was attempted.  This prevents an estimated fallback from being presented
     # as an official real-time ISO observation.
     source: DataSource = "estimated_fallback"
+    # Capacity can be an official adequacy observation or a static regional
+    # reference.  Keep this separate from the load source: the two may fail
+    # independently.
+    capacity_source: CapacitySource = "configured_reference"
+    capacity_basis: str = "configured regional reference"
 
 
 class GridDataAdapter(ABC):

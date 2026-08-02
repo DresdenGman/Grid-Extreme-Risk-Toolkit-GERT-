@@ -267,7 +267,9 @@ export const api = {
           capacity_mw: 65000,
           utilization_percent: 69.2,
           timestamp: new Date().toISOString(),
-          data_source: 'estimated_fallback'
+          data_source: 'estimated_fallback',
+          capacity_source: 'configured_reference',
+          capacity_basis: 'configured regional reference'
         }))
       : liveFetch<GridLoadResponse>(`/load/current?region=${region}`, { method: 'GET' }),
 };
