@@ -47,6 +47,7 @@ class CAISOAdapter(GridDataAdapter):
                 capacity_mw=self.get_region_capacity(region),
                 timestamp=datetime.now(),
                 region=region,
+                source="estimated_fallback",
             )
         except Exception:
             # Fallback
@@ -55,6 +56,7 @@ class CAISOAdapter(GridDataAdapter):
                 capacity_mw=self.get_region_capacity(region),
                 timestamp=datetime.now(),
                 region=region,
+                source="estimated_fallback",
             )
 
     async def fetch_historical_load(
@@ -91,6 +93,7 @@ class CAISOAdapter(GridDataAdapter):
                     wind_speed=current.get("wind_speed_10m", 5.0),
                     solar_irradiance=current.get("direct_normal_irradiance", 800.0),
                     timestamp=datetime.now(),
+                    source="official_live",
                 )
         except Exception:
             return WeatherData(
@@ -98,4 +101,5 @@ class CAISOAdapter(GridDataAdapter):
                 wind_speed=5.0,
                 solar_irradiance=800.0,
                 timestamp=datetime.now(),
+                source="estimated_fallback",
             )

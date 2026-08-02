@@ -162,15 +162,27 @@ export default function Home() {
               STALE DATA — {error}
             </div>
           )}
-          {data?.diagnostics?.data_source && (
+          {data && (
             <div className="mt-1 flex items-center gap-2">
               <span className={clsx(
                 "text-[10px] px-2 py-0.5 rounded font-mono",
-                data.diagnostics.data_source === 'real_time' 
+                data.diagnostics.backend_type === 'real'
                   ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                   : "bg-slate-700/50 text-slate-400 border border-slate-600/30"
               )}>
-                {data.diagnostics.data_source === 'real_time' ? '✓ Real-Time Data' : '⚠ Simulated Data'}
+                {data.diagnostics.backend_type === 'real'
+                  ? '✓ TRAINED MODEL ARTIFACT'
+                  : '⚠ STUB MODEL — demo forecast'}
+              </span>
+              <span className={clsx(
+                "text-[10px] px-2 py-0.5 rounded font-mono",
+                data.diagnostics.load_data_source === 'official_live'
+                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                  : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+              )}>
+                {data.diagnostics.load_data_source === 'official_live'
+                  ? '✓ OFFICIAL LIVE LOAD CONTEXT'
+                  : '⚠ ESTIMATED LOAD CONTEXT'}
               </span>
               {data && (
                 <button

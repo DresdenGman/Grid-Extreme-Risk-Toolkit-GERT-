@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 import generate_bulletin
 from api.deps import ai_client, logger, model_service, alert_manager
+from api.config import config
 from api.limiting import limiter
 from db.connection import get_db, init_db
 from db.repository import PredictionRepository, AlertRepository, GridLoadRepository
@@ -53,7 +54,7 @@ async def health_check():
         "timestamp": datetime.now(),
         "backend": model_service.get_version(),
         "ai_enabled": ai_client is not None,
-        "env": os.getenv("ENVIRONMENT", "dev"),
+        "env": config.app_env,
     }
 
 
@@ -125,7 +126,7 @@ async def get_current_load(region: str, request: Request):
             "capacity_mw": load_data.capacity_mw,
             "utilization_percent": (load_data.current_load_mw / load_data.capacity_mw) * 100,
             "timestamp": load_data.timestamp.isoformat() if load_data.timestamp else datetime.now().isoformat(),
-            "data_source": "real_time",
+            "data_source": load_data.source,
         }
     except Exception as e:
         logger.error(f"Load data fetch failed: {e}")
@@ -166,7 +167,12 @@ async def predict_risk(req: PredictRequest, request: Request, db: Session = Depe
             except Exception as db_error:
                 logger.warning(f"Failed to save grid load data: {db_error}")
             
-            logger.info(f"Real load data: {real_load.current_load_mw} MW / {real_load.capacity_mw} MW")
+            logger.info(
+                "Grid load context: %s MW / %s MW (%s)",
+                real_load.current_load_mw,
+                real_load.capacity_mw,
+                real_load.source,
+            )
         except Exception as e:
             logger.warning(f"Could not fetch real load data: {e}, using model-only prediction")
             real_load = None
@@ -202,9 +208,9 @@ async def predict_risk(req: PredictRequest, request: Request, db: Session = Depe
         if real_load:
             result.diagnostics["real_load_mw"] = real_load.current_load_mw
             result.diagnostics["real_capacity_mw"] = real_load.capacity_mw
-            result.diagnostics["data_source"] = "real_time"
+            result.diagnostics["load_data_source"] = real_load.source
         else:
-            result.diagnostics["data_source"] = "simulated"
+            result.diagnostics["load_data_source"] = "estimated_fallback"
         
         # Save prediction to database
         try:
@@ -572,4 +578,3 @@ async def get_event_playback(event_id: str):
         steps=steps,
         logs=logs,
     )
-
