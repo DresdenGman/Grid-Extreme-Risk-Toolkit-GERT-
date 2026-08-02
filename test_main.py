@@ -156,6 +156,17 @@ def test_api_predict_flow():
     data = response.json()
     assert "q99_load_mw" in data
     assert "risk_score" in data
+    assert data["diagnostics"]["backend_type"] == "stub"
+    assert data["diagnostics"]["load_data_source"] in {
+        "official_live",
+        "estimated_fallback",
+    }
+
+
+def test_health_reports_app_env():
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["env"] in {"development", "test", "production"}
 
 
 def test_api_predict_rejects_invalid_region():

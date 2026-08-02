@@ -20,7 +20,8 @@ export interface Diagnostics {
   model_version: string;
   backend_type: string;
   capacity_used?: number;
-  data_source?: 'real_time' | 'simulated';
+  /** Source of the grid-load context. It is distinct from the model itself. */
+  load_data_source?: 'official_live' | 'estimated_fallback';
   real_load_mw?: number;
   real_capacity_mw?: number;
 }
@@ -138,7 +139,7 @@ export interface GridLoadResponse {
   capacity_mw: number;
   utilization_percent: number;
   timestamp: string;
-  data_source: 'real_time' | 'simulated';
+  data_source: 'official_live' | 'estimated_fallback';
 }
 
 export interface HealthStatus {

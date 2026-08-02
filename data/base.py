@@ -5,7 +5,10 @@ Base classes and data models for grid data adapters.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
+
+
+DataSource = Literal["official_live", "estimated_fallback"]
 
 
 @dataclass
@@ -16,6 +19,7 @@ class WeatherData:
     solar_irradiance: float  # W/m^2
     humidity: Optional[float] = None  # 0-100%
     timestamp: Optional[datetime] = None
+    source: DataSource = "estimated_fallback"
 
 
 @dataclass
@@ -26,6 +30,10 @@ class GridLoadData:
     forecast_load_mw: Optional[float] = None  # Next hour forecast
     timestamp: Optional[datetime] = None
     region: Optional[str] = None
+    # The source must describe the value returned, rather than the adapter that
+    # was attempted.  This prevents an estimated fallback from being presented
+    # as an official real-time ISO observation.
+    source: DataSource = "estimated_fallback"
 
 
 class GridDataAdapter(ABC):

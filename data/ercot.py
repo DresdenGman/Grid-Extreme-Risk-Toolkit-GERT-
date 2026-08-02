@@ -53,6 +53,9 @@ class ERCOTAdapter(GridDataAdapter):
                 else:
                     load_mw = 0.0
 
+                if load_mw <= 0:
+                    raise ValueError("ERCOT response did not contain a positive system load")
+
                 capacity = self.get_region_capacity(region)
                 
                 return GridLoadData(
@@ -60,6 +63,7 @@ class ERCOTAdapter(GridDataAdapter):
                     capacity_mw=capacity,
                     timestamp=datetime.now(),
                     region=region,
+                    source="official_live",
                 )
         except Exception as e:
             # Fallback: return estimated load based on time of day
@@ -75,6 +79,7 @@ class ERCOTAdapter(GridDataAdapter):
                 capacity_mw=self.get_region_capacity(region),
                 timestamp=datetime.now(),
                 region=region,
+                source="estimated_fallback",
             )
 
     async def fetch_historical_load(
@@ -123,6 +128,7 @@ class ERCOTAdapter(GridDataAdapter):
                     wind_speed=current.get("wind_speed_10m", 5.0),
                     solar_irradiance=current.get("direct_normal_irradiance", 500.0),
                     timestamp=datetime.now(),
+                    source="official_live",
                 )
         except Exception:
             # Fallback
@@ -131,4 +137,5 @@ class ERCOTAdapter(GridDataAdapter):
                 wind_speed=10.0,
                 solar_irradiance=600.0,
                 timestamp=datetime.now(),
+                source="estimated_fallback",
             )
