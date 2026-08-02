@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 import os
 from fastapi.testclient import TestClient
@@ -167,6 +168,66 @@ def test_health_reports_app_env():
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json()["env"] in {"development", "test", "production"}
+
+
+def test_ercot_load_parser_accepts_field_value_rows():
+    """NP6-346-CD field/value report rows must normalize to system MW."""
+    from data.ercot import ERCOTAdapter
+
+    payload = {
+        "fields": [{"name": "operatingDay"}, {"name": "total"}],
+        "data": [["2026-08-02", "71234.5"]],
+    }
+    assert ERCOTAdapter._latest_total_mw(payload) == 71234.5
+
+
+def test_ercot_load_parser_rejects_missing_total():
+    from data.ercot import ERCOTAdapter
+
+    with pytest.raises(ValueError, match="positive total"):
+        ERCOTAdapter._latest_total_mw({"data": [{"north": 1000}]})
+
+
+def test_ercot_token_is_cached(monkeypatch):
+    """A valid ERCOT token should not trigger repeated authentication requests."""
+    from data.ercot import ERCOTAdapter
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"id_token": "test-token", "expires_in": 3600}
+
+    class FakeClient:
+        def __init__(self):
+            self.calls = 0
+
+        async def post(self, *args, **kwargs):
+            self.calls += 1
+            return FakeResponse()
+
+    monkeypatch.setenv("ERCOT_API_USERNAME", "test@example.com")
+    monkeypatch.setenv("ERCOT_API_PASSWORD", "not-a-real-password")
+    monkeypatch.setenv("ERCOT_API_SUBSCRIPTION_KEY", "not-a-real-key")
+    adapter = ERCOTAdapter()
+    client = FakeClient()
+
+    async def fetch_twice():
+        return await adapter._get_id_token(client), await adapter._get_id_token(client)
+
+    assert asyncio.run(fetch_twice()) == ("test-token", "test-token")
+    assert client.calls == 1
+
+
+def test_ercot_missing_credentials_returns_estimated_fallback(monkeypatch):
+    from data.ercot import ERCOTAdapter
+
+    monkeypatch.delenv("ERCOT_API_USERNAME", raising=False)
+    monkeypatch.delenv("ERCOT_API_PASSWORD", raising=False)
+    monkeypatch.delenv("ERCOT_API_SUBSCRIPTION_KEY", raising=False)
+    load = asyncio.run(ERCOTAdapter().fetch_current_load("ERCOT_NORTH"))
+    assert load.source == "estimated_fallback"
 
 
 def test_api_predict_rejects_invalid_region():
