@@ -33,15 +33,16 @@ class ERCOTAdapter(GridDataAdapter):
     )
     CLIENT_ID = "fec253ea-0d06-4272-a5e6-b478baeecd70"
     LOAD_URL = "https://api.ercot.com/api/public-reports/np6-346-cd/act_sys_load_by_fzn"
+    ADEQUACY_URL = "https://api.ercot.com/api/public-reports/np3-763-cd/st_sys_adequacy"
     TOKEN_REFRESH_SKEW_SECONDS = 60
+    _shared_id_token: str | None = None
+    _shared_token_expires_at: datetime | None = None
+    _shared_token_lock: asyncio.Lock | None = None
 
     def __init__(self) -> None:
         self._username = os.getenv("ERCOT_API_USERNAME", "").strip()
         self._password = os.getenv("ERCOT_API_PASSWORD", "")
         self._subscription_key = os.getenv("ERCOT_API_SUBSCRIPTION_KEY", "").strip()
-        self._id_token: str | None = None
-        self._token_expires_at: datetime | None = None
-        self._token_lock = asyncio.Lock()
 
     @property
     def official_api_configured(self) -> bool:
@@ -49,14 +50,24 @@ class ERCOTAdapter(GridDataAdapter):
         return bool(self._username and self._password and self._subscription_key)
 
     async def _get_id_token(self, client: httpx.AsyncClient) -> str:
-        now = datetime.utcnow()
-        if self._id_token and self._token_expires_at and now < self._token_expires_at:
-            return self._id_token
+        now = datetime.now().astimezone()
+        if (
+            self.__class__._shared_id_token
+            and self.__class__._shared_token_expires_at
+            and now < self.__class__._shared_token_expires_at
+        ):
+            return self.__class__._shared_id_token
 
-        async with self._token_lock:
-            now = datetime.utcnow()
-            if self._id_token and self._token_expires_at and now < self._token_expires_at:
-                return self._id_token
+        if self.__class__._shared_token_lock is None:
+            self.__class__._shared_token_lock = asyncio.Lock()
+        async with self.__class__._shared_token_lock:
+            now = datetime.now().astimezone()
+            if (
+                self.__class__._shared_id_token
+                and self.__class__._shared_token_expires_at
+                and now < self.__class__._shared_token_expires_at
+            ):
+                return self.__class__._shared_id_token
 
             response = await client.post(
                 self.TOKEN_URL,
@@ -76,8 +87,8 @@ class ERCOTAdapter(GridDataAdapter):
                 raise ValueError("ERCOT token response did not contain id_token")
 
             expires_in = int(payload.get("expires_in", 3600))
-            self._id_token = token
-            self._token_expires_at = now + timedelta(
+            self.__class__._shared_id_token = token
+            self.__class__._shared_token_expires_at = now + timedelta(
                 seconds=max(1, expires_in - self.TOKEN_REFRESH_SKEW_SECONDS)
             )
             return token
@@ -126,12 +137,30 @@ class ERCOTAdapter(GridDataAdapter):
                 return total_mw
         raise ValueError("ERCOT load response did not contain a positive total MW value")
 
-    async def _fetch_official_load(self) -> float:
+    @classmethod
+    def _latest_available_generation_mw(cls, payload: dict[str, Any]) -> float:
+        """Extract ERCOT's available generation capacity from NP3-763-CD."""
+        records = cls._records(payload)
+        if not records:
+            raise ValueError("ERCOT adequacy response contained no records")
+
+        for row in records:
+            normalized = {str(key).lower().replace("_", ""): value for key, value in row.items()}
+            value = normalized.get("availcapgen")
+            try:
+                available_mw = float(value)
+            except (TypeError, ValueError):
+                continue
+            if available_mw > 0:
+                return available_mw
+        raise ValueError("ERCOT adequacy response did not contain positive available generation MW")
+
+    async def _fetch_official_context(self) -> tuple[float, float | None]:
         if not self.official_api_configured:
             raise RuntimeError("ERCOT Public API credentials are not fully configured")
 
         today = datetime.now().date()
-        params = {
+        load_params = {
             "operatingDayFrom": (today - timedelta(days=1)).isoformat(),
             "operatingDayTo": today.isoformat(),
             "page": 1,
@@ -141,16 +170,37 @@ class ERCOTAdapter(GridDataAdapter):
         }
         async with httpx.AsyncClient(timeout=10.0) as client:
             token = await self._get_id_token(client)
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Ocp-Apim-Subscription-Key": self._subscription_key,
+            }
             response = await client.get(
                 self.LOAD_URL,
-                params=params,
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Ocp-Apim-Subscription-Key": self._subscription_key,
-                },
+                params=load_params,
+                headers=headers,
             )
             response.raise_for_status()
-            return self._latest_total_mw(response.json())
+            load_mw = self._latest_total_mw(response.json())
+
+            # The adequacy product is an hourly planning/operating input.  A
+            # failure here must not discard a valid official load observation.
+            try:
+                adequacy_response = await client.get(
+                    self.ADEQUACY_URL,
+                    params={
+                        "deliveryDateFrom": (today - timedelta(days=1)).isoformat(),
+                        "deliveryDateTo": today.isoformat(),
+                        "page": 1,
+                        "size": 100,
+                        "sort": "postedDatetime",
+                        "dir": "DESC",
+                    },
+                    headers=headers,
+                )
+                adequacy_response.raise_for_status()
+                return load_mw, self._latest_available_generation_mw(adequacy_response.json())
+            except Exception:
+                return load_mw, None
 
     def _estimated_load(self, region: str) -> GridLoadData:
         hour = datetime.now().hour
@@ -161,17 +211,27 @@ class ERCOTAdapter(GridDataAdapter):
             timestamp=datetime.now(),
             region=region,
             source="estimated_fallback",
+            capacity_source="configured_reference",
+            capacity_basis="configured regional reference",
         )
 
     async def fetch_current_load(self, region: str) -> GridLoadData:
         try:
-            load_mw = await self._fetch_official_load()
+            load_mw, available_capacity_mw = await self._fetch_official_context()
             return GridLoadData(
                 current_load_mw=load_mw,
-                capacity_mw=self.get_region_capacity(region),
+                capacity_mw=available_capacity_mw or self.get_region_capacity(region),
                 timestamp=datetime.now(),
                 region=region,
                 source="official_live",
+                capacity_source=(
+                    "official_adequacy" if available_capacity_mw else "configured_reference"
+                ),
+                capacity_basis=(
+                    "ERCOT available generation capacity (NP3-763-CD)"
+                    if available_capacity_mw
+                    else "configured regional reference"
+                ),
             )
         except Exception:
             return self._estimated_load(region)

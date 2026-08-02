@@ -184,6 +184,16 @@ export default function Home() {
                   ? '✓ OFFICIAL LIVE LOAD CONTEXT'
                   : '⚠ ESTIMATED LOAD CONTEXT'}
               </span>
+              <span className={clsx(
+                "text-[10px] px-2 py-0.5 rounded font-mono",
+                data.diagnostics.capacity_data_source === 'official_adequacy'
+                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                  : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+              )}>
+                {data.diagnostics.capacity_data_source === 'official_adequacy'
+                  ? '✓ OFFICIAL ERCOT CAPACITY CONTEXT'
+                  : '⚠ CONFIGURED CAPACITY REFERENCE'}
+              </span>
               {data && (
                 <button
                   type="button"

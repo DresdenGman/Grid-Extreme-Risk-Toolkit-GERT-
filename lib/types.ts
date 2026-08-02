@@ -22,6 +22,8 @@ export interface Diagnostics {
   capacity_used?: number;
   /** Source of the grid-load context. It is distinct from the model itself. */
   load_data_source?: 'official_live' | 'estimated_fallback';
+  capacity_data_source?: 'official_adequacy' | 'configured_reference';
+  capacity_basis?: string;
   real_load_mw?: number;
   real_capacity_mw?: number;
 }
@@ -140,6 +142,8 @@ export interface GridLoadResponse {
   utilization_percent: number;
   timestamp: string;
   data_source: 'official_live' | 'estimated_fallback';
+  capacity_source: 'official_adequacy' | 'configured_reference';
+  capacity_basis: string;
 }
 
 export interface HealthStatus {

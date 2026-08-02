@@ -35,8 +35,8 @@ class RiskService:
         self.model = model
         self.scorer = scorer or RiskScorer()
 
-    def predict(self, req: PredictRequest) -> PredictionOut:
-        capacity = get_region_capacity(req.region)
+    def predict(self, req: PredictRequest, capacity_mw: float | None = None) -> PredictionOut:
+        capacity = capacity_mw if capacity_mw is not None else get_region_capacity(req.region)
         quantiles = self._predict_quantiles(req.weather_features)
 
         risk = self.scorer.score(p99_load_mw=quantiles.q99, capacity_mw=capacity)
@@ -68,4 +68,3 @@ class RiskService:
             q95=float(fixed["q95"]),
             q99=float(fixed["q99"]),
         )
-

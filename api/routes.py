@@ -127,6 +127,8 @@ async def get_current_load(region: str, request: Request):
             "utilization_percent": (load_data.current_load_mw / load_data.capacity_mw) * 100,
             "timestamp": load_data.timestamp.isoformat() if load_data.timestamp else datetime.now().isoformat(),
             "data_source": load_data.source,
+            "capacity_source": load_data.capacity_source,
+            "capacity_basis": load_data.capacity_basis,
         }
     except Exception as e:
         logger.error(f"Load data fetch failed: {e}")
@@ -185,7 +187,8 @@ async def predict_risk(req: PredictRequest, request: Request, db: Session = Depe
             f"predict:{req.region}:"
             f"{round(req.weather_features.temperature, 1)}:"
             f"{round(req.weather_features.wind_speed, 1)}:"
-            f"{round(req.weather_features.solar_irradiance, 0)}"
+            f"{round(req.weather_features.solar_irradiance, 0)}:"
+            f"{round(real_load.capacity_mw, 0) if real_load else 'configured'}"
         )
         cached_result = predict_cache.get(cache_key)
         if cached_result:
@@ -198,7 +201,14 @@ async def predict_risk(req: PredictRequest, request: Request, db: Session = Depe
             )
             result: PredictionOut = cached_result
         else:
-            result = risk_service.predict(req)
+            result = risk_service.predict(
+                req,
+                capacity_mw=(
+                    real_load.capacity_mw
+                    if real_load and real_load.capacity_source == "official_adequacy"
+                    else None
+                ),
+            )
             predict_cache.set(cache_key, result, ttl_seconds=30)
         result.diagnostics["temperature"] = req.weather_features.temperature
         result.diagnostics["wind_speed"] = req.weather_features.wind_speed
@@ -209,8 +219,12 @@ async def predict_risk(req: PredictRequest, request: Request, db: Session = Depe
             result.diagnostics["real_load_mw"] = real_load.current_load_mw
             result.diagnostics["real_capacity_mw"] = real_load.capacity_mw
             result.diagnostics["load_data_source"] = real_load.source
+            result.diagnostics["capacity_data_source"] = real_load.capacity_source
+            result.diagnostics["capacity_basis"] = real_load.capacity_basis
         else:
             result.diagnostics["load_data_source"] = "estimated_fallback"
+            result.diagnostics["capacity_data_source"] = "configured_reference"
+            result.diagnostics["capacity_basis"] = "configured regional reference"
         
         # Save prediction to database
         try:
