@@ -87,10 +87,11 @@ export default function EventReplay() {
     <div className="max-w-6xl mx-auto space-y-6">
       
       {/* Header with KPI Ticker */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-6">
+      <div className="flex flex-col gap-4 border-b border-white/[0.09] pb-7 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-3">
-            <Snowflake className="h-6 w-6 text-indigo-400" />
+          <span className="technical-label text-[#c8ff3d]">Event replay / Historical decision trace</span>
+          <h1 className="mt-3 flex items-center gap-3 text-4xl font-medium tracking-[-0.04em] text-white sm:text-5xl">
+            <Snowflake className="h-8 w-8 text-[#74e7dd]" />
             {data.title}
           </h1>
           <p className="text-slate-500 text-sm mt-1">Replaying: {currentStep.timestamp_label}</p>

@@ -51,10 +51,11 @@ export default function BenchmarkPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Model Benchmark & Calibration</h1>
+      <div className="border-b border-white/[0.09] pb-7">
+        <span className="technical-label text-[#c8ff3d]">Evidence layer / Model governance</span>
+        <h1 className="mt-3 text-4xl font-medium tracking-[-0.045em] text-white sm:text-6xl">Trust is a measured<br />property.</h1>
         <p className="text-slate-300 text-sm mb-1">
-          GERT maintains near-nominal P99 coverage during extreme spikes, while mean models under-cover tail events.
+          Compare tail coverage, loss and reliability before any artifact earns production authority.
         </p>
         <p className="text-slate-500 text-sm">
           Validating GERT's probabilistic guarantees using historical backtests.

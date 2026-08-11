@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Activity, LayoutDashboard, CloudLightning, LineChart, History, BookOpen, Settings } from 'lucide-react';
+import { Activity, LayoutDashboard, CloudLightning, LineChart, History, BookOpen, ArrowUpRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -35,19 +35,19 @@ export default function Sidebar() {
   const isHealthy = health?.status === 'ok';
 
   return (
-    <aside className="w-64 bg-slate-950 border-r border-slate-800 flex-col hidden md:flex h-full">
-      {/* Brand */}
-      <div className="h-16 flex items-center px-6 border-b border-slate-800">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-3">
-            <div className="bg-indigo-600 p-1.5 rounded text-white shadow-[0_0_15px_rgba(79,70,229,0.5)]">
+    <aside className="hidden h-full w-[276px] shrink-0 flex-col border-r border-white/[0.08] bg-[#070c0c]/90 backdrop-blur-xl md:flex">
+      <div className="flex min-h-24 items-center border-b border-white/[0.08] px-6">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-3.5">
+            <div className="grid h-10 w-10 place-items-center rounded-full border border-[#c8ff3d]/25 bg-[#c8ff3d]/10 text-[#c8ff3d] shadow-[0_0_24px_rgba(200,255,61,0.08)]">
               <Activity className="h-5 w-5" />
             </div>
-            <span className="font-bold tracking-tight text-slate-100">
-              GERT <span className="text-slate-600 text-xs font-normal align-top">v0.2</span>
-            </span>
+            <div>
+              <span className="block text-sm font-semibold tracking-[0.24em] text-white">GERT</span>
+              <span className="technical-label text-[8px] text-slate-500">Grid extreme risk toolkit</span>
+            </div>
           </div>
-          <div className="text-[10px] font-mono text-slate-500">
+          <div className="technical-label pl-[54px] text-[8px] text-slate-600">
             {health
               ? `Model: ${health.backend} • Env: ${health.env} • AI: ${health.ai_enabled ? 'ON' : 'OFF'}`
               : 'Model: loading…'}
@@ -55,10 +55,9 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 py-6 px-3 space-y-1">
-        <div className="px-3 mb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">
-          Platform
+      <nav className="flex-1 space-y-1 px-3 py-7">
+        <div className="technical-label mb-3 px-3 text-slate-600">
+          Decision workflow
         </div>
         {navItems.map((item) => {
           const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
@@ -69,39 +68,37 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               className={clsx(
-                "group flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200",
+                "group flex items-center gap-3 rounded-xl border px-3 py-3 text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "bg-slate-900 text-indigo-400 border border-slate-800 shadow-sm"
-                  : "text-slate-400 hover:bg-slate-900/50 hover:text-slate-200"
+                  ? "border-[#c8ff3d]/15 bg-[#c8ff3d]/[0.07] text-white"
+                  : "border-transparent text-slate-500 hover:border-white/[0.06] hover:bg-white/[0.03] hover:text-slate-200"
               )}
             >
-              <Icon className={clsx("h-4 w-4", isActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300")} />
+              <Icon className={clsx("h-4 w-4", isActive ? "text-[#c8ff3d]" : "text-slate-600 group-hover:text-slate-300")} />
               {item.name}
-              {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />}
+              {isActive && <ArrowUpRight className="ml-auto h-3.5 w-3.5 text-[#c8ff3d]" />}
             </Link>
           );
         })}
       </nav>
 
-      {/* Footer / Status */}
-      <div className="p-4 border-t border-slate-800 bg-slate-950">
-        <div className="flex items-center gap-3 px-2 py-2 rounded-md bg-slate-900/50 border border-slate-800/50">
+      <div className="border-t border-white/[0.08] p-4">
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-4">
+          <div className="mb-3 flex items-center gap-3">
           <div className="relative">
-            <div className={`w-2 h-2 rounded-full ${isHealthy ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
-            <div className={`absolute top-0 left-0 w-2 h-2 rounded-full opacity-75 ${isHealthy ? 'bg-emerald-500 animate-ping' : 'bg-amber-400 animate-ping'}`}></div>
+            <div className={`h-2 w-2 rounded-full ${isHealthy ? 'signal-dot bg-[#c8ff3d]' : 'bg-amber-400'}`}></div>
           </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">System Status</span>
-            <span className={`text-xs font-mono ${isHealthy ? 'text-emerald-400' : 'text-amber-300'}`}>
+          <div className="flex flex-1 items-center justify-between">
+            <span className="technical-label text-slate-500">System</span>
+            <span className={`technical-label ${isHealthy ? 'text-[#c8ff3d]' : 'text-amber-300'}`}>
               {health ? (isHealthy ? 'ONLINE' : health.status.toUpperCase()) : 'CHECKING'}
             </span>
-            {health && (
-              <span className="text-[10px] font-mono text-slate-500 mt-0.5">
-                Backend: {health.backend} • Env: {health.env}
-              </span>
-            )}
           </div>
-          <Settings className="ml-auto h-4 w-4 text-slate-600 hover:text-slate-400 cursor-pointer" />
+          </div>
+          <div className="grid grid-cols-2 gap-2 border-t border-white/[0.07] pt-3 text-[10px]">
+            <span className="text-slate-600">MODEL</span><span className="truncate text-right font-mono text-slate-400">{health?.backend ?? '—'}</span>
+            <span className="text-slate-600">ENV</span><span className="truncate text-right font-mono text-slate-400">{health?.env ?? '—'}</span>
+          </div>
         </div>
       </div>
     </aside>
