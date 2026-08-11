@@ -11,13 +11,17 @@ from __future__ import annotations
 import asyncio
 import math
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
 
 from data.base import GridDataAdapter, GridLoadData, WeatherData
-from services.region import REGION_COORDS
+from services.region import (
+    ERCOT_SYSTEM_WEATHER_POINTS,
+    ERCOT_SYSTEM_WEATHER_WEIGHTS,
+    REGION_COORDS,
+)
 
 
 class ERCOTAdapter(GridDataAdapter):
@@ -155,6 +159,19 @@ class ERCOTAdapter(GridDataAdapter):
                 return available_mw
         raise ValueError("ERCOT adequacy response did not contain positive available generation MW")
 
+    @staticmethod
+    def _aggregate_system_weather(payload: Any, target_key: str) -> dict[str, float]:
+        if not isinstance(payload, list) or len(payload) != len(ERCOT_SYSTEM_WEATHER_POINTS):
+            raise ValueError("Open-Meteo did not return all ERCOT weather points")
+        values = {"temperature_2m": 0.0, "wind_speed_10m": 0.0, "shortwave_radiation": 0.0}
+        for (zone, _, _), location in zip(ERCOT_SYSTEM_WEATHER_POINTS, payload):
+            hourly = location["hourly"]
+            index = hourly["time"].index(target_key)
+            weight = ERCOT_SYSTEM_WEATHER_WEIGHTS[zone]
+            for name in values:
+                values[name] += float(hourly[name][index]) * weight
+        return values
+
     async def _fetch_official_context(self) -> tuple[float, float | None]:
         if not self.official_api_configured:
             raise RuntimeError("ERCOT Public API credentials are not fully configured")
@@ -243,10 +260,36 @@ class ERCOTAdapter(GridDataAdapter):
         return []
 
     async def fetch_weather(self, region: str) -> WeatherData:
-        """Retrieve current weather from Open-Meteo for the requested ERCOT region."""
+        """Retrieve target-hour weather from Open-Meteo for the ERCOT system."""
         coords = REGION_COORDS.get(region) or REGION_COORDS["ERCOT_NORTH"]
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
+                if region in {"ERCOT_SYSTEM", "ERCOT_NORTH"}:
+                    response = await client.get(
+                        "https://api.open-meteo.com/v1/forecast",
+                        params={
+                            "latitude": ",".join(str(item[1]) for item in ERCOT_SYSTEM_WEATHER_POINTS),
+                            "longitude": ",".join(str(item[2]) for item in ERCOT_SYSTEM_WEATHER_POINTS),
+                            "hourly": ["temperature_2m", "wind_speed_10m", "shortwave_radiation"],
+                            "forecast_hours": 3,
+                            "timezone": "UTC",
+                            "wind_speed_unit": "ms",
+                        },
+                    )
+                    response.raise_for_status()
+                    payload = response.json()
+                    target = (datetime.now(timezone.utc) + timedelta(hours=1)).replace(
+                        minute=0, second=0, microsecond=0
+                    )
+                    target_key = target.strftime("%Y-%m-%dT%H:00")
+                    values = self._aggregate_system_weather(payload, target_key)
+                    return WeatherData(
+                        temperature=values["temperature_2m"],
+                        wind_speed=values["wind_speed_10m"],
+                        solar_irradiance=values["shortwave_radiation"],
+                        timestamp=target,
+                        source="external_forecast",
+                    )
                 response = await client.get(
                     "https://api.open-meteo.com/v1/forecast",
                     params={
@@ -255,7 +298,7 @@ class ERCOTAdapter(GridDataAdapter):
                         "current": [
                             "temperature_2m",
                             "wind_speed_10m",
-                            "direct_normal_irradiance",
+                            "shortwave_radiation",
                         ],
                         "wind_speed_unit": "ms",
                     },
@@ -265,9 +308,9 @@ class ERCOTAdapter(GridDataAdapter):
                 return WeatherData(
                     temperature=current.get("temperature_2m", 25.0),
                     wind_speed=current.get("wind_speed_10m", 5.0),
-                    solar_irradiance=current.get("direct_normal_irradiance", 500.0),
+                    solar_irradiance=current.get("shortwave_radiation", 500.0),
                     timestamp=datetime.now(),
-                    source="official_live",
+                    source="external_forecast",
                 )
         except Exception:
             return WeatherData(

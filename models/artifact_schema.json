@@ -14,12 +14,14 @@
     "feature_names",
     "feature_units",
     "quantiles",
-    "supported_regions"
+    "supported_regions",
+    "training_data",
+    "runtime"
   ],
   "properties": {
     "artifact_schema_version": {
       "type": "string",
-      "enum": ["1.0"],
+      "enum": ["1.0", "1.1", "1.2"],
       "description": "Version of this schema definition."
     },
     "model_name": {
@@ -52,7 +54,7 @@
       "required": ["forecast_origin", "target_horizon_hours", "target_variable"],
       "properties": {
         "forecast_origin": {"type": "string"},
-        "target_horizon_hours": {"type": "integer", "minimum": 0},
+        "target_horizon_hours": {"type": "integer", "minimum": 1},
         "target_variable": {"type": "string"}
       }
     },

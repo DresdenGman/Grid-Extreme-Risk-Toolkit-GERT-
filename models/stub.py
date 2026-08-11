@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import random
+from datetime import datetime
 from typing import Dict
 
 from api.schemas import WeatherFeatures
@@ -22,7 +23,9 @@ class QuantileModelStub(ModelInterface):
     def get_version(self) -> str:
         return "stub-v1"
 
-    def predict(self, features: WeatherFeatures) -> Dict[str, float]:
+    def predict(
+        self, features: WeatherFeatures, timestamp: datetime | None = None
+    ) -> Dict[str, float]:
         derived = self._feature_builder.build(features)
 
         # Keep some variability, but stable for a given temperature + seed.
@@ -35,4 +38,3 @@ class QuantileModelStub(ModelInterface):
         q99 = q50 + derived.volatility_base_mw * 2.33
 
         return enforce_quantile_monotonicity({"q50": q50, "q90": q90, "q95": q95, "q99": q99})
-

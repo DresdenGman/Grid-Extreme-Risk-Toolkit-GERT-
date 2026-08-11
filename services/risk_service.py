@@ -36,14 +36,18 @@ class RiskService:
         self.scorer = scorer or RiskScorer()
 
     def predict(self, req: PredictRequest, capacity_mw: float | None = None) -> PredictionOut:
+        if not self.model.supports_region(req.region):
+            raise ValueError(
+                f"Model {self.model.get_version()} does not support region {req.region}"
+            )
         capacity = capacity_mw if capacity_mw is not None else get_region_capacity(req.region)
-        quantiles = self._predict_quantiles(req.weather_features)
+        quantiles = self._predict_quantiles(req.weather_features, req.date)
 
         risk = self.scorer.score(p99_load_mw=quantiles.q99, capacity_mw=capacity)
         financials = calculate_financials(p99_load_mw=quantiles.q99, capacity_mw=capacity)
 
         return PredictionOut(
-            timestamp=datetime.now(),
+            timestamp=req.date,
             q50_load_mw=quantiles.q50,
             q90_load_mw=quantiles.q90,
             q95_load_mw=quantiles.q95,
@@ -56,11 +60,14 @@ class RiskService:
                 "model_version": self.model.get_version(),
                 "backend_type": os.getenv("MODEL_BACKEND", "stub"),
                 "capacity_used": capacity,
+                "forecast_horizon_hours": 1,
             },
         )
 
-    def _predict_quantiles(self, features: WeatherFeatures) -> QuantilePrediction:
-        raw: Dict[str, float] = self.model.predict(features)
+    def _predict_quantiles(
+        self, features: WeatherFeatures, timestamp: datetime
+    ) -> QuantilePrediction:
+        raw: Dict[str, float] = self.model.predict(features, timestamp)
         fixed = enforce_quantile_monotonicity(raw)
         return QuantilePrediction(
             q50=float(fixed["q50"]),

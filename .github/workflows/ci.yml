@@ -21,9 +21,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install -r requirements-training.txt
           pip install pytest
       - name: Lint (compile)
-        run: python -m compileall api models services risk features db
+        run: python -m compileall api models services risk features db training
       - name: Tests
         run: python -m pytest -vv --tb=line
 
@@ -84,7 +85,7 @@ jobs:
           curl -i --max-time 10 \
             -X POST http://localhost:8001/predict \
             -H 'Content-Type: application/json' \
-            -d '{"region":"ERCOT_NORTH","date":"2026-01-01T00:00:00","weather_features":{"temperature":30,"wind_speed":5,"solar_irradiance":600}}'
+            -d '{"region":"ERCOT_SYSTEM","date":"2026-01-01T01:00:00Z","weather_features":{"temperature":30,"wind_speed":5,"solar_irradiance":600}}'
       - name: Verify CORS
         run: |
           echo "=== Trusted origin ==="

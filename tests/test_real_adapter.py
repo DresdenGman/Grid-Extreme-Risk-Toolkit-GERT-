@@ -3,6 +3,7 @@ import json
 import os
 import pickle
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -80,6 +81,11 @@ class _Estimator:
         return [X[0][0] * self.multiplier]
 
 
+class _SumEstimator:
+    def predict(self, X):
+        return [sum(X[0])]
+
+
 @pytest.fixture
 def object_bundle_dir():
     """Temp dir with an object-bundle artifact."""
@@ -141,9 +147,67 @@ class TestRealModelAdapter:
         # q50 should be 25*100 = 2500 based on temp being first
         assert r["q50"] == 2500.0
 
+    def test_schema_1_1_uses_ercot_local_calendar_features(self, tmp_path):
+        metadata = dict(VALID_METADATA)
+        metadata["artifact_schema_version"] = "1.1"
+        metadata["feature_names"] = [
+            "temperature", "wind_speed", "solar_irradiance",
+            "hour", "day_of_week", "month", "is_weekend",
+        ]
+        metadata["feature_units"] = {
+            "temperature": "degC", "wind_speed": "m/s", "solar_irradiance": "W/m2",
+            "hour": "local_hour", "day_of_week": "integer_0_monday",
+            "month": "integer_1_january", "is_weekend": "binary",
+        }
+        (tmp_path / "metadata.json").write_text(json.dumps(metadata))
+        (tmp_path / "metrics.json").write_text(json.dumps(VALID_METRICS))
+        bundle = {key: _SumEstimator() for key in ("q50", "q90", "q95", "q99")}
+        (tmp_path / "model.joblib").write_bytes(pickle.dumps(bundle))
+        adapter = RealModelAdapter(artifact_dir=str(tmp_path))
+        weather = __import__("api.schemas", fromlist=["WeatherFeatures"]).WeatherFeatures(
+            temperature=25, wind_speed=10, solar_irradiance=500
+        )
+
+        result = adapter.predict(weather, datetime(2025, 1, 1, 6, tzinfo=timezone.utc))
+
+        # 2025-01-01 06:00 UTC = local midnight Wednesday: hour=0, dow=2, month=1.
+        assert result["q50"] == 538.0
+
+    def test_schema_1_2_adds_ercot_local_year(self, tmp_path):
+        metadata = dict(VALID_METADATA)
+        metadata["artifact_schema_version"] = "1.2"
+        metadata["feature_names"] = [
+            "temperature", "wind_speed", "solar_irradiance",
+            "hour", "day_of_week", "month", "is_weekend", "year",
+        ]
+        metadata["feature_units"] = {
+            "temperature": "degC", "wind_speed": "m/s", "solar_irradiance": "W/m2",
+            "hour": "local_hour", "day_of_week": "integer_0_monday",
+            "month": "integer_1_january", "is_weekend": "binary",
+            "year": "ercot_local_year",
+        }
+        (tmp_path / "metadata.json").write_text(json.dumps(metadata))
+        (tmp_path / "metrics.json").write_text(json.dumps(VALID_METRICS))
+        bundle = {key: _SumEstimator() for key in ("q50", "q90", "q95", "q99")}
+        (tmp_path / "model.joblib").write_bytes(pickle.dumps(bundle))
+        adapter = RealModelAdapter(artifact_dir=str(tmp_path))
+        weather = __import__("api.schemas", fromlist=["WeatherFeatures"]).WeatherFeatures(
+            temperature=25, wind_speed=10, solar_irradiance=500
+        )
+
+        result = adapter.predict(weather, datetime(2025, 1, 1, 6, tzinfo=timezone.utc))
+
+        assert result["q50"] == 2563.0
+
     def test_get_version_returns_artifact_version(self, object_bundle_dir):
         a = RealModelAdapter(artifact_dir=object_bundle_dir)
         assert a.get_version() == "0.1.0-test"
+
+    def test_supported_region_comes_from_artifact(self, object_bundle_dir):
+        adapter = RealModelAdapter(artifact_dir=object_bundle_dir)
+
+        assert adapter.supports_region("ERCOT_NORTH") is True
+        assert adapter.supports_region("SPP") is False
 
     def test_missing_artifact_dir_var(self, monkeypatch):
         monkeypatch.delenv("MODEL_ARTIFACT_DIR", raising=False)

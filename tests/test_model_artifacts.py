@@ -94,6 +94,20 @@ class TestValidateMetadata:
         assert isinstance(meta, ModelMetadata)
         assert meta.model_name == "gert_weather_quantile"
 
+    def test_schema_1_1_calendar_features(self, valid_metadata_dict):
+        d = dict(valid_metadata_dict)
+        d["artifact_schema_version"] = "1.1"
+        d["feature_names"] = [
+            "temperature", "wind_speed", "solar_irradiance",
+            "hour", "day_of_week", "month", "is_weekend",
+        ]
+        d["feature_units"] = {
+            "temperature": "degC", "wind_speed": "m/s", "solar_irradiance": "W/m2",
+            "hour": "local_hour", "day_of_week": "integer_0_monday",
+            "month": "integer_1_january", "is_weekend": "binary",
+        }
+        assert validate_metadata(d).artifact_schema_version == "1.1"
+
     def test_unsupported_schema_version(self, valid_metadata_dict):
         d = dict(valid_metadata_dict)
         d["artifact_schema_version"] = "0.9"

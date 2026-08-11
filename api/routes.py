@@ -185,6 +185,7 @@ async def predict_risk(req: PredictRequest, request: Request, db: Session = Depe
         # Lightweight response cache (per region + features snapshot)
         cache_key = (
             f"predict:{req.region}:"
+            f"{req.date.strftime('%Y-%m-%dT%H')}:"
             f"{round(req.weather_features.temperature, 1)}:"
             f"{round(req.weather_features.wind_speed, 1)}:"
             f"{round(req.weather_features.solar_irradiance, 0)}:"
@@ -278,6 +279,9 @@ async def predict_risk(req: PredictRequest, request: Request, db: Session = Depe
         return result
     except HTTPException:
         raise
+    except ValueError as e:
+        logger.warning(f"Prediction validation error: {e}")
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Prediction Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -288,6 +292,8 @@ async def predict_risk(req: PredictRequest, request: Request, db: Session = Depe
 async def run_scenario(req: ScenarioRequest, request: Request):
     try:
         return scenario_service.run(req)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Scenario Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -301,7 +307,10 @@ async def analyze_risk(req: PredictRequest, request: Request):
     1) Reuse RiskService.predict to generate a truth snapshot.
     2) Send snapshot to Gemini (or return mock if not configured).
     """
-    pred = risk_service.predict(req)
+    try:
+        pred = risk_service.predict(req)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     snapshot = {
         "region": req.region,
         "capacity_mw": pred.diagnostics.get("capacity_used"),
@@ -438,68 +447,52 @@ async def get_alert_history(
 
 
 @router.get("/backtest", response_model=BacktestResponse)
-async def run_backtest():
-    hours = 72
-    time_series = []
-    baseline_hits = 0
-    gert_hits = 0
-    baseline_loss = 0.0
-    gert_loss = 0.0
-    random.seed(101)
+@limiter.limit("20/minute")
+async def run_backtest(request: Request):
+    from models.real_adapter import RealModelAdapter
 
-    for h in range(hours):
-        base_signal = 40000 + 5000 * math.sin(h / 24 * 2 * math.pi)
-        is_spike = h == 20 or h == 50
-        spike_val = 15000 if is_spike else 0
-        noise = random.gauss(0, 1000)
-        actual = base_signal + spike_val + noise
-
-        baseline_pred = base_signal
-        baseline_std = 2000
-        baseline_p99 = baseline_pred + (2.33 * baseline_std)
-
-        gert_volatility = 10000 if is_spike else 1500
-        gert_p99 = base_signal + (2.33 * gert_volatility)
-
-        if actual > baseline_p99:
-            baseline_loss += (actual - baseline_p99) * 0.99
-        else:
-            baseline_loss += (baseline_p99 - actual) * 0.01
-            baseline_hits += 1
-
-        if actual > gert_p99:
-            gert_loss += (actual - gert_p99) * 0.99
-        else:
-            gert_loss += (gert_p99 - actual) * 0.01
-            gert_hits += 1
-
-        time_series.append(TimePoint(hour=h, actual_load=actual, baseline_p99=baseline_p99, gert_p99=gert_p99))
-
-    calibration_curve = [
-        CalibrationBin(prob_bucket="0-50%", observed_freq=0.48, ideal_freq=0.50),
-        CalibrationBin(prob_bucket="50-90%", observed_freq=0.89, ideal_freq=0.90),
-        CalibrationBin(prob_bucket="90-95%", observed_freq=0.94, ideal_freq=0.95),
-        CalibrationBin(prob_bucket="95-99%", observed_freq=0.985, ideal_freq=0.99),
-        CalibrationBin(prob_bucket=">99%", observed_freq=0.996, ideal_freq=0.999),
-    ]
-
+    if not isinstance(model_service, RealModelAdapter):
+        raise HTTPException(status_code=503, detail="Validated backtest unavailable while MODEL_BACKEND is not real")
+    sample_path = model_service.get_artifact_file("backtest_sample.json")
+    report_path = model_service.get_artifact_file("evaluation_report.json")
+    if not sample_path.is_file() or not report_path.is_file():
+        raise HTTPException(status_code=503, detail="Real model artifact does not include validated backtest evidence")
+    sample = json.loads(sample_path.read_text(encoding="utf-8"))
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    model = report["model"]
+    baseline = report["baseline"]
     return BacktestResponse(
-        time_series=time_series,
+        time_series=[
+            TimePoint(
+                hour=int(row["hour"]),
+                actual_load=float(row["actual_load"]),
+                baseline_p99=float(row["baseline_p99"]),
+                gert_p99=float(row["gert_p99"]),
+            )
+            for row in sample
+        ],
         metrics=[
             ModelMetrics(
-                model_name="Baseline (Mean/OLS)",
-                coverage_p99=round(baseline_hits / hours * 100, 1),
-                pinball_loss=round(baseline_loss / hours, 1),
-                description="Standard regression. Assumes constant risk.",
+                model_name="Month-hour climatology",
+                coverage_p99=round(float(baseline["empirical_coverage"]["q99"]) * 100, 2),
+                pinball_loss=round(float(baseline["pinball_loss"]["q99"]), 2),
+                description="2025 holdout baseline derived from 2019-2024 only.",
             ),
             ModelMetrics(
-                model_name="GERT (Quantile)",
-                coverage_p99=round(gert_hits / hours * 100, 1),
-                pinball_loss=round(gert_loss / hours, 1),
-                description="Adapts to volatility. High coverage.",
+                model_name=model_service.get_version(),
+                coverage_p99=round(float(model["empirical_coverage"]["q99"]) * 100, 2),
+                pinball_loss=round(float(model["pinball_loss"]["q99"]), 2),
+                description="Observed 2025 holdout performance; not simulated.",
             ),
         ],
-        calibration_curve=calibration_curve,
+        calibration_curve=[
+            CalibrationBin(
+                prob_bucket=key.upper(),
+                observed_freq=float(model["empirical_coverage"][key]),
+                ideal_freq=quantile,
+            )
+            for key, quantile in (("q50", 0.5), ("q90", 0.9), ("q95", 0.95), ("q99", 0.99))
+        ],
     )
 
 
