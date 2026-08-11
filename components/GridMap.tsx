@@ -63,10 +63,10 @@ export default function GridMap({ selectedRegion, onSelect, className }: GridMap
             >
               <path
                 d={PATHS[key as keyof typeof PATHS]}
-                fill={isSelected ? "rgba(255, 77, 0, 0.18)" : "transparent"}
-                stroke={isSelected ? "#ff4d00" : "#6d6b66"}
+                fill={isSelected ? "rgba(23, 90, 115, 0.18)" : "transparent"}
+                stroke={isSelected ? "#175a73" : "#6d6b66"}
                 strokeWidth={isSelected ? 2 : 1}
-                className="transition-all duration-300 group-hover:stroke-[#ff4d00]"
+                className="transition-all duration-300 group-hover:stroke-[#175a73]"
                 filter={isSelected ? "url(#glow)" : ""}
               />
               
@@ -76,7 +76,7 @@ export default function GridMap({ selectedRegion, onSelect, className }: GridMap
                    cx={LABELS[key as keyof typeof LABELS].x} 
                    cy={LABELS[key as keyof typeof LABELS].y - 20} 
                    r="3" 
-                   fill="#ff4d00"
+                   fill="#175a73"
                    className="animate-pulse"
                  />
               )}

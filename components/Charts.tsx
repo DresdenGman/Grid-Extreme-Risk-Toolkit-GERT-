@@ -7,10 +7,10 @@ interface QuantileChartProps {
 }
 
 const QUANTILES = [
-  { key: 'q50_load_mw', label: 'P50', note: 'Expected', color: '#141414' },
-  { key: 'q90_load_mw', label: 'P90', note: 'Stress', color: '#ff4d00' },
-  { key: 'q95_load_mw', label: 'P95', note: 'Severe', color: '#ffd166' },
-  { key: 'q99_load_mw', label: 'P99', note: 'Tail', color: '#ff6b57' },
+  { key: 'q50_load_mw', label: 'P50', note: 'Expected', color: '#175a73' },
+  { key: 'q90_load_mw', label: 'P90', note: 'Stress', color: '#4b7c8d' },
+  { key: 'q95_load_mw', label: 'P95', note: 'Severe', color: '#c47c00' },
+  { key: 'q99_load_mw', label: 'P99', note: 'Tail', color: '#b42318' },
 ] as const;
 
 export const QuantileChart = ({ prediction }: QuantileChartProps) => {
@@ -33,13 +33,13 @@ export const QuantileChart = ({ prediction }: QuantileChartProps) => {
         </div>
         <div className="text-right">
           <span className="technical-label text-[#87847e]">Available capacity</span>
-          <span className="mt-1 block font-mono text-sm text-[#ff4d00]">{(capacity / 1000).toFixed(1)} GW</span>
+          <span className="mt-1 block font-mono text-sm font-semibold text-[#2f6b4f]">{(capacity / 1000).toFixed(1)} GW</span>
         </div>
       </div>
 
       <div className="relative space-y-4">
-        <div className="absolute bottom-0 top-0 w-px bg-[#ff4d00]/70" style={{ left: `${capacityPosition}%` }}>
-          <div className="absolute -top-1 h-2 w-2 -translate-x-1/2 bg-[#ff4d00]" />
+        <div className="absolute bottom-0 top-0 w-px bg-[#2f6b4f]" style={{ left: `${capacityPosition}%` }}>
+          <div className="absolute -top-1 h-2 w-2 -translate-x-1/2 bg-[#2f6b4f]" />
         </div>
         {QUANTILES.map(({ key, label, note, color }, index) => {
           const value = prediction[key];
@@ -61,7 +61,7 @@ export const QuantileChart = ({ prediction }: QuantileChartProps) => {
       </div>
 
       <div className="flex items-start gap-3 border-t border-black/[0.08] pt-4">
-        <div className="mt-1 h-2 w-2 rounded-full bg-[#ff4d00]" />
+        <div className="mt-1 h-2 w-2 rounded-full bg-[#2f6b4f]" />
         <div>
           <p className="text-xs text-[#4f4e4a]">Capacity marker reveals where each confidence band meets the system boundary.</p>
           <p className="mt-1 text-[10px] text-[#87847e]">One-hour probability distribution. No synthetic multi-hour curve.</p>
