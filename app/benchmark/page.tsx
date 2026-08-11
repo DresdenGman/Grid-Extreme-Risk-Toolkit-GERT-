@@ -47,12 +47,12 @@ export default function BenchmarkPage() {
       </div>
     );
   }
-  if (!data) return <div className="p-8 text-red-500">Failed to load benchmark data.</div>;
+  if (!data) return <div className="p-8 text-[#b42318]">Failed to load benchmark data.</div>;
 
   return (
     <div className="space-y-8">
       <div className="border-b border-white/[0.09] pb-7">
-        <span className="technical-label text-[#c8ff3d]">Evidence layer / Model governance</span>
+        <span className="technical-label text-[#175a73]">Evidence layer / Model governance</span>
         <h1 className="display-serif mt-3 text-4xl tracking-[-0.045em] text-[#141414] sm:text-6xl">Trust is a measured<br />property.</h1>
         <p className="text-[#454545] text-sm mb-1">
           Compare tail coverage, loss and reliability before any artifact earns production authority.
@@ -78,7 +78,7 @@ export default function BenchmarkPage() {
                 <div className="text-xs text-[#6d6b66] flex items-center gap-1">
                   <ShieldCheck className="h-3 w-3" /> P99 Coverage
                 </div>
-                <div className={`text-2xl font-bold ${model.coverage_p99 >= 99 ? 'text-emerald-400' : 'text-red-400'}`}>
+                <div className={`text-2xl font-bold ${model.coverage_p99 >= 99 ? 'text-[#2f6b4f]' : 'text-[#b42318]'}`}>
                   {model.coverage_p99}%
                 </div>
                 <div className="text-[10px] text-[#87847e]">Target: ≥99%</div>
@@ -126,7 +126,7 @@ export default function BenchmarkPage() {
         <Card>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Target className="h-5 w-5 text-emerald-400"/>
+                  <Target className="h-5 w-5 text-[#2f6b4f]"/>
                   Reliability Diagram (Calibration)
               </h3>
               <div className="flex items-center gap-2 text-xs text-[#4f4e4a]">

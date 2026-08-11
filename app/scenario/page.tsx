@@ -87,27 +87,27 @@ export default function ScenarioLab() {
   return (
     <div className="mx-auto max-w-6xl space-y-7 pb-12">
       <header className="border-b border-white/[0.09] pb-7">
-        <span className="technical-label text-[#c8ff3d]">Scenario lab / Controlled intervention</span>
+        <span className="technical-label text-[#9a6200]">Scenario lab / Controlled intervention</span>
         <h1 className="display-serif mt-3 text-4xl tracking-[-0.045em] text-[#141414] sm:text-6xl">Stress the system<br />before nature does.</h1>
         <p className="mt-4 max-w-2xl text-sm leading-6 text-[#4f4e4a]">Perturb physical drivers, preserve the baseline and expose the resulting tail-risk delta.</p>
       </header>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <button onClick={() => applyPreset('POLAR_VORTEX')} className="hairline-panel rounded-2xl p-5 text-left transition hover:border-[#74e7dd]/40">
-          <div className="flex items-center gap-2 mb-2 text-[#ff4d00] group-hover:text-[#ff4d00]">
+        <button onClick={() => applyPreset('POLAR_VORTEX')} className="hairline-panel scenario-cold rounded-2xl p-5 text-left transition hover:-translate-y-0.5">
+          <div className="mb-2 flex items-center gap-2 text-[#175a73]">
             <CloudSnow className="h-5 w-5" />
             <span className="font-bold">Polar Vortex</span>
           </div>
           <p className="text-xs text-[#6d6b66]">Extreme cold (-15°C) with high heating demand.</p>
         </button>
-        <button onClick={() => applyPreset('HEAT_WAVE')} className="hairline-panel rounded-2xl p-5 text-left transition hover:border-orange-400/40">
+        <button onClick={() => applyPreset('HEAT_WAVE')} className="hairline-panel scenario-heat rounded-2xl p-5 text-left transition hover:-translate-y-0.5">
           <div className="flex items-center gap-2 mb-2 text-orange-400 group-hover:text-orange-300">
             <Sun className="h-5 w-5" />
             <span className="font-bold">Heat Wave</span>
           </div>
           <p className="text-xs text-[#6d6b66]">Extreme heat (+10°C) triggering A/C load.</p>
         </button>
-        <button onClick={() => applyPreset('DUNKELFLAUTE')} className="hairline-panel rounded-2xl p-5 text-left transition hover:border-[#c8ff3d]/40">
+        <button onClick={() => applyPreset('DUNKELFLAUTE')} className="hairline-panel scenario-renewables rounded-2xl p-5 text-left transition hover:-translate-y-0.5">
           <div className="flex items-center gap-2 mb-2 text-[#4f4e4a] group-hover:text-[#454545]">
             <CloudRain className="h-5 w-5" />
             <span className="font-bold">Dunkelflaute</span>
@@ -234,8 +234,8 @@ export default function ScenarioLab() {
               <h4 className="text-xs font-bold uppercase text-[#6d6b66] mb-2">Reserve Requirement</h4>
               <div className="text-2xl font-mono text-[#141414]">
                 {result.reserve_shortfall_mw > 0 
-                  ? <span className="text-red-400">-{result.reserve_shortfall_mw} MW</span> 
-                  : <span className="text-emerald-400">Sufficient</span>}
+                  ? <span className="text-[#b42318]">-{result.reserve_shortfall_mw} MW</span>
+                  : <span className="text-[#2f6b4f]">Sufficient</span>}
               </div>
               <p className="text-xs text-[#6d6b66] mt-1">Additional generation needed to meet P99 load.</p>
             </Card>

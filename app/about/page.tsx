@@ -18,7 +18,7 @@ export default function About() {
         <p className="max-w-lg text-base leading-7 text-[#4f4e4a]">GERT is built around the operational question conventional load dashboards obscure: how close is an unlikely—but plausible—demand tail to the system boundary?</p>
       </header>
 
-      <section className="grid overflow-hidden border border-[#141414] bg-[#141414] shadow-[7px_7px_0_#ff4d00] md:grid-cols-4">
+      <section className="architecture-grid grid overflow-hidden border border-[#141414] bg-[#141414] shadow-[7px_7px_0_#ff4d00] md:grid-cols-4">
         {layers.map(({ n, icon: Icon, title, text }, index) => (
           <div key={title} className="relative bg-[#deddd9] p-6 sm:p-7">
             <div className="flex items-center justify-between"><span className="technical-label text-[#87847e]">{n}</span><Icon className="h-4 w-4 text-[#ff4d00]" /></div>

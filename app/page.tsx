@@ -133,7 +133,7 @@ export default function Home() {
       </header>
 
       <section className="reveal reveal-delay-1 grid gap-5 xl:grid-cols-12">
-        <div className="relative min-h-[430px] overflow-hidden border border-[#141414] bg-[#e4e3e0] p-6 shadow-[7px_7px_0_#141414] sm:p-8 xl:col-span-8">
+        <div className="relative min-h-[430px] overflow-hidden border border-[#141414] bg-[#f1efe9] p-6 shadow-[7px_7px_0_#ff4d00] sm:p-8 xl:col-span-8">
           <div className={clsx('absolute inset-x-0 top-0 h-1', danger ? 'bg-[#ff6b57]' : 'bg-[#ff4d00]')} />
           <div className="relative flex h-full flex-col justify-between gap-10">
             <div className="flex flex-wrap items-start justify-between gap-4">
@@ -199,12 +199,12 @@ export default function Home() {
           </div>
         </div>
 
-        <Card className="flex min-h-[430px] flex-col justify-between overflow-hidden p-0 xl:col-span-4">
+        <Card className="panel-boundary flex min-h-[430px] flex-col justify-between overflow-hidden p-0 xl:col-span-4">
           <div className="border-b border-black/[0.08] p-6">
             <span className="technical-label text-[#6d6b66]">02 / System boundary</span>
             <div className="mt-4 flex items-end justify-between">
               <div><p className="text-sm text-[#6d6b66]">P99 capacity margin</p><p className="mt-1 font-mono text-4xl tracking-tight text-[#141414]">{marginMw === null ? '—' : `${(marginMw / 1000).toFixed(2)}`} <span className="text-sm text-[#87847e]">GW</span></p></div>
-              <Gauge className={clsx('h-10 w-10', marginMw !== null && marginMw < 0 ? 'text-[#ff6b57]' : 'text-[#ff4d00]')} />
+              <Gauge className={clsx('h-10 w-10', marginMw !== null && marginMw < 0 ? 'text-[#b42318]' : 'text-[#2f6b4f]')} />
             </div>
           </div>
           <div className="grid flex-1 grid-cols-2">
@@ -214,8 +214,8 @@ export default function Home() {
             <MetricCell label="Wind signal" value={`${inputs.wind_speed.toFixed(1)} m/s`} icon={<Wind />} />
           </div>
           <div className="border-t border-black/[0.08] px-6 py-4">
-            <div className={clsx('flex items-center gap-2 technical-label', error ? 'text-[#ff8878]' : 'text-[#6d6b66]')}>
-              <span className={clsx('h-1.5 w-1.5 rounded-full', error ? 'bg-[#ff6b57]' : 'signal-dot bg-[#ff4d00]')} />
+            <div className={clsx('flex items-center gap-2 technical-label', error ? 'text-[#b42318]' : 'text-[#4f4d49]')}>
+              <span className={clsx('h-1.5 w-1.5 rounded-full', error ? 'bg-[#b42318]' : 'signal-dot bg-[#9a6200]')} />
               {error ? (data ? `STALE DATA — ${error}` : `DATA UNAVAILABLE — ${error}`) : sourceLabel(provenance)}
             </div>
           </div>
@@ -231,25 +231,25 @@ export default function Home() {
       )}
 
       <section className="reveal reveal-delay-2 grid gap-5 xl:grid-cols-12">
-        <Card className="p-6 sm:p-7 xl:col-span-8">
+        <Card className="panel-data p-6 sm:p-7 xl:col-span-8">
           <div className="mb-8 flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
             <div><span className="technical-label text-[#6d6b66]">03 / Uncertainty geometry</span><h2 className="display-serif mt-2 text-2xl tracking-tight text-[#141414]">One forecast. Four confidence boundaries.</h2></div>
-            <div className="flex items-center gap-2 rounded-full border border-black/[0.08] px-3 py-1.5"><CircleDotDashed className="h-3.5 w-3.5 text-[#141414]" /><span className="technical-label text-[#6d6b66]">Quantile engine</span></div>
+            <div className="flex items-center gap-2 rounded-full border border-[#175a73] px-3 py-1.5 text-[#175a73]"><CircleDotDashed className="h-3.5 w-3.5" /><span className="technical-label">Quantile engine</span></div>
           </div>
           <div className="min-h-[330px]">{data ? <QuantileChart prediction={data} /> : <EmptyForecast loading={loading} />}</div>
         </Card>
 
-        <Card className="overflow-hidden p-0 xl:col-span-4">
+        <Card className="panel-system overflow-hidden p-0 xl:col-span-4">
           <div className="flex items-center justify-between border-b border-black/[0.08] px-6 py-5">
             <div><span className="technical-label text-[#6d6b66]">04 / Grid context</span><h2 className="display-serif mt-1 text-lg text-[#141414]">ERCOT interconnection</h2></div>
-            <span className="technical-label rounded-full border border-[#ff4d00]/20 bg-[#ff4d00]/5 px-2.5 py-1 text-[#ff4d00]">System</span>
+            <span className="technical-label rounded-full border border-[#2f6b4f] bg-[#2f6b4f]/10 px-2.5 py-1 text-[#2f6b4f]">System</span>
           </div>
           <GridMap selectedRegion={REGION} onSelect={() => undefined} className="min-h-[300px] border-0 bg-transparent" />
           <div className="border-t border-black/[0.08] px-6 py-4 text-xs leading-5 text-[#6d6b66]">Spatial context only. The active forecast is system-wide, not a fabricated weather-zone estimate.</div>
         </Card>
       </section>
 
-      <section className="reveal reveal-delay-3 grid overflow-hidden border border-[#141414] bg-[#e4e3e0] shadow-[7px_7px_0_#141414] lg:grid-cols-[0.7fr_1.3fr]">
+      <section className="panel-scenario reveal reveal-delay-3 grid overflow-hidden border border-[#141414] lg:grid-cols-[0.7fr_1.3fr]">
         <div className="border-b border-black/[0.08] p-6 sm:p-8 lg:border-b-0 lg:border-r">
           <span className="technical-label text-[#6d6b66]">05 / Controlled intervention</span>
           <h2 className="display-serif mt-3 text-3xl leading-tight tracking-tight text-[#141414]">Stress the weather.<br />Keep the evidence.</h2>
@@ -293,5 +293,5 @@ function ScenarioControl({ icon, label, value, live, min, max, step, input, onCh
 }
 
 function EvidenceCell({ icon, title, value, verified }: { icon: React.ReactNode; title: string; value: string; verified: boolean }) {
-  return <div className="bg-[#deddd9] p-5"><div className="flex items-center justify-between"><span className="text-[#87847e] [&_svg]:h-4 [&_svg]:w-4">{icon}</span>{verified ? <Check className="h-3.5 w-3.5 text-[#ff4d00]" /> : <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />}</div><p className="technical-label mt-5 text-[#87847e]">{title}</p><p className="mt-1 text-xs text-[#454545]">{value}</p></div>;
+  return <div className={clsx('p-5', verified ? 'evidence-verified' : 'evidence-fallback')}><div className="flex items-center justify-between"><span className="text-[#4f4d49] [&_svg]:h-4 [&_svg]:w-4">{icon}</span>{verified ? <Check className="h-3.5 w-3.5 text-[#2f6b4f]" /> : <AlertTriangle className="h-3.5 w-3.5 text-[#9a6200]" />}</div><p className="technical-label mt-5 text-[#4f4d49]">{title}</p><p className="mt-1 text-xs text-[#141414]">{value}</p></div>;
 }

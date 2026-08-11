@@ -89,9 +89,9 @@ export default function EventReplay() {
       {/* Header with KPI Ticker */}
       <div className="flex flex-col gap-4 border-b border-white/[0.09] pb-7 md:flex-row md:items-end md:justify-between">
         <div>
-          <span className="technical-label text-[#c8ff3d]">Event replay / Historical decision trace</span>
+          <span className="technical-label text-[#175a73]">Event replay / Historical decision trace</span>
           <h1 className="display-serif mt-3 flex items-center gap-3 text-4xl tracking-[-0.04em] text-[#141414] sm:text-5xl">
-            <Snowflake className="h-8 w-8 text-[#74e7dd]" />
+            <Snowflake className="h-8 w-8 text-[#175a73]" />
             {data.title}
           </h1>
           <p className="text-[#6d6b66] text-sm mt-1">Replaying: {currentStep.timestamp_label}</p>
@@ -101,8 +101,8 @@ export default function EventReplay() {
           <Card className="px-4 py-2 flex flex-col items-center min-w-[100px] border-[#141414] bg-[#e4e3e0]/50">
              <span className="text-xs text-[#6d6b66] uppercase font-bold">Risk Score</span>
              <span className={clsx("text-2xl font-bold", 
-                currentStep.risk_score > 90 ? "text-red-500 animate-pulse" : 
-                currentStep.risk_score > 70 ? "text-orange-400" : "text-emerald-400"
+                currentStep.risk_score > 90 ? "animate-pulse text-[#b42318]" :
+                currentStep.risk_score > 70 ? "text-[#9a6200]" : "text-[#2f6b4f]"
              )}>
                 {currentStep.risk_score.toFixed(0)}
              </span>
@@ -219,7 +219,7 @@ export default function EventReplay() {
             <div className="grid grid-cols-2 gap-4">
                 <Card className="bg-[#e4e3e0]/50 border-[#141414]">
                     <h3 className="text-sm font-semibold text-[#4f4e4a] mb-2">Capacity Margin</h3>
-                    <div className={clsx("text-xl font-mono font-bold", (currentStep.capacity_mw - currentStep.actual_load_mw) < 2000 ? "text-red-500" : "text-emerald-400")}>
+                    <div className={clsx("text-xl font-mono font-bold", (currentStep.capacity_mw - currentStep.actual_load_mw) < 2000 ? "text-[#b42318]" : "text-[#2f6b4f]")}>
                         {((currentStep.capacity_mw - currentStep.actual_load_mw) / 1000).toFixed(1)} GW
                     </div>
                 </Card>

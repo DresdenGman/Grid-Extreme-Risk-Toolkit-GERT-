@@ -7,8 +7,17 @@
   --muted: #6d6b66;
   --paper: #e4e3e0;
   --paper-deep: #d9d8d4;
+  --surface: #f1efe9;
+  --surface-data: #dfe8ea;
+  --surface-system: #e0e7df;
+  --surface-warm: #eee0d4;
+  --surface-scenario: #eee6cf;
   --line: #141414;
   --signal: #ff4d00;
+  --signal-text: #a83400;
+  --data: #175a73;
+  --verified: #2f6b4f;
+  --waiting: #9a6200;
   --danger: #c52f19;
 }
 
@@ -72,6 +81,54 @@ select:focus-visible {
   box-shadow: 7px 7px 0 var(--ink) !important;
 }
 
+.panel-boundary {
+  background: var(--surface-warm) !important;
+  box-shadow: 7px 7px 0 var(--signal) !important;
+}
+
+.panel-data {
+  background: var(--surface-data) !important;
+  box-shadow: 7px 7px 0 var(--data) !important;
+}
+
+.panel-system {
+  background: var(--surface-system) !important;
+  box-shadow: 7px 7px 0 var(--verified) !important;
+}
+
+.panel-scenario {
+  background: var(--surface-scenario) !important;
+  box-shadow: 7px 7px 0 var(--waiting) !important;
+}
+
+.evidence-verified {
+  background: #d7e4d9 !important;
+}
+
+.evidence-fallback {
+  background: #eadbcf !important;
+}
+
+.scenario-cold {
+  background: #dce7ec !important;
+  box-shadow: 4px 4px 0 var(--data) !important;
+}
+
+.scenario-heat {
+  background: #eed9cc !important;
+  box-shadow: 4px 4px 0 var(--signal) !important;
+}
+
+.scenario-renewables {
+  background: #e9e1c9 !important;
+  box-shadow: 4px 4px 0 var(--waiting) !important;
+}
+
+.architecture-grid > :nth-child(1) { background: #d7e4d9 !important; }
+.architecture-grid > :nth-child(2) { background: #dce7ec !important; }
+.architecture-grid > :nth-child(3) { background: #e9e1c9 !important; }
+.architecture-grid > :nth-child(4) { background: #eadbcf !important; }
+
 .technical-label {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.65rem;
@@ -103,6 +160,14 @@ select:focus-visible {
 
 .brs-frame [class*="bg-white/"] {
   background-color: rgba(20, 20, 20, 0.035) !important;
+}
+
+.brs-frame [class*="text-[#87847e]"] {
+  color: #5f5d58 !important;
+}
+
+.brs-frame [class*="text-[#6d6b66]"] {
+  color: #4f4d49 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
