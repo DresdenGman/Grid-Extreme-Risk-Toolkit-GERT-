@@ -80,16 +80,44 @@ class LoadedModelArtifact:
 #  Constants
 # ---------------------------------------------------------------------------
 
-SUPPORTED_SCHEMA_VERSION = "1.0"
+SUPPORTED_SCHEMA_VERSIONS = {"1.0", "1.1", "1.2"}
 SUPPORTED_MODEL_TYPE = "sklearn_quantile_bundle"
-EXPECTED_FEATURES = ["temperature", "wind_speed", "solar_irradiance"]
+FEATURES_BY_SCHEMA = {
+    "1.0": ["temperature", "wind_speed", "solar_irradiance"],
+    "1.1": [
+        "temperature", "wind_speed", "solar_irradiance",
+        "hour", "day_of_week", "month", "is_weekend",
+    ],
+    "1.2": [
+        "temperature", "wind_speed", "solar_irradiance",
+        "hour", "day_of_week", "month", "is_weekend", "year",
+    ],
+}
 EXPECTED_QUANTILES = [0.5, 0.9, 0.95, 0.99]
-EXPECTED_FEATURE_UNITS = {
+BASE_FEATURE_UNITS = {
     "temperature": "degC",
     "wind_speed": "m/s",
     "solar_irradiance": "W/m2",
 }
-ALLOWED_REGIONS = {"ERCOT_NORTH", "CAISO", "PJM", "NYISO"}
+FEATURE_UNITS_BY_SCHEMA = {
+    "1.0": BASE_FEATURE_UNITS,
+    "1.1": {
+        **BASE_FEATURE_UNITS,
+        "hour": "local_hour",
+        "day_of_week": "integer_0_monday",
+        "month": "integer_1_january",
+        "is_weekend": "binary",
+    },
+    "1.2": {
+        **BASE_FEATURE_UNITS,
+        "hour": "local_hour",
+        "day_of_week": "integer_0_monday",
+        "month": "integer_1_january",
+        "is_weekend": "binary",
+        "year": "ercot_local_year",
+    },
+}
+ALLOWED_REGIONS = {"ERCOT_SYSTEM", "ERCOT_NORTH", "CAISO", "PJM", "NYISO"}
 REQUIRED_PROVENANCE_KEYS = {"source", "provenance"}
 REQUIRED_RUNTIME_KEYS = {"python_version", "scikit_learn_version"}
 ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
@@ -141,10 +169,10 @@ def validate_metadata(raw: dict) -> ModelMetadata:
     """
     # 1. Schema version
     version = raw.get("artifact_schema_version")
-    if version != SUPPORTED_SCHEMA_VERSION:
+    if version not in SUPPORTED_SCHEMA_VERSIONS:
         raise ModelArtifactError(
             f"Unsupported artifact_schema_version: {version!r}. "
-            f"Expected '{SUPPORTED_SCHEMA_VERSION}'."
+            f"Expected one of {sorted(SUPPORTED_SCHEMA_VERSIONS)}."
         )
 
     # 2. Model name & version
@@ -206,18 +234,20 @@ def validate_metadata(raw: dict) -> ModelMetadata:
 
     # 7. Feature names
     features = raw.get("feature_names", [])
-    if features != EXPECTED_FEATURES:
+    expected_features = FEATURES_BY_SCHEMA[version]
+    if features != expected_features:
         raise ModelArtifactError(
-            f"Expected feature_names={EXPECTED_FEATURES}, got {features}"
+            f"Expected feature_names={expected_features}, got {features}"
         )
 
     # 8. Feature units
     units = raw.get("feature_units", {})
     if not isinstance(units, dict):
         raise ModelArtifactError("feature_units must be a dict.")
-    if units != EXPECTED_FEATURE_UNITS:
+    expected_units = FEATURE_UNITS_BY_SCHEMA[version]
+    if units != expected_units:
         raise ModelArtifactError(
-            f"Expected feature_units={EXPECTED_FEATURE_UNITS}, got {units}"
+            f"Expected feature_units={expected_units}, got {units}"
         )
 
     # 9. Quantiles

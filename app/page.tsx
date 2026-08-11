@@ -18,10 +18,10 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
-const REGIONS: Region[] = ['ERCOT_NORTH', 'CAISO', 'PJM', 'NYISO'];
+const REGIONS: Region[] = ['ERCOT_SYSTEM'];
 
 export default function Home() {
-  const [region, setRegion] = useState<Region>('ERCOT_NORTH');
+  const [region, setRegion] = useState<Region>('ERCOT_SYSTEM');
   const [inputs, setInputs] = useState<WeatherFeatures>({
     temperature: 32,
     wind_speed: 15,
@@ -68,7 +68,7 @@ export default function Home() {
     try {
       const envelope = await api.predict({
         region: region,
-        date: new Date().toISOString(),
+        date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
           weather_features: featuresToUse
       });
         if (mountedRef.current) {
@@ -336,7 +336,7 @@ export default function Home() {
             {/* Weather Driver */}
             <Card className="p-4 bg-slate-900 border border-slate-800">
                 <div className="text-slate-500 text-xs font-bold uppercase mb-1 flex items-center gap-2">
-                    <Thermometer className="h-3 w-3 text-blue-500" /> Ambient Temp
+                    <Thermometer className="h-3 w-3 text-blue-500" /> 1h System Forecast Temp
                 </div>
                 <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-bold text-white tracking-tighter">
@@ -381,10 +381,10 @@ export default function Home() {
                  <div className="p-3 border-b border-slate-800 bg-slate-950/50 flex justify-between items-center">
                     <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
                         <Activity className="h-3 w-3" />
-                        Probabilistic Forecast Horizon (24h)
+                        Probabilistic Forecast (1h ahead)
                     </span>
                      <span className="text-xs font-mono text-slate-500">
-                        Model: GERT-Quantile-v1
+                        Model: {data?.diagnostics.model_version ?? 'initializing'}
                     </span>
                 </div>
                 <div className="flex-1 p-4 min-h-0">

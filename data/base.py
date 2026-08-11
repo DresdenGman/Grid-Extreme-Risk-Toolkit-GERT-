@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Literal, Optional
 
 
-DataSource = Literal["official_live", "estimated_fallback"]
+DataSource = Literal["official_live", "external_forecast", "estimated_fallback"]
 CapacitySource = Literal["official_adequacy", "configured_reference"]
 
 

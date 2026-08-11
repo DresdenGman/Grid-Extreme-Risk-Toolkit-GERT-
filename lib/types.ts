@@ -1,7 +1,7 @@
 
 export type RiskLevel = 'LOW' | 'MODERATE' | 'HIGH' | 'EXTREME';
 
-export type Region = 'ERCOT_NORTH' | 'CAISO' | 'PJM' | 'NYISO';
+export type Region = 'ERCOT_SYSTEM' | 'CAISO' | 'PJM' | 'NYISO';
 
 export interface WeatherFeatures {
   temperature: number;

@@ -45,8 +45,8 @@ export default function ScenarioLab() {
     try {
       const env = await api.scenario({
         baseline_request: {
-          region: 'ERCOT_NORTH',
-          date: new Date().toISOString(),
+          region: 'ERCOT_SYSTEM',
+          date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
           weather_features: { temperature: 20, wind_speed: 10, solar_irradiance: 500 }
         },
         perturbations: {
@@ -67,8 +67,8 @@ export default function ScenarioLab() {
       setAnalyzing(true);
       try {
         const env = await api.analyze({
-          region: 'ERCOT_NORTH',
-          date: new Date().toISOString(),
+          region: 'ERCOT_SYSTEM',
+          date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
           weather_features: { 
               temperature: 20 - tempDrop,
               wind_speed: 10 + windChange,

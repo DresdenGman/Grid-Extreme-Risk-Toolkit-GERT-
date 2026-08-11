@@ -7,6 +7,7 @@ from fastapi import HTTPException
 
 # Supported regions
 VALID_REGIONS = [
+    "ERCOT_SYSTEM",
     "ERCOT_NORTH",
     "CAISO",
     "PJM",

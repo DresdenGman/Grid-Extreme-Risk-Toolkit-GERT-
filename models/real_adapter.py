@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import logging
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Union
+from zoneinfo import ZoneInfo
 
 import numpy as np
 
@@ -48,6 +50,7 @@ class RealModelAdapter(ModelInterface):
             )
 
         self._loaded: LoadedModelArtifact = load_model_artifact(path)
+        self._artifact_dir = path
         self._meta: ModelMetadata = self._loaded.metadata
         self._bundle: Any = _lazy_load_bundle(self._loaded.model_path)
 
@@ -63,12 +66,41 @@ class RealModelAdapter(ModelInterface):
     def get_version(self) -> str:
         return self._meta.model_version
 
-    def predict(self, features: WeatherFeatures) -> Dict[str, float]:
-        feature_row = [
-            features.temperature,
-            features.wind_speed,
-            features.solar_irradiance,
-        ]
+    def supports_region(self, region: str) -> bool:
+        return region in self._meta.supported_regions
+
+    def get_evaluation_metrics(self):
+        return self._loaded.metrics
+
+    def get_artifact_file(self, name: str) -> Path:
+        if Path(name).name != name:
+            raise ValueError("Artifact filename must not contain a path")
+        return self._artifact_dir / name
+
+    def predict(
+        self, features: WeatherFeatures, timestamp: datetime | None = None
+    ) -> Dict[str, float]:
+        values: dict[str, float] = {
+            "temperature": features.temperature,
+            "wind_speed": features.wind_speed,
+            "solar_irradiance": features.solar_irradiance,
+        }
+        if self._meta.artifact_schema_version in {"1.1", "1.2"}:
+            effective = timestamp or datetime.now(timezone.utc)
+            if effective.tzinfo is None:
+                effective = effective.replace(tzinfo=timezone.utc)
+            local = effective.astimezone(ZoneInfo("America/Chicago"))
+            values.update(
+                {
+                    "hour": float(local.hour),
+                    "day_of_week": float(local.weekday()),
+                    "month": float(local.month),
+                    "is_weekend": float(local.weekday() >= 5),
+                }
+            )
+            if self._meta.artifact_schema_version == "1.2":
+                values["year"] = float(local.year)
+        feature_row = [values[name] for name in self._meta.feature_names]
 
         try:
             if hasattr(self._bundle, "predict_quantiles"):

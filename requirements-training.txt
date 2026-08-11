@@ -1,0 +1,7 @@
+# Offline-only ERCOT training environment. Do not add these to the Railway
+# runtime image until an ERCOT artifact is ready for production review.
+# Keep this bundle compatible with the project's existing Matplotlib 3.8 runtime.
+numpy==1.26.4
+scipy==1.14.1
+pandas==2.3.3
+scikit-learn==1.9.0
