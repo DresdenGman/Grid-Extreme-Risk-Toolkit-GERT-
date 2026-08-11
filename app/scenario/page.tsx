@@ -88,38 +88,38 @@ export default function ScenarioLab() {
     <div className="mx-auto max-w-6xl space-y-7 pb-12">
       <header className="border-b border-white/[0.09] pb-7">
         <span className="technical-label text-[#c8ff3d]">Scenario lab / Controlled intervention</span>
-        <h1 className="mt-3 text-4xl font-medium tracking-[-0.045em] text-white sm:text-6xl">Stress the system<br />before nature does.</h1>
-        <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-400">Perturb physical drivers, preserve the baseline and expose the resulting tail-risk delta.</p>
+        <h1 className="display-serif mt-3 text-4xl tracking-[-0.045em] text-[#141414] sm:text-6xl">Stress the system<br />before nature does.</h1>
+        <p className="mt-4 max-w-2xl text-sm leading-6 text-[#4f4e4a]">Perturb physical drivers, preserve the baseline and expose the resulting tail-risk delta.</p>
       </header>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <button onClick={() => applyPreset('POLAR_VORTEX')} className="hairline-panel rounded-2xl p-5 text-left transition hover:border-[#74e7dd]/40">
-          <div className="flex items-center gap-2 mb-2 text-indigo-400 group-hover:text-indigo-300">
+          <div className="flex items-center gap-2 mb-2 text-[#ff4d00] group-hover:text-[#ff4d00]">
             <CloudSnow className="h-5 w-5" />
             <span className="font-bold">Polar Vortex</span>
           </div>
-          <p className="text-xs text-slate-500">Extreme cold (-15°C) with high heating demand.</p>
+          <p className="text-xs text-[#6d6b66]">Extreme cold (-15°C) with high heating demand.</p>
         </button>
         <button onClick={() => applyPreset('HEAT_WAVE')} className="hairline-panel rounded-2xl p-5 text-left transition hover:border-orange-400/40">
           <div className="flex items-center gap-2 mb-2 text-orange-400 group-hover:text-orange-300">
             <Sun className="h-5 w-5" />
             <span className="font-bold">Heat Wave</span>
           </div>
-          <p className="text-xs text-slate-500">Extreme heat (+10°C) triggering A/C load.</p>
+          <p className="text-xs text-[#6d6b66]">Extreme heat (+10°C) triggering A/C load.</p>
         </button>
         <button onClick={() => applyPreset('DUNKELFLAUTE')} className="hairline-panel rounded-2xl p-5 text-left transition hover:border-[#c8ff3d]/40">
-          <div className="flex items-center gap-2 mb-2 text-slate-400 group-hover:text-slate-300">
+          <div className="flex items-center gap-2 mb-2 text-[#4f4e4a] group-hover:text-[#454545]">
             <CloudRain className="h-5 w-5" />
             <span className="font-bold">Dunkelflaute</span>
           </div>
-          <p className="text-xs text-slate-500">"Dark Lull": Low wind/solar output scenario.</p>
+          <p className="text-xs text-[#6d6b66]">"Dark Lull": Low wind/solar output scenario.</p>
         </button>
       </div>
 
       <Card className="mb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-4">
+            <label className="block text-sm font-medium text-[#454545] mb-4">
               Temperature Adjustment (°C)
             </label>
             <div className="flex items-center gap-4">
@@ -127,13 +127,13 @@ export default function ScenarioLab() {
                 type="range" min="-20" max="20" step="1"
                 value={tempDrop}
                 onChange={(e) => setTempDrop(Number(e.target.value))}
-                className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#ff4d00]"
               />
               <span className="font-mono text-xl w-16 text-right">{tempDrop > 0 ? '-' : '+'}{Math.abs(tempDrop)}°C</span>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-4">
+            <label className="block text-sm font-medium text-[#454545] mb-4">
               Wind Speed Adjustment (m/s)
             </label>
             <div className="flex items-center gap-4">
@@ -141,7 +141,7 @@ export default function ScenarioLab() {
                 type="range" min="-20" max="20" step="1"
                 value={windChange}
                 onChange={(e) => setWindChange(Number(e.target.value))}
-                className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#ff4d00]"
               />
               <span className="font-mono text-xl w-16 text-right">{windChange > 0 ? '+' : ''}{windChange}</span>
             </div>
@@ -151,7 +151,7 @@ export default function ScenarioLab() {
         <button
           onClick={runSimulation}
           disabled={loading}
-          className="mt-6 w-full rounded-xl bg-[#c8ff3d] py-3 font-semibold text-[#07100a] transition-colors hover:bg-[#d5ff6a] disabled:opacity-50"
+          className="technical-label mt-6 w-full border border-[#141414] bg-[#141414] py-3 text-[#e4e3e0] shadow-[4px_4px_0_#ff4d00] transition-colors hover:bg-[#ff4d00] hover:text-[#141414] disabled:opacity-50"
         >
           {loading ? 'Running Simulation...' : 'Run Analysis'}
         </button>
@@ -180,29 +180,29 @@ export default function ScenarioLab() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             {/* Before */}
             <div className="text-center opacity-50">
-              <h3 className="text-sm uppercase tracking-wider text-slate-400 mb-2">Baseline Risk</h3>
-              <div className="text-4xl font-bold text-slate-200">{result.baseline_risk_score}</div>
+              <h3 className="text-sm uppercase tracking-wider text-[#4f4e4a] mb-2">Baseline Risk</h3>
+              <div className="text-4xl font-bold text-[#141414]">{result.baseline_risk_score}</div>
             </div>
 
             {/* Arrow */}
-            <div className="flex justify-center text-slate-600 md:hidden">
+            <div className="flex justify-center text-[#87847e] md:hidden">
               <ArrowRight className="h-8 w-8 rotate-90" />
             </div>
-             <div className="hidden md:flex justify-center text-slate-600">
+             <div className="hidden md:flex justify-center text-[#87847e]">
               <ArrowRight className="h-8 w-8" />
             </div>
 
             {/* After */}
-            <Card className="border-indigo-500/50 bg-indigo-900/10">
+            <Card className="border-[#141414] bg-[#ff4d00]/10">
               <div className="text-center">
-                <h3 className="text-sm uppercase tracking-wider text-indigo-300 mb-2">Scenario Risk Score</h3>
-                <div className="text-5xl font-bold text-white mb-2">{result.scenario_risk_score}</div>
-                <div className="inline-flex items-center gap-2 text-indigo-400 bg-indigo-950/50 px-3 py-1 rounded-full text-sm">
+                <h3 className="text-sm uppercase tracking-wider text-[#ff4d00] mb-2">Scenario Risk Score</h3>
+                <div className="text-5xl font-bold text-[#141414] mb-2">{result.scenario_risk_score}</div>
+                <div className="inline-flex items-center gap-2 border border-[#141414] bg-[#141414] px-3 py-1 text-sm text-[#e4e3e0]">
                   <AlertTriangle className="h-4 w-4" />
                   Delta: +{result.risk_delta}
                 </div>
-                <div className="mt-3 text-xs text-slate-400 text-left max-w-md mx-auto">
-                  <p className="font-semibold text-slate-300 mb-1">Why did risk change?</p>
+                <div className="mt-3 text-xs text-[#4f4e4a] text-left max-w-md mx-auto">
+                  <p className="font-semibold text-[#454545] mb-1">Why did risk change?</p>
                   <ul className="space-y-1">
                     {tempDrop !== 0 && (
                       <li>
@@ -230,22 +230,22 @@ export default function ScenarioLab() {
 
           {/* Actionable Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="bg-slate-900/50">
-              <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">Reserve Requirement</h4>
-              <div className="text-2xl font-mono text-white">
+            <Card className="bg-[#e4e3e0]/50">
+              <h4 className="text-xs font-bold uppercase text-[#6d6b66] mb-2">Reserve Requirement</h4>
+              <div className="text-2xl font-mono text-[#141414]">
                 {result.reserve_shortfall_mw > 0 
                   ? <span className="text-red-400">-{result.reserve_shortfall_mw} MW</span> 
                   : <span className="text-emerald-400">Sufficient</span>}
               </div>
-              <p className="text-xs text-slate-500 mt-1">Additional generation needed to meet P99 load.</p>
+              <p className="text-xs text-[#6d6b66] mt-1">Additional generation needed to meet P99 load.</p>
             </Card>
 
-            <Card className="bg-slate-900/50">
-              <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">Projected Financial Impact</h4>
-              <div className="text-2xl font-mono text-white">
+            <Card className="bg-[#e4e3e0]/50">
+              <h4 className="text-xs font-bold uppercase text-[#6d6b66] mb-2">Projected Financial Impact</h4>
+              <div className="text-2xl font-mono text-[#141414]">
                  ${(result.financial_impact.estimated_loss / 1000).toLocaleString()}k
               </div>
-              <p className="text-xs text-slate-500 mt-1">Based on VOLL pricing.</p>
+              <p className="text-xs text-[#6d6b66] mt-1">Based on VOLL pricing.</p>
             </Card>
           </div>
           
@@ -255,34 +255,34 @@ export default function ScenarioLab() {
                  <button 
                   onClick={runAIAnalysis}
                   disabled={analyzing}
-                  className="group relative inline-flex items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-purple-600 to-blue-500 p-0.5 font-medium text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-300 group-hover:from-purple-600 group-hover:to-blue-500 dark:text-white dark:focus:ring-blue-800"
+                  className="group relative inline-flex items-center justify-center border border-[#141414] bg-[#141414] font-medium text-[#e4e3e0] shadow-[4px_4px_0_#ff4d00] focus:outline-none"
                 >
-                  <span className="relative flex items-center gap-2 rounded-md bg-white px-5 py-2.5 transition-all duration-75 ease-in group-hover:bg-opacity-0 dark:bg-gray-900">
+                  <span className="relative flex items-center gap-2 px-5 py-2.5 transition-all duration-75 group-hover:bg-[#ff4d00] group-hover:text-[#141414]">
                      {analyzing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                      {analyzing ? "AI: Explain This Scenario" : "AI: Explain This Scenario"}
                   </span>
                 </button>
               </div>
             ) : (
-              <Card className="border-purple-500/50 bg-slate-900/80">
-                <div className="flex items-center justify-between mb-4 border-b border-purple-900/50 pb-3">
-                  <div className="flex items-center gap-2 text-purple-400">
+              <Card className="border-[#141414] bg-[#e4e3e0]">
+                <div className="mb-4 flex items-center justify-between border-b border-black/20 pb-3">
+                  <div className="flex items-center gap-2 text-[#ff4d00]">
                     <BrainCircuit className="h-5 w-5" />
                     <span className="font-bold tracking-wide text-sm">SCENARIO ANALYSIS</span>
                   </div>
                   <Badge level={analysis.confidence === 'HIGH' ? 'HIGH' : 'MODERATE'} />
                 </div>
                 
-                <h3 className="text-xl font-bold text-white mb-4">{analysis.headline}</h3>
-                <p className="text-slate-300 mb-4">{analysis.uncertainty}</p>
+                <h3 className="text-xl font-bold text-[#141414] mb-4">{analysis.headline}</h3>
+                <p className="text-[#454545] mb-4">{analysis.uncertainty}</p>
                 
-                <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Implications</h4>
+                <h4 className="text-xs font-bold text-[#6d6b66] uppercase mb-3">Implications</h4>
                  <ul className="space-y-2">
                       {analysis.drivers.map((d, i) => (
-                        <li key={i} className="flex gap-2 text-sm text-slate-300">
-                          <span className="text-purple-500 font-bold">•</span>
+                        <li key={i} className="flex gap-2 text-sm text-[#454545]">
+                          <span className="font-bold text-[#ff4d00]">•</span>
                           <span>
-                            <span className="font-semibold text-white">{d.factor}:</span> {d.evidence}
+                            <span className="font-semibold text-[#141414]">{d.factor}:</span> {d.evidence}
                           </span>
                         </li>
                       ))}

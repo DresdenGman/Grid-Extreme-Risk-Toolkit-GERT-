@@ -3,13 +3,13 @@
 @tailwind utilities;
 
 :root {
-  --ink: #f4f1e8;
-  --muted: #8f9a96;
-  --panel: #0b1212;
-  --line: rgba(190, 208, 199, 0.13);
-  --signal: #c8ff3d;
-  --cyan: #74e7dd;
-  --danger: #ff6b57;
+  --ink: #141414;
+  --muted: #6d6b66;
+  --paper: #e4e3e0;
+  --paper-deep: #d9d8d4;
+  --line: #141414;
+  --signal: #ff4d00;
+  --danger: #c52f19;
 }
 
 * {
@@ -17,31 +17,22 @@
 }
 
 html {
-  background: #050909;
+  background: #141414;
 }
 
 body {
   min-height: 100vh;
   background:
-    radial-gradient(circle at 78% -10%, rgba(116, 231, 221, 0.09), transparent 30rem),
-    radial-gradient(circle at 28% 110%, rgba(200, 255, 61, 0.055), transparent 34rem),
-    #050909;
+    linear-gradient(rgba(20, 20, 20, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 20, 20, 0.04) 1px, transparent 1px),
+    var(--paper);
+  background-size: 40px 40px;
   color: var(--ink);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 body::before {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  content: "";
-  opacity: 0.23;
-  background-image:
-    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: linear-gradient(to bottom, black, transparent 86%);
+  display: none;
 }
 
 button, input, select {
@@ -75,9 +66,10 @@ select:focus-visible {
 .reveal-delay-3 { animation-delay: 240ms; }
 
 .hairline-panel {
-  border: 1px solid var(--line);
-  background: linear-gradient(145deg, rgba(16, 25, 25, 0.95), rgba(7, 13, 13, 0.92));
-  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.24);
+  border: 1px solid var(--line) !important;
+  border-radius: 0 !important;
+  background: var(--paper) !important;
+  box-shadow: 7px 7px 0 var(--ink) !important;
 }
 
 .technical-label {
@@ -89,7 +81,28 @@ select:focus-visible {
 }
 
 .signal-dot {
-  box-shadow: 0 0 0 4px rgba(200, 255, 61, 0.08), 0 0 18px rgba(200, 255, 61, 0.52);
+  box-shadow: none;
+}
+
+.display-serif {
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.brs-frame [class*="rounded-[28px]"],
+.brs-frame [class*="rounded-2xl"],
+.brs-frame [class*="rounded-xl"],
+.brs-frame [class*="rounded-lg"] {
+  border-radius: 0 !important;
+}
+
+.brs-frame [class*="border-white"] {
+  border-color: rgba(20, 20, 20, 0.22) !important;
+}
+
+.brs-frame [class*="bg-white/"] {
+  background-color: rgba(20, 20, 20, 0.035) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

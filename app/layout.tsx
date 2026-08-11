@@ -16,8 +16,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="flex h-screen overflow-hidden selection:bg-lime-300/30 selection:text-white">
+    <html lang="en">
+      <body className="brs-frame flex h-screen overflow-hidden border-[8px] border-[#141414] selection:bg-[#ff4d00] selection:text-white">
         <ToastProvider>
           <Sidebar />
           <div className="min-w-0 flex-1 overflow-hidden">

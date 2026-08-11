@@ -35,19 +35,19 @@ export default function Sidebar() {
   const isHealthy = health?.status === 'ok';
 
   return (
-    <aside className="hidden h-full w-[276px] shrink-0 flex-col border-r border-white/[0.08] bg-[#070c0c]/90 backdrop-blur-xl md:flex">
-      <div className="flex min-h-24 items-center border-b border-white/[0.08] px-6">
+    <aside className="hidden h-full w-[276px] shrink-0 flex-col border-r border-[#141414] bg-[#e4e3e0] md:flex">
+      <div className="flex min-h-24 items-center border-b border-[#141414] px-6">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-3.5">
-            <div className="grid h-10 w-10 place-items-center rounded-full border border-[#c8ff3d]/25 bg-[#c8ff3d]/10 text-[#c8ff3d] shadow-[0_0_24px_rgba(200,255,61,0.08)]">
+            <div className="grid h-10 w-10 place-items-center border border-[#141414] bg-[#141414] text-[#ff4d00] shadow-[4px_4px_0_#ff4d00]">
               <Activity className="h-5 w-5" />
             </div>
             <div>
-              <span className="block text-sm font-semibold tracking-[0.24em] text-white">GERT</span>
-              <span className="technical-label text-[8px] text-slate-500">Grid extreme risk toolkit</span>
+              <span className="display-serif block text-xl text-[#141414]">GERT</span>
+              <span className="technical-label text-[8px] text-[#6d6b66]">Grid extreme risk toolkit</span>
             </div>
           </div>
-          <div className="technical-label pl-[54px] text-[8px] text-slate-600">
+          <div className="technical-label pl-[54px] text-[8px] text-[#87847e]">
             {health
               ? `Model: ${health.backend} • Env: ${health.env} • AI: ${health.ai_enabled ? 'ON' : 'OFF'}`
               : 'Model: loading…'}
@@ -56,7 +56,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-7">
-        <div className="technical-label mb-3 px-3 text-slate-600">
+        <div className="technical-label mb-3 px-3 text-[#87847e]">
           Decision workflow
         </div>
         {navItems.map((item) => {
@@ -68,36 +68,36 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               className={clsx(
-                "group flex items-center gap-3 rounded-xl border px-3 py-3 text-sm font-medium transition-all duration-200",
+                "group flex items-center gap-3 border px-3 py-3 text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "border-[#c8ff3d]/15 bg-[#c8ff3d]/[0.07] text-white"
-                  : "border-transparent text-slate-500 hover:border-white/[0.06] hover:bg-white/[0.03] hover:text-slate-200"
+                  ? "border-[#141414] bg-[#141414] text-[#e4e3e0] shadow-[4px_4px_0_#ff4d00]"
+                  : "border-transparent text-[#5f5d58] hover:border-[#141414] hover:bg-[#d9d8d4] hover:text-[#141414]"
               )}
             >
-              <Icon className={clsx("h-4 w-4", isActive ? "text-[#c8ff3d]" : "text-slate-600 group-hover:text-slate-300")} />
+              <Icon className={clsx("h-4 w-4", isActive ? "text-[#ff4d00]" : "text-[#87847e] group-hover:text-[#141414]")} />
               {item.name}
-              {isActive && <ArrowUpRight className="ml-auto h-3.5 w-3.5 text-[#c8ff3d]" />}
+              {isActive && <ArrowUpRight className="ml-auto h-3.5 w-3.5 text-[#ff4d00]" />}
             </Link>
           );
         })}
       </nav>
 
-      <div className="border-t border-white/[0.08] p-4">
-        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-4">
+      <div className="border-t border-[#141414] p-4">
+        <div className="border border-[#141414] bg-[#deddd9] p-4 shadow-[4px_4px_0_#141414]">
           <div className="mb-3 flex items-center gap-3">
           <div className="relative">
-            <div className={`h-2 w-2 rounded-full ${isHealthy ? 'signal-dot bg-[#c8ff3d]' : 'bg-amber-400'}`}></div>
+            <div className={`h-2 w-2 ${isHealthy ? 'signal-dot bg-[#ff4d00]' : 'bg-amber-500'}`}></div>
           </div>
           <div className="flex flex-1 items-center justify-between">
-            <span className="technical-label text-slate-500">System</span>
-            <span className={`technical-label ${isHealthy ? 'text-[#c8ff3d]' : 'text-amber-300'}`}>
+            <span className="technical-label text-[#6d6b66]">System</span>
+            <span className={`technical-label ${isHealthy ? 'text-[#ff4d00]' : 'text-amber-700'}`}>
               {health ? (isHealthy ? 'ONLINE' : health.status.toUpperCase()) : 'CHECKING'}
             </span>
           </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 border-t border-white/[0.07] pt-3 text-[10px]">
-            <span className="text-slate-600">MODEL</span><span className="truncate text-right font-mono text-slate-400">{health?.backend ?? '—'}</span>
-            <span className="text-slate-600">ENV</span><span className="truncate text-right font-mono text-slate-400">{health?.env ?? '—'}</span>
+          <div className="grid grid-cols-2 gap-2 border-t border-black/20 pt-3 text-[10px]">
+            <span className="text-[#87847e]">MODEL</span><span className="truncate text-right font-mono text-[#454545]">{health?.backend ?? '—'}</span>
+            <span className="text-[#87847e]">ENV</span><span className="truncate text-right font-mono text-[#454545]">{health?.env ?? '—'}</span>
           </div>
         </div>
       </div>
