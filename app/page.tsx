@@ -25,6 +25,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { createPresentationPrediction, createPresentationPrior, PRESENTATION_WEATHER } from '@/lib/presentation';
 import { ApiClientError, PredictionOut, Provenance, Region, WeatherFeatures } from '@/lib/types';
 import { Badge, Card } from '@/components/ui';
 import { QuantileChart } from '@/components/Charts';
@@ -49,11 +50,26 @@ export default function Home() {
   const [lastUpdated, setLastUpdated] = useState('—');
   const [provenance, setProvenance] = useState<Provenance | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [modeResolved, setModeResolved] = useState(false);
+  const [presentationMode, setPresentationMode] = useState(false);
   const mountedRef = useRef(true);
 
   useEffect(() => () => { mountedRef.current = false; }, []);
 
   useEffect(() => {
+    const enabled = new URLSearchParams(window.location.search).get('demo') === '1';
+    setPresentationMode(enabled);
+    setModeResolved(true);
+  }, []);
+
+  useEffect(() => {
+    if (!modeResolved) return;
+    if (presentationMode) {
+      setInputs(PRESENTATION_WEATHER);
+      setDraftInputs(PRESENTATION_WEATHER);
+      setLiveSnapshot(PRESENTATION_WEATHER);
+      return;
+    }
     api.liveWeather(REGION)
       .then((envelope) => {
         if (!mountedRef.current) return;
@@ -62,11 +78,24 @@ export default function Home() {
         setLiveSnapshot(envelope.data);
       })
       .catch((err) => console.warn('Weather sync failed', err));
-  }, []);
+  }, [modeResolved, presentationMode]);
 
   const fetchPrediction = useCallback(async (featuresOverride?: WeatherFeatures) => {
     const features = featuresOverride ?? inputs;
     setLoading(true);
+    if (presentationMode) {
+      const snapshot = createPresentationPrediction(features);
+      setData((current) => {
+        setPrevData(current ?? createPresentationPrior());
+        return snapshot;
+      });
+      setProvenance('simulated_demo');
+      setLastUpdated('DEMO SNAPSHOT');
+      setShowWhy(true);
+      setError(null);
+      setLoading(false);
+      return;
+    }
     try {
       const envelope = await api.predict({
         region: REGION,
@@ -86,9 +115,11 @@ export default function Home() {
     } finally {
       if (mountedRef.current) setLoading(false);
     }
-  }, [inputs]);
+  }, [inputs, presentationMode]);
 
-  useEffect(() => { fetchPrediction(); }, [fetchPrediction]);
+  useEffect(() => {
+    if (modeResolved) fetchPrediction();
+  }, [fetchPrediction, modeResolved]);
 
   const capacity = data?.diagnostics.capacity_used ?? 60000;
   const marginMw = data ? capacity - data.q99_load_mw : null;
@@ -150,7 +181,7 @@ export default function Home() {
                 disabled={loading}
                 className="technical-label flex items-center gap-2 border border-[#141414] bg-transparent px-4 py-2 text-[#141414] transition hover:bg-[#141414] hover:text-[#e4e3e0] disabled:opacity-50"
               >
-                <RefreshCw className={clsx('h-3.5 w-3.5', loading && 'animate-spin')} /> Refresh inference
+                <RefreshCw className={clsx('h-3.5 w-3.5', loading && 'animate-spin')} /> {presentationMode ? 'Replay snapshot' : 'Refresh inference'}
               </button>
             </div>
 
@@ -253,9 +284,9 @@ export default function Home() {
         <div className="border-b border-black/[0.08] p-6 sm:p-8 lg:border-b-0 lg:border-r">
           <span className="technical-label text-[#6d6b66]">05 / Controlled intervention</span>
           <h2 className="display-serif mt-3 text-3xl leading-tight tracking-tight text-[#141414]">Stress the weather.<br />Keep the evidence.</h2>
-          <p className="mt-4 max-w-sm text-sm leading-6 text-[#4f4e4a]">Adjust the physical drivers, rerun the same decision pipeline and compare against the live snapshot.</p>
+          <p className="mt-4 max-w-sm text-sm leading-6 text-[#4f4e4a]">Adjust the physical drivers, rerun the same decision pipeline and compare against the {presentationMode ? 'simulated reference' : 'live snapshot'}.</p>
           <div className="mt-6 flex gap-2">
-            <button onClick={resetScenario} className="technical-label flex items-center gap-2 border border-[#141414] px-4 py-2 text-[#141414] hover:bg-[#d9d8d4]"><RotateCcw className="h-3.5 w-3.5" /> Reset live</button>
+            <button onClick={resetScenario} className="technical-label flex items-center gap-2 border border-[#141414] px-4 py-2 text-[#141414] hover:bg-[#d9d8d4]"><RotateCcw className="h-3.5 w-3.5" /> Reset {presentationMode ? 'reference' : 'live'}</button>
             <button onClick={applyScenario} disabled={loading} className="technical-label flex items-center gap-2 border border-[#141414] bg-[#141414] px-4 py-2 text-[#e4e3e0] shadow-[3px_3px_0_#ff4d00] transition hover:bg-[#ff4d00] hover:text-[#141414] disabled:opacity-50">Run scenario <ArrowUpRight className="h-3.5 w-3.5" /></button>
           </div>
         </div>
@@ -267,9 +298,9 @@ export default function Home() {
       </section>
 
       <section className="grid gap-px overflow-hidden border border-[#141414] bg-[#141414] shadow-[5px_5px_0_#ff4d00] md:grid-cols-4">
-        <EvidenceCell icon={<Database />} title="Load context" value={officialLoad ? 'Official live' : 'Estimated fallback'} verified={officialLoad} />
-        <EvidenceCell icon={<ShieldCheck />} title="Capacity basis" value={officialCapacity ? 'ERCOT adequacy' : 'Configured reference'} verified={officialCapacity} />
-        <EvidenceCell icon={<Cpu />} title="Model artifact" value={backendReal ? data?.diagnostics.model_version ?? 'Trained' : 'Stub / demo'} verified={backendReal} />
+        <EvidenceCell icon={<Database />} title="Load context" value={presentationMode ? 'Simulated peak-day load' : officialLoad ? 'Official live' : 'Estimated fallback'} verified={!presentationMode && officialLoad} />
+        <EvidenceCell icon={<ShieldCheck />} title="Capacity basis" value={presentationMode ? 'Simulated adequacy margin' : officialCapacity ? 'ERCOT adequacy' : 'Configured reference'} verified={!presentationMode && officialCapacity} />
+        <EvidenceCell icon={<Cpu />} title="Model artifact" value={presentationMode ? 'Presentation candidate' : backendReal ? data?.diagnostics.model_version ?? 'Trained' : 'Stub / demo'} verified={!presentationMode && backendReal} />
         <EvidenceCell icon={<Braces />} title="Decision contract" value="P50 → P99 + provenance" verified />
       </section>
     </div>

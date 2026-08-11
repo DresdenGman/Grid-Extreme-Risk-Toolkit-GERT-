@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { ScenarioResponse, AIAnalysisResponse, RiskLevel } from '@/lib/types';
 import { Card, Badge } from '@/components/ui';
@@ -24,6 +24,31 @@ export default function ScenarioLab() {
   // AI State
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<AIAnalysisResponse | null>(null);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('demo') !== '1') return;
+
+    const request = {
+      region: 'ERCOT_SYSTEM',
+      date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      weather_features: { temperature: 15, wind_speed: 10, solar_irradiance: 500 },
+    };
+    setLoading(true);
+    setAnalyzing(true);
+    Promise.all([
+      api.scenario({ baseline_request: request, perturbations: { temperature: 15, wind_speed: 10 } }),
+      api.analyze(request),
+    ])
+      .then(([scenario, explanation]) => {
+        setResult(scenario.data);
+        setAnalysis(explanation.data);
+      })
+      .catch(console.error)
+      .finally(() => {
+        setLoading(false);
+        setAnalyzing(false);
+      });
+  }, []);
 
   // Presets
   const applyPreset = (type: 'POLAR_VORTEX' | 'HEAT_WAVE' | 'DUNKELFLAUTE') => {

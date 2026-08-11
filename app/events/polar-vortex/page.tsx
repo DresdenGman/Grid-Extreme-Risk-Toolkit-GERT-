@@ -38,7 +38,10 @@ export default function EventReplay() {
 
   useEffect(() => {
     // Load Event Data
-    api.fetchEventPlayback('polar-vortex').then((env) => setData(env.data)).catch(console.error);
+    api.fetchEventPlayback('polar-vortex').then((env) => {
+      setData(env.data);
+      if (env.source === 'simulated_demo') setCurrentHour(env.data.total_hours - 1);
+    }).catch(console.error);
   }, []);
 
   // Playback Logic
