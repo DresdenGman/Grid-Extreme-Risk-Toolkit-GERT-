@@ -85,25 +85,29 @@ export default function ScenarioLab() {
     };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Scenario Stress Test</h1>
+    <div className="mx-auto max-w-6xl space-y-7 pb-12">
+      <header className="border-b border-white/[0.09] pb-7">
+        <span className="technical-label text-[#c8ff3d]">Scenario lab / Controlled intervention</span>
+        <h1 className="mt-3 text-4xl font-medium tracking-[-0.045em] text-white sm:text-6xl">Stress the system<br />before nature does.</h1>
+        <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-400">Perturb physical drivers, preserve the baseline and expose the resulting tail-risk delta.</p>
+      </header>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <button onClick={() => applyPreset('POLAR_VORTEX')} className="bg-slate-900 border border-slate-800 p-4 rounded hover:border-indigo-500 transition-colors text-left group">
+        <button onClick={() => applyPreset('POLAR_VORTEX')} className="hairline-panel rounded-2xl p-5 text-left transition hover:border-[#74e7dd]/40">
           <div className="flex items-center gap-2 mb-2 text-indigo-400 group-hover:text-indigo-300">
             <CloudSnow className="h-5 w-5" />
             <span className="font-bold">Polar Vortex</span>
           </div>
           <p className="text-xs text-slate-500">Extreme cold (-15°C) with high heating demand.</p>
         </button>
-        <button onClick={() => applyPreset('HEAT_WAVE')} className="bg-slate-900 border border-slate-800 p-4 rounded hover:border-orange-500 transition-colors text-left group">
+        <button onClick={() => applyPreset('HEAT_WAVE')} className="hairline-panel rounded-2xl p-5 text-left transition hover:border-orange-400/40">
           <div className="flex items-center gap-2 mb-2 text-orange-400 group-hover:text-orange-300">
             <Sun className="h-5 w-5" />
             <span className="font-bold">Heat Wave</span>
           </div>
           <p className="text-xs text-slate-500">Extreme heat (+10°C) triggering A/C load.</p>
         </button>
-        <button onClick={() => applyPreset('DUNKELFLAUTE')} className="bg-slate-900 border border-slate-800 p-4 rounded hover:border-slate-500 transition-colors text-left group">
+        <button onClick={() => applyPreset('DUNKELFLAUTE')} className="hairline-panel rounded-2xl p-5 text-left transition hover:border-[#c8ff3d]/40">
           <div className="flex items-center gap-2 mb-2 text-slate-400 group-hover:text-slate-300">
             <CloudRain className="h-5 w-5" />
             <span className="font-bold">Dunkelflaute</span>
@@ -147,7 +151,7 @@ export default function ScenarioLab() {
         <button
           onClick={runSimulation}
           disabled={loading}
-          className="mt-6 w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-medium disabled:opacity-50 transition-colors"
+          className="mt-6 w-full rounded-xl bg-[#c8ff3d] py-3 font-semibold text-[#07100a] transition-colors hover:bg-[#d5ff6a] disabled:opacity-50"
         >
           {loading ? 'Running Simulation...' : 'Run Analysis'}
         </button>

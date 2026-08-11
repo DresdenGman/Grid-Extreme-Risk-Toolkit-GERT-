@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Activity, Menu } from 'lucide-react';
+import { Activity, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { clsx } from 'clsx';
 
@@ -18,27 +18,29 @@ export default function Navbar() {
   const pathname = usePathname();
 
   return (
-    <header className="md:hidden border-b border-slate-800 bg-slate-950 sticky top-0 z-50">
-      <div className="px-6 py-4 flex justify-between items-center">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#050909]/90 backdrop-blur-xl md:hidden">
+      <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">
-          <Activity className="h-6 w-6 text-indigo-500" />
-          <h1 className="text-lg font-bold text-slate-100">GERT</h1>
+          <div className="grid h-8 w-8 place-items-center rounded-full border border-[#c8ff3d]/30 bg-[#c8ff3d]/10">
+            <Activity className="h-4 w-4 text-[#c8ff3d]" />
+          </div>
+          <div><h1 className="text-sm font-semibold tracking-[0.22em] text-white">GERT</h1><p className="technical-label text-[8px] text-slate-500">Tail-risk intelligence</p></div>
         </div>
-        <button onClick={() => setIsOpen(!isOpen)} className="text-slate-400">
-          <Menu className="h-6 w-6" />
+        <button aria-label={isOpen ? 'Close navigation' : 'Open navigation'} onClick={() => setIsOpen(!isOpen)} className="rounded-full border border-white/10 p-2 text-slate-300">
+          {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
       
       {isOpen && (
-        <nav className="px-6 pb-4 flex flex-col gap-2">
+        <nav className="flex flex-col gap-1 px-4 pb-4">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={() => setIsOpen(false)}
               className={clsx(
-                "px-4 py-3 rounded-md text-sm font-medium transition-colors",
-                pathname === item.href ? "bg-slate-900 text-indigo-400" : "text-slate-400"
+                "rounded-xl px-4 py-3 text-sm font-medium transition-colors",
+                pathname === item.href ? "bg-white/10 text-[#c8ff3d]" : "text-slate-400"
               )}
             >
               {item.name}

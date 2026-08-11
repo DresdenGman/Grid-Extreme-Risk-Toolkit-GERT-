@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
+import Navbar from "@/components/Navbar";
 import { ToastProvider } from "@/components/ToastProvider";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Grid Extreme Risk Toolkit",
-  description: "Quantile Regression & EVT Analysis Engine",
+  title: "GERT — Grid Extreme Risk Intelligence",
+  description: "Decision intelligence for power-system tail risk, capacity stress and extreme events.",
 };
 
 export default function RootLayout({
@@ -16,17 +17,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className="font-sans text-slate-300 bg-slate-950 flex h-screen overflow-hidden selection:bg-indigo-500/30">
+      <body className="flex h-screen overflow-hidden selection:bg-lime-300/30 selection:text-white">
         <ToastProvider>
-          {/* Fixed Sidebar */}
           <Sidebar />
-          
-          {/* Main Scrollable Area */}
-          <main className="flex-1 overflow-y-auto overflow-x-hidden relative scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
-            <div className="max-w-[1600px] mx-auto px-6 py-8">
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <Navbar />
+            <main className="relative h-full overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent md:h-screen">
+              <div className="mx-auto max-w-[1720px] px-4 py-5 sm:px-6 sm:py-7 xl:px-10 xl:py-9">
               {children}
-            </div>
-          </main>
+              </div>
+            </main>
+          </div>
         </ToastProvider>
       </body>
     </html>

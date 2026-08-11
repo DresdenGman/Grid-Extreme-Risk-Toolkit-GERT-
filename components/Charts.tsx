@@ -7,10 +7,10 @@ interface QuantileChartProps {
 }
 
 const QUANTILES = [
-  { key: 'q50_load_mw', label: 'P50', color: 'bg-indigo-400' },
-  { key: 'q90_load_mw', label: 'P90', color: 'bg-blue-400' },
-  { key: 'q95_load_mw', label: 'P95', color: 'bg-amber-400' },
-  { key: 'q99_load_mw', label: 'P99', color: 'bg-red-400' },
+  { key: 'q50_load_mw', label: 'P50', note: 'Expected', color: '#74e7dd' },
+  { key: 'q90_load_mw', label: 'P90', note: 'Stress', color: '#c8ff3d' },
+  { key: 'q95_load_mw', label: 'P95', note: 'Severe', color: '#ffd166' },
+  { key: 'q99_load_mw', label: 'P99', note: 'Tail', color: '#ff6b57' },
 ] as const;
 
 export const QuantileChart = ({ prediction }: QuantileChartProps) => {
@@ -25,30 +25,34 @@ export const QuantileChart = ({ prediction }: QuantileChartProps) => {
   });
 
   return (
-    <div className="h-full flex flex-col justify-center gap-6 px-2 md:px-6">
-      <div className="flex flex-col gap-1">
-        <span className="text-xs font-mono text-slate-500">Target hour</span>
-        <span className="text-sm font-semibold text-slate-200">{targetLabel}</span>
+    <div className="flex h-full flex-col justify-between gap-7">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <span className="technical-label text-slate-600">Forecast target</span>
+          <span className="mt-1 block text-base font-medium text-[#f4f1e8]">{targetLabel}</span>
+        </div>
+        <div className="text-right">
+          <span className="technical-label text-slate-600">Available capacity</span>
+          <span className="mt-1 block font-mono text-sm text-[#c8ff3d]">{(capacity / 1000).toFixed(1)} GW</span>
+        </div>
       </div>
 
-      <div className="space-y-5">
-        {QUANTILES.map(({ key, label, color }) => {
+      <div className="relative space-y-4">
+        <div className="absolute bottom-0 top-0 w-px bg-[#c8ff3d]/70" style={{ left: `${capacityPosition}%` }}>
+          <div className="absolute -top-1 h-2 w-2 -translate-x-1/2 rounded-full bg-[#c8ff3d] shadow-[0_0_12px_rgba(200,255,61,.7)]" />
+        </div>
+        {QUANTILES.map(({ key, label, note, color }, index) => {
           const value = prediction[key];
           return (
-            <div key={key} className="grid grid-cols-[42px_1fr_78px] items-center gap-3">
-              <span className="text-xs font-bold text-slate-400">{label}</span>
-              <div className="relative h-3 rounded-full bg-slate-800 overflow-visible">
+            <div key={key} className="grid grid-cols-[48px_1fr_76px] items-center gap-3">
+              <div><span className="block text-xs font-semibold text-slate-200">{label}</span><span className="technical-label text-[8px] text-slate-600">{note}</span></div>
+              <div className="relative h-7 overflow-hidden rounded-sm bg-white/[0.035]">
                 <div
-                  className={`h-3 rounded-full ${color}`}
-                  style={{ width: `${Math.min(100, (value / maximum) * 100)}%` }}
-                />
-                <div
-                  className="absolute -top-2 h-7 w-px bg-emerald-300"
-                  style={{ left: `${capacityPosition}%` }}
-                  title={`Capacity ${(capacity / 1000).toFixed(1)} GW`}
+                  className="h-full rounded-sm transition-[width] duration-700"
+                  style={{ width: `${Math.min(100, (value / maximum) * 100)}%`, background: `linear-gradient(90deg, ${color}20, ${color}${index === 3 ? 'd9' : 'a8'})` }}
                 />
               </div>
-              <span className="text-right text-xs font-mono text-slate-200">
+              <span className="text-right font-mono text-xs text-[#f4f1e8]">
                 {(value / 1000).toFixed(1)} GW
               </span>
             </div>
@@ -56,13 +60,13 @@ export const QuantileChart = ({ prediction }: QuantileChartProps) => {
         })}
       </div>
 
-      <div className="flex items-center justify-between border-t border-slate-800 pt-4 text-xs">
-        <span className="text-slate-500">Green marker: available capacity</span>
-        <span className="font-mono text-emerald-300">{(capacity / 1000).toFixed(1)} GW</span>
+      <div className="flex items-start gap-3 border-t border-white/[0.08] pt-4">
+        <div className="mt-1 h-2 w-2 rounded-full bg-[#c8ff3d]" />
+        <div>
+          <p className="text-xs text-slate-400">Capacity marker reveals where each confidence band meets the system boundary.</p>
+          <p className="mt-1 text-[10px] text-slate-600">One-hour probability distribution. No synthetic multi-hour curve.</p>
+        </div>
       </div>
-      <p className="text-[11px] text-slate-600">
-        One-hour target distribution. No synthetic multi-hour curve is displayed.
-      </p>
     </div>
   );
 };
