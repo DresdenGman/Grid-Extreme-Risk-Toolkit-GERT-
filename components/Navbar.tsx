@@ -18,15 +18,15 @@ export default function Navbar() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#050909]/90 backdrop-blur-xl md:hidden">
+    <header className="sticky top-0 z-50 border-b border-[#141414] bg-[#e4e3e0]/95 backdrop-blur-xl md:hidden">
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="grid h-8 w-8 place-items-center rounded-full border border-[#c8ff3d]/30 bg-[#c8ff3d]/10">
-            <Activity className="h-4 w-4 text-[#c8ff3d]" />
+          <div className="grid h-8 w-8 place-items-center border border-[#141414] bg-[#141414]">
+            <Activity className="h-4 w-4 text-[#ff4d00]" />
           </div>
-          <div><h1 className="text-sm font-semibold tracking-[0.22em] text-white">GERT</h1><p className="technical-label text-[8px] text-slate-500">Tail-risk intelligence</p></div>
+          <div><h1 className="display-serif text-lg text-[#141414]">GERT</h1><p className="technical-label text-[8px] text-[#6d6b66]">Tail-risk intelligence</p></div>
         </div>
-        <button aria-label={isOpen ? 'Close navigation' : 'Open navigation'} onClick={() => setIsOpen(!isOpen)} className="rounded-full border border-white/10 p-2 text-slate-300">
+        <button aria-label={isOpen ? 'Close navigation' : 'Open navigation'} onClick={() => setIsOpen(!isOpen)} className="border border-[#141414] p-2 text-[#141414]">
           {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
@@ -39,8 +39,8 @@ export default function Navbar() {
               href={item.href}
               onClick={() => setIsOpen(false)}
               className={clsx(
-                "rounded-xl px-4 py-3 text-sm font-medium transition-colors",
-                pathname === item.href ? "bg-white/10 text-[#c8ff3d]" : "text-slate-400"
+                "border px-4 py-3 text-sm font-medium transition-colors",
+                pathname === item.href ? "border-[#141414] bg-[#141414] text-[#e4e3e0]" : "border-transparent text-[#5f5d58]"
               )}
             >
               {item.name}

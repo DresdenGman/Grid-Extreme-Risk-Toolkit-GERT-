@@ -25,7 +25,7 @@ const LABELS = {
 
 export default function GridMap({ selectedRegion, onSelect, className }: GridMapProps) {
   return (
-    <div className={clsx("relative w-full aspect-[2/1] bg-slate-900 rounded-lg overflow-hidden select-none border border-slate-800 shadow-inner", className)}>
+    <div className={clsx("relative aspect-[2/1] w-full select-none overflow-hidden border border-[#141414] bg-[#e4e3e0]", className)}>
       <svg viewBox="0 0 950 500" className="w-full h-full">
         <defs>
           <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
@@ -33,7 +33,7 @@ export default function GridMap({ selectedRegion, onSelect, className }: GridMap
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e293b" strokeWidth="0.5"/>
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#b9b6af" strokeWidth="0.7"/>
           </pattern>
         </defs>
 
@@ -43,8 +43,8 @@ export default function GridMap({ selectedRegion, onSelect, className }: GridMap
         {/* USA Base Layer (Dark Context) */}
         <path 
           d={PATHS.USA} 
-          fill="#0f172a" 
-          stroke="#334155" 
+          fill="#d9d8d4"
+          stroke="#141414"
           strokeWidth="1"
           strokeDasharray="4 4"
         />
@@ -63,10 +63,10 @@ export default function GridMap({ selectedRegion, onSelect, className }: GridMap
             >
               <path
                 d={PATHS[key as keyof typeof PATHS]}
-                fill={isSelected ? "rgba(79, 70, 229, 0.2)" : "transparent"}
-                stroke={isSelected ? "#818cf8" : "#475569"}
+                fill={isSelected ? "rgba(255, 77, 0, 0.18)" : "transparent"}
+                stroke={isSelected ? "#ff4d00" : "#6d6b66"}
                 strokeWidth={isSelected ? 2 : 1}
-                className="transition-all duration-300 group-hover:stroke-indigo-400"
+                className="transition-all duration-300 group-hover:stroke-[#ff4d00]"
                 filter={isSelected ? "url(#glow)" : ""}
               />
               
@@ -76,7 +76,7 @@ export default function GridMap({ selectedRegion, onSelect, className }: GridMap
                    cx={LABELS[key as keyof typeof LABELS].x} 
                    cy={LABELS[key as keyof typeof LABELS].y - 20} 
                    r="3" 
-                   fill="#818cf8" 
+                   fill="#ff4d00"
                    className="animate-pulse"
                  />
               )}
@@ -86,7 +86,7 @@ export default function GridMap({ selectedRegion, onSelect, className }: GridMap
                 <text
                   x={LABELS[key as keyof typeof LABELS].x}
                   y={LABELS[key as keyof typeof LABELS].y}
-                  fill={isSelected ? "#fff" : "#64748b"}
+                  fill={isSelected ? "#141414" : "#6d6b66"}
                   fontSize={isSelected ? 14 : 12}
                   fontFamily="monospace"
                   fontWeight="bold"
