@@ -12,6 +12,9 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || (
 );
 
 function getDataMode(): DataMode {
+  if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === '1') {
+    return 'demo';
+  }
   const raw = process.env.NEXT_PUBLIC_DATA_MODE;
   if (raw === 'live') return 'live';
   if (raw === 'demo') return 'demo';
@@ -112,6 +115,33 @@ const MOCK_WEATHER: WeatherFeatures = {
     temperature: 25.0,
     wind_speed: 10.0,
     solar_irradiance: 800.0
+};
+
+const MOCK_EVENT: EventPlaybackResponse = {
+  event_id: 'ercot-2021-presentation',
+  title: 'ERCOT Polar Vortex · Decision Replay',
+  total_hours: 36,
+  steps: Array.from({ length: 36 }, (_, hour) => {
+    const pressure = Math.sin((hour / 35) * Math.PI);
+    const actualLoad = 49_000 + pressure * 22_500 + hour * 95;
+    const capacity = 78_500 - pressure * 7_600;
+    return {
+      hour,
+      timestamp_label: `Feb ${14 + Math.floor(hour / 24)}, ${String(hour % 24).padStart(2, '0')}:00`,
+      temperature: Number((8 - pressure * 23).toFixed(1)),
+      actual_load_mw: Math.round(actualLoad),
+      capacity_mw: Math.round(capacity),
+      gert_p99_load_mw: Math.round(actualLoad + 2_300 + pressure * 2_500),
+      risk_score: Number((22 + pressure * 76).toFixed(1)),
+    };
+  }),
+  logs: [
+    { hour: 4, message: 'Cold-weather watch initiated as the probabilistic tail widens.', source: 'GERT', severity: 'INFO' },
+    { hour: 11, message: 'P99 demand enters the two-gigawatt capacity buffer.', source: 'RISK', severity: 'WARNING' },
+    { hour: 17, message: 'Modeled tail crosses available capacity; reserve action indicated.', source: 'GERT', severity: 'CRITICAL' },
+    { hour: 23, message: 'Sustained generation outages constrain the recovery window.', source: 'OPS', severity: 'CRITICAL' },
+    { hour: 31, message: 'Capacity margin begins recovering as temperature pressure eases.', source: 'OPS', severity: 'INFO' },
+  ],
 };
 
 // --- DEMO MODE: return mock data with envelope ---
@@ -245,22 +275,16 @@ export const api = {
   health: async (): Promise<DataEnvelope<HealthStatus>> =>
     getDataMode() === 'demo'
       ? Promise.resolve(demoEnvelope({
-          status: 'mock-ok',
-          backend: 'stub-v1',
+          status: 'ok',
+          backend: 'tail-qrf.demo',
           ai_enabled: false,
-          env: 'dev'
+          env: 'presentation'
         }))
       : liveFetch<HealthStatus>('/health', { method: 'GET' }),
 
   fetchEventPlayback: (id: string): Promise<DataEnvelope<EventPlaybackResponse>> =>
     getDataMode() === 'demo'
-      ? Promise.resolve(demoEnvelope({
-          event_id: 'mock',
-          title: 'Mock Event',
-          total_hours: 24,
-          steps: [],
-          logs: []
-        }))
+      ? Promise.resolve(demoEnvelope(MOCK_EVENT))
       : liveFetch<EventPlaybackResponse>(`/events/playback/${id}`, { method: 'GET' }),
 
   getCurrentLoad: (region: string): Promise<DataEnvelope<GridLoadResponse>> =>

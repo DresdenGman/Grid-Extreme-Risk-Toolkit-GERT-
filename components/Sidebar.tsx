@@ -19,9 +19,11 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [health, setHealth] = useState<HealthStatus | null>(null);
+  const [presentationMode, setPresentationMode] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    setPresentationMode(new URLSearchParams(window.location.search).get('demo') === '1');
     api.health()
       .then((env) => {
         if (!cancelled) setHealth(env.data);
@@ -48,7 +50,9 @@ export default function Sidebar() {
             </div>
           </div>
           <div className="technical-label pl-[54px] text-[8px] text-[#87847e]">
-            {health
+            {presentationMode
+              ? 'Model: tail-qrf.demo • Presentation'
+              : health
               ? `Model: ${health.backend} • Env: ${health.env} • AI: ${health.ai_enabled ? 'ON' : 'OFF'}`
               : 'Model: loading…'}
           </div>
@@ -66,7 +70,7 @@ export default function Sidebar() {
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={presentationMode ? `${item.href}?demo=1` : item.href}
               className={clsx(
                 "group flex items-center gap-3 border px-3 py-3 text-sm font-medium transition-all duration-200",
                 isActive
@@ -91,7 +95,7 @@ export default function Sidebar() {
           <div className="flex flex-1 items-center justify-between">
             <span className="technical-label text-[#6d6b66]">System</span>
             <span className={`technical-label ${isHealthy ? 'text-[#ff4d00]' : 'text-amber-700'}`}>
-              {health ? (isHealthy ? 'ONLINE' : health.status.toUpperCase()) : 'CHECKING'}
+              {health ? (presentationMode ? 'SIMULATED' : isHealthy ? 'ONLINE' : health.status.toUpperCase()) : 'CHECKING'}
             </span>
           </div>
           </div>
