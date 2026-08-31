@@ -1,0 +1,45 @@
+name: Research or calibration feedback
+description: Challenge an assumption, metric, validation gate, or reproducibility claim
+title: "[Research]: "
+labels:
+  - research
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for making the evidence stronger. Please avoid including credentials, private data, or unpublished material.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Calibration
+        - Quantile skill
+        - Data provenance
+        - Promotion gates
+        - Operational interpretation
+        - Reproducibility
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: claim
+    attributes:
+      label: Claim or assumption being challenged
+      description: Point to the page, endpoint, metric, file, or statement.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence or reproduction steps
+      description: Include enough detail for another person to inspect the result.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Suggested test or improvement
+      description: What result would change your conclusion?
+    validations:
+      required: false

@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If GERT supports your research or teaching, please cite the software using this metadata."
+type: software
+title: "GERT: Grid Extreme Risk Toolkit"
+abstract: >-
+  Evidence-first decision-support software for power-grid tail risk,
+  probabilistic load research, scenario stress testing, and explicit
+  model-governance controls.
+authors:
+  - family-names: Goehner
+    given-names: Dresden
+repository-code: "https://github.com/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-"
+url: "https://gertgrid.space"
+license: MIT
+keywords:
+  - power systems
+  - extreme risk
+  - quantile forecasting
+  - ERCOT
+  - applied mathematics
