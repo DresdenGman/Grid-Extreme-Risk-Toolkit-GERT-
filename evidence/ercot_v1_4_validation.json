@@ -1,0 +1,87 @@
+{
+  "candidate_id": "ercot-delta-quantile-v1.4",
+  "validation_status": "rejected_candidate",
+  "summary": "The frozen candidate showed strong predictive skill at every reported quantile, but failed the predeclared calibration tolerance at Q90, Q95, and Q99. It is not authorized for production inference.",
+  "evaluation_window_start": "2026-08-21T00:00:00Z",
+  "evaluation_window_end": "2026-08-24T23:00:00Z",
+  "observations": 96,
+  "q50_mae_mw": 404.535,
+  "quantile_crossings": 0,
+  "quantile_metrics": [
+    {
+      "quantile": "q50",
+      "target_coverage": 0.5,
+      "empirical_coverage": 0.520833,
+      "absolute_coverage_error": 0.020833,
+      "pinball_skill_vs_baseline": 0.841492
+    },
+    {
+      "quantile": "q90",
+      "target_coverage": 0.9,
+      "empirical_coverage": 0.864583,
+      "absolute_coverage_error": 0.035417,
+      "pinball_skill_vs_baseline": 0.757824
+    },
+    {
+      "quantile": "q95",
+      "target_coverage": 0.95,
+      "empirical_coverage": 0.90625,
+      "absolute_coverage_error": 0.04375,
+      "pinball_skill_vs_baseline": 0.78482
+    },
+    {
+      "quantile": "q99",
+      "target_coverage": 0.99,
+      "empirical_coverage": 0.958333,
+      "absolute_coverage_error": 0.031667,
+      "pinball_skill_vs_baseline": 0.768279
+    }
+  ],
+  "gates": [
+    {
+      "gate": "Q50 calibration error",
+      "passed": true,
+      "observed": 0.020833,
+      "requirement": "absolute error <= 0.03"
+    },
+    {
+      "gate": "Q90 calibration error",
+      "passed": false,
+      "observed": 0.035417,
+      "requirement": "absolute error <= 0.03"
+    },
+    {
+      "gate": "Q95 calibration error",
+      "passed": false,
+      "observed": 0.04375,
+      "requirement": "absolute error <= 0.03"
+    },
+    {
+      "gate": "Q99 calibration error",
+      "passed": false,
+      "observed": 0.031667,
+      "requirement": "absolute error <= 0.03"
+    },
+    {
+      "gate": "Positive pinball skill",
+      "passed": true,
+      "observed": 0.757824,
+      "requirement": "skill > 0 at every quantile"
+    },
+    {
+      "gate": "Quantile monotonicity",
+      "passed": true,
+      "observed": 0,
+      "requirement": "crossings = 0"
+    }
+  ],
+  "all_gates_passed": false,
+  "data_provenance": "Official ERCOT system-load archives joined with ERA5 weather. Model and calibration parameters were frozen before evaluating the final 96-hour window.",
+  "limitations": [
+    "The final frozen window contains only 96 hourly observations and is not sufficient for production promotion by itself.",
+    "Strict calibration tolerance was missed at Q90, Q95, and Q99.",
+    "The candidate is retained as research evidence only; production prediction, scenario, backtest, and AI-analysis endpoints remain gated.",
+    "GERT is decision-support research and must not be used for autonomous grid control."
+  ],
+  "published_at": "2026-08-30T00:00:00Z"
+}

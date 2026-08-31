@@ -28,9 +28,8 @@ ERCOT_RAW_COLUMNS = (
     "solar_irradiance_wm2",
 )
 
-# These match the feature units exposed by the current GERT runtime.  Calendar
-# and lagged-load features will be declared in the artifact manifest only when
-# an operational feature store has been implemented.
+# These raw weather columns are joined with causal load history by the feature
+# builder.  The runtime ERCOT adapter independently builds the same load lags.
 SERVED_WEATHER_COLUMNS = (
     "temperature_c",
     "wind_speed_ms",

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Mapping
 
 from api.schemas import WeatherFeatures
 from features.weather import WeatherFeatureBuilder
@@ -24,7 +24,10 @@ class QuantileModelStub(ModelInterface):
         return "stub-v1"
 
     def predict(
-        self, features: WeatherFeatures, timestamp: datetime | None = None
+        self,
+        features: WeatherFeatures,
+        timestamp: datetime | None = None,
+        operational_features: Mapping[str, float] | None = None,
     ) -> Dict[str, float]:
         derived = self._feature_builder.build(features)
 

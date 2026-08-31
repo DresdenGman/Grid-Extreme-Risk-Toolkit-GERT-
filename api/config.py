@@ -27,8 +27,10 @@ class RuntimeConfig:
         self._app_env = self._parse_app_env()
         self._allowed_origins = self._parse_allowed_origins()
         self._database_url = self._parse_database_url()
-        self._model_backend = os.getenv("MODEL_BACKEND", "stub").lower()
-        self._model_artifact_dir = os.getenv("MODEL_ARTIFACT_DIR", "")
+        self._model_backend = self._parse_model_backend()
+        self._model_artifact_dir = os.getenv("MODEL_ARTIFACT_DIR", "").strip()
+        if self._model_backend == "real" and not self._model_artifact_dir:
+            raise ValueError("MODEL_ARTIFACT_DIR is required when MODEL_BACKEND=real")
 
     # -- host --
 
@@ -126,6 +128,13 @@ class RuntimeConfig:
         return self._database_url
 
     # -- model backend --
+
+    @staticmethod
+    def _parse_model_backend() -> str:
+        raw = os.getenv("MODEL_BACKEND", "stub").strip().lower()
+        if raw not in {"stub", "real"}:
+            raise ValueError("MODEL_BACKEND must be either 'stub' or 'real'")
+        return raw
 
     @property
     def model_backend(self) -> str:

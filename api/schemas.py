@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -15,7 +15,7 @@ class WeatherFeatures(BaseModel):
 
 
 class PredictRequest(BaseModel):
-    region: str = Field(..., example="ERCOT_NORTH")
+    region: str = Field(..., json_schema_extra={"example": "ERCOT_SYSTEM"})
     date: datetime
     weather_features: WeatherFeatures
 
@@ -42,7 +42,7 @@ class ScenarioRequest(BaseModel):
     baseline_request: PredictRequest
     perturbations: Dict[str, float] = Field(
         ...,
-        example={"temperature": 5.0, "wind_speed": -10.0},
+        json_schema_extra={"example": {"temperature": 5.0, "wind_speed": -10.0}},
         description="Additive or replacement changes to features",
     )
 
@@ -125,4 +125,63 @@ class EventPlaybackResponse(BaseModel):
     total_hours: int
     steps: List[EventStep]
     logs: List[EventLog]
+    provenance: Literal["verified_observation", "synthetic_reconstruction"]
+    methodology_note: str
 
+
+class ProductCapabilities(BaseModel):
+    official_ercot_data: bool
+    probabilistic_prediction: bool
+    scenario_analysis: bool
+    validated_backtest: bool
+    ai_analysis: bool
+    presentation_mode: bool = True
+
+
+class ProductStatus(BaseModel):
+    status: Literal["operational", "degraded"]
+    environment: str
+    model_status: Literal[
+        "validated_production",
+        "provisional_candidate",
+        "rejected_candidate",
+        "demonstration_stub",
+    ]
+    model_version: str
+    capabilities: ProductCapabilities
+
+
+class QuantileValidationMetric(BaseModel):
+    quantile: Literal["q50", "q90", "q95", "q99"]
+    target_coverage: float = Field(..., ge=0, le=1)
+    empirical_coverage: float = Field(..., ge=0, le=1)
+    absolute_coverage_error: float = Field(..., ge=0, le=1)
+    pinball_skill_vs_baseline: float
+
+
+class ValidationGate(BaseModel):
+    gate: str
+    passed: bool
+    observed: float
+    requirement: str
+
+
+class ModelEvidence(BaseModel):
+    candidate_id: str
+    validation_status: Literal[
+        "validated_production",
+        "provisional_candidate",
+        "rejected_candidate",
+    ]
+    summary: str
+    evaluation_window_start: str
+    evaluation_window_end: str
+    observations: int = Field(..., gt=0)
+    q50_mae_mw: float = Field(..., ge=0)
+    quantile_crossings: int = Field(..., ge=0)
+    quantile_metrics: List[QuantileValidationMetric]
+    gates: List[ValidationGate]
+    all_gates_passed: bool
+    data_provenance: str
+    limitations: List[str]
+    published_at: str

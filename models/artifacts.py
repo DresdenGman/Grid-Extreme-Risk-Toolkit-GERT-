@@ -56,6 +56,7 @@ class ModelMetadata:
     supported_regions: List[str]
     training_data: Dict[str, str]
     runtime: ModelRuntime
+    validation_status: str
 
 
 @dataclass(frozen=True)
@@ -80,7 +81,7 @@ class LoadedModelArtifact:
 #  Constants
 # ---------------------------------------------------------------------------
 
-SUPPORTED_SCHEMA_VERSIONS = {"1.0", "1.1", "1.2"}
+SUPPORTED_SCHEMA_VERSIONS = {"1.0", "1.1", "1.2", "1.3"}
 SUPPORTED_MODEL_TYPE = "sklearn_quantile_bundle"
 FEATURES_BY_SCHEMA = {
     "1.0": ["temperature", "wind_speed", "solar_irradiance"],
@@ -91,6 +92,13 @@ FEATURES_BY_SCHEMA = {
     "1.2": [
         "temperature", "wind_speed", "solar_irradiance",
         "hour", "day_of_week", "month", "is_weekend", "year",
+    ],
+    "1.3": [
+        "temperature", "wind_speed", "solar_irradiance",
+        "hour", "day_of_week", "month", "is_weekend", "year",
+        "lag_load_1h", "lag_load_24h", "lag_load_168h",
+        "rolling_load_mean_24h", "rolling_load_std_24h",
+        "rolling_load_mean_168h", "rolling_load_std_168h",
     ],
 }
 EXPECTED_QUANTILES = [0.5, 0.9, 0.95, 0.99]
@@ -116,8 +124,29 @@ FEATURE_UNITS_BY_SCHEMA = {
         "is_weekend": "binary",
         "year": "ercot_local_year",
     },
+    "1.3": {
+        **BASE_FEATURE_UNITS,
+        "hour": "local_hour",
+        "day_of_week": "integer_0_monday",
+        "month": "integer_1_january",
+        "is_weekend": "binary",
+        "year": "ercot_local_year",
+        "lag_load_1h": "MW",
+        "lag_load_24h": "MW",
+        "lag_load_168h": "MW",
+        "rolling_load_mean_24h": "MW",
+        "rolling_load_std_24h": "MW",
+        "rolling_load_mean_168h": "MW",
+        "rolling_load_std_168h": "MW",
+    },
 }
 ALLOWED_REGIONS = {"ERCOT_SYSTEM", "ERCOT_NORTH", "CAISO", "PJM", "NYISO"}
+ALLOWED_VALIDATION_STATUSES = {
+    "legacy_candidate",
+    "provisional_candidate",
+    "validated_production",
+    "rejected_candidate",
+}
 REQUIRED_PROVENANCE_KEYS = {"source", "provenance"}
 REQUIRED_RUNTIME_KEYS = {"python_version", "scikit_learn_version"}
 ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
@@ -295,6 +324,12 @@ def validate_metadata(raw: dict) -> ModelMetadata:
             f"runtime missing required keys: {missing_rt}"
         )
 
+    validation_status = raw.get("validation_status", "legacy_candidate")
+    if validation_status not in ALLOWED_VALIDATION_STATUSES:
+        raise ModelArtifactError(
+            f"Unsupported validation_status: {validation_status!r}"
+        )
+
     return ModelMetadata(
         artifact_schema_version=version,
         model_name=model_name,
@@ -316,6 +351,7 @@ def validate_metadata(raw: dict) -> ModelMetadata:
             python_version=rt.get("python_version", "UNSPECIFIED"),
             scikit_learn_version=rt.get("scikit_learn_version", "UNSPECIFIED"),
         ),
+        validation_status=validation_status,
     )
 
 

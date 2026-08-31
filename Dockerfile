@@ -23,6 +23,7 @@ COPY db/ db/
 COPY domain/ domain/
 COPY alerts/ alerts/
 COPY bulletin/ bulletin/
+COPY evidence/ evidence/
 COPY generate_bulletin.py .
 COPY main.py .
 COPY requirements.txt .
@@ -33,4 +34,7 @@ RUN mkdir -p /data && chown gert:gert /data
 USER gert
 EXPOSE 8000
 
-CMD ["uvicorn", "api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:' + __import__('os').environ.get('PORT', '8000') + '/ready', timeout=3)"
+
+CMD ["sh", "-c", "exec uvicorn api.app:app --host 0.0.0.0 --port ${PORT:-8000}"]

@@ -1,9 +1,9 @@
 """Build a serving-compatible ERCOT training feature table.
 
-The first deployable ERCOT model deliberately uses only the three weather
-inputs the production API can supply today.  Lagged load features are valuable
-but require a separately operated feature store; training on them before that
-store exists would create training-serving skew.
+Schema 1.3 adds causal load lags and rolling statistics.  Every operational
+feature is shifted by at least one hour, so the target observation can never
+leak into its own feature row.  The production ERCOT adapter builds the same
+feature names from official recent history.
 """
 
 from __future__ import annotations
@@ -23,6 +23,9 @@ from training.ercot.contracts import (
 SERVED_FEATURE_COLUMNS = (
     "temperature", "wind_speed", "solar_irradiance",
     "hour", "day_of_week", "month", "is_weekend", "year",
+    "lag_load_1h", "lag_load_24h", "lag_load_168h",
+    "rolling_load_mean_24h", "rolling_load_std_24h",
+    "rolling_load_mean_168h", "rolling_load_std_168h",
 )
 OUTPUT_COLUMNS = ("timestamp_utc", "actual_load_mw", *SERVED_FEATURE_COLUMNS)
 
@@ -36,10 +39,19 @@ def build_serving_feature_rows(
     ``WeatherFeatures`` / real-artifact contract exactly.
     """
     validate_hourly_rows(rows)
-    features: list[dict[str, float | str]] = []
-    for row in rows:
+    base_rows: list[dict[str, float | str]] = []
+    loads = [float(row["actual_load_mw"]) for row in rows]
+    for index, row in enumerate(rows):
+        if index < 168:
+            continue
         calendar = calendar_features(parse_utc_timestamp(row["timestamp_utc"]))
-        features.append(
+        prior_24 = loads[index - 24:index]
+        prior_168 = loads[index - 168:index]
+        mean_24 = sum(prior_24) / len(prior_24)
+        mean_168 = sum(prior_168) / len(prior_168)
+        std_24 = (sum((value - mean_24) ** 2 for value in prior_24) / len(prior_24)) ** 0.5
+        std_168 = (sum((value - mean_168) ** 2 for value in prior_168) / len(prior_168)) ** 0.5
+        base_rows.append(
             {
                 "timestamp_utc": str(row["timestamp_utc"]),
                 "actual_load_mw": float(row["actual_load_mw"]),
@@ -52,9 +64,16 @@ def build_serving_feature_rows(
                     .astimezone(ZoneInfo("America/Chicago"))
                     .year
                 ),
+                "lag_load_1h": loads[index - 1],
+                "lag_load_24h": loads[index - 24],
+                "lag_load_168h": loads[index - 168],
+                "rolling_load_mean_24h": mean_24,
+                "rolling_load_std_24h": std_24,
+                "rolling_load_mean_168h": mean_168,
+                "rolling_load_std_168h": std_168,
             }
         )
-    return features
+    return base_rows
 
 
 def validate_serving_feature_rows(rows: Sequence[Mapping[str, Any]]) -> None:

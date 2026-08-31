@@ -88,11 +88,17 @@ export default function EventReplay() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
+      {data.provenance === 'synthetic_reconstruction' && (
+        <div className="border border-[#9a6200] bg-[#eee6cf] px-5 py-4 text-sm text-[#5f4300]" role="note">
+          <strong className="technical-label block text-[#9a6200]">Educational reconstruction</strong>
+          <span className="mt-1 block">{data.methodology_note}</span>
+        </div>
+      )}
       
       {/* Header with KPI Ticker */}
       <div className="flex flex-col gap-4 border-b border-white/[0.09] pb-7 md:flex-row md:items-end md:justify-between">
         <div>
-          <span className="technical-label text-[#175a73]">Event replay / Historical decision trace</span>
+          <span className="technical-label text-[#175a73]">Event replay / Reconstructed decision trace</span>
           <h1 className="display-serif mt-3 flex items-center gap-3 text-4xl tracking-[-0.04em] text-[#141414] sm:text-5xl">
             <Snowflake className="h-8 w-8 text-[#175a73]" />
             {data.title}

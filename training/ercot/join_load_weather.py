@@ -66,7 +66,15 @@ def read_weather(weather_dir: Path) -> pd.DataFrame:
         frames.append(per_year)
     if not frames:
         raise FileNotFoundError(f"No ERA5 weather JSON files found in {weather_dir}")
-    return pd.concat(frames, ignore_index=True).sort_values("timestamp_utc")
+    combined = pd.concat(frames, ignore_index=True).sort_values("timestamp_utc")
+    duplicate_rows = combined.loc[combined["timestamp_utc"].duplicated(keep=False)]
+    if not duplicate_rows.empty:
+        value_columns = [column for column in combined.columns if column != "timestamp_utc"]
+        conflicts = duplicate_rows.groupby("timestamp_utc")[value_columns].nunique(dropna=False)
+        if (conflicts > 1).any().any():
+            raise ValueError("Overlapping ERA5 files contain conflicting hourly values")
+        combined = combined.drop_duplicates("timestamp_utc", keep="first")
+    return combined.sort_values("timestamp_utc")
 
 
 def main() -> None:

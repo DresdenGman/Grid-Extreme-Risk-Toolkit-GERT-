@@ -6,7 +6,7 @@ import { Activity, LayoutDashboard, CloudLightning, LineChart, History, BookOpen
 import { clsx } from 'clsx';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import type { HealthStatus } from '@/lib/types';
+import type { ProductStatus } from '@/lib/types';
 
 const navItems = [
   { name: 'Live Monitor', href: '/', icon: LayoutDashboard },
@@ -18,23 +18,32 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [health, setHealth] = useState<HealthStatus | null>(null);
+  const [status, setStatus] = useState<ProductStatus | null>(null);
   const [presentationMode, setPresentationMode] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setPresentationMode(new URLSearchParams(window.location.search).get('demo') === '1');
-    api.health()
+    api.status()
       .then((env) => {
-        if (!cancelled) setHealth(env.data);
+        if (!cancelled) setStatus(env.data);
       })
-      .catch((e) => console.warn('Health check failed', e));
+      .catch((e) => console.warn('Product status check failed', e));
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const isHealthy = health?.status === 'ok';
+  const isHealthy = status?.status === 'operational';
+  const modelLabel = status?.model_status === 'validated_production'
+    ? 'VALIDATED'
+    : status?.model_status === 'provisional_candidate'
+      ? 'PROVISIONAL'
+      : status?.model_status === 'rejected_candidate'
+        ? 'REJECTED'
+        : status
+          ? 'GATED'
+          : '—';
 
   return (
     <aside className="hidden h-full w-[276px] shrink-0 flex-col border-r border-[#141414] bg-[#e4e3e0] md:flex">
@@ -52,8 +61,8 @@ export default function Sidebar() {
           <div className="technical-label pl-[54px] text-[8px] text-[#87847e]">
             {presentationMode
               ? 'Model: tail-qrf.demo • Presentation'
-              : health
-              ? `Model: ${health.backend} • Env: ${health.env} • AI: ${health.ai_enabled ? 'ON' : 'OFF'}`
+              : status
+              ? `Model: ${status.model_version} • ${modelLabel} • AI: ${status.capabilities.ai_analysis ? 'ON' : 'OFF'}`
               : 'Model: loading…'}
           </div>
         </div>
@@ -95,13 +104,13 @@ export default function Sidebar() {
           <div className="flex flex-1 items-center justify-between">
             <span className="technical-label text-[#6d6b66]">System</span>
             <span className={`technical-label ${isHealthy ? 'text-[#ff4d00]' : 'text-amber-700'}`}>
-              {health ? (presentationMode ? 'SIMULATED' : isHealthy ? 'ONLINE' : health.status.toUpperCase()) : 'CHECKING'}
+              {status ? (presentationMode ? 'SIMULATED' : status.status.toUpperCase()) : 'CHECKING'}
             </span>
           </div>
           </div>
           <div className="grid grid-cols-2 gap-2 border-t border-black/20 pt-3 text-[10px]">
-            <span className="text-[#87847e]">MODEL</span><span className="truncate text-right font-mono text-[#454545]">{health?.backend ?? '—'}</span>
-            <span className="text-[#87847e]">ENV</span><span className="truncate text-right font-mono text-[#454545]">{health?.env ?? '—'}</span>
+            <span className="text-[#87847e]">MODEL</span><span className="truncate text-right font-mono text-[#454545]">{modelLabel}</span>
+            <span className="text-[#87847e]">ENV</span><span className="truncate text-right font-mono text-[#454545]">{status?.environment ?? '—'}</span>
           </div>
         </div>
       </div>

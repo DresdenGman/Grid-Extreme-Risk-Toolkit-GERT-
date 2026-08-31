@@ -108,6 +108,27 @@ class TestValidateMetadata:
         }
         assert validate_metadata(d).artifact_schema_version == "1.1"
 
+    def test_schema_1_3_operational_features(self, valid_metadata_dict):
+        d = dict(valid_metadata_dict)
+        d["artifact_schema_version"] = "1.3"
+        d["feature_names"] = [
+            "temperature", "wind_speed", "solar_irradiance",
+            "hour", "day_of_week", "month", "is_weekend", "year",
+            "lag_load_1h", "lag_load_24h", "lag_load_168h",
+            "rolling_load_mean_24h", "rolling_load_std_24h",
+            "rolling_load_mean_168h", "rolling_load_std_168h",
+        ]
+        d["feature_units"] = {
+            "temperature": "degC", "wind_speed": "m/s", "solar_irradiance": "W/m2",
+            "hour": "local_hour", "day_of_week": "integer_0_monday",
+            "month": "integer_1_january", "is_weekend": "binary",
+            "year": "ercot_local_year",
+            "lag_load_1h": "MW", "lag_load_24h": "MW", "lag_load_168h": "MW",
+            "rolling_load_mean_24h": "MW", "rolling_load_std_24h": "MW",
+            "rolling_load_mean_168h": "MW", "rolling_load_std_168h": "MW",
+        }
+        assert validate_metadata(d).artifact_schema_version == "1.3"
+
     def test_unsupported_schema_version(self, valid_metadata_dict):
         d = dict(valid_metadata_dict)
         d["artifact_schema_version"] = "0.9"

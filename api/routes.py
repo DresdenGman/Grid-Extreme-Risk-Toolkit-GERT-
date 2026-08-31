@@ -1,12 +1,12 @@
 import json
 import math
-import random
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 import os
 
 import httpx
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
@@ -14,7 +14,7 @@ import generate_bulletin
 from api.deps import ai_client, logger, model_service, alert_manager
 from api.config import config
 from api.limiting import limiter
-from db.connection import get_db, init_db
+from db.connection import get_db, get_db_context
 from db.repository import PredictionRepository, AlertRepository, GridLoadRepository
 from api.schemas import (
     AIAnalysisResponse,
@@ -26,6 +26,9 @@ from api.schemas import (
     EventPlaybackResponse,
     EventStep,
     ModelMetrics,
+    ModelEvidence,
+    ProductCapabilities,
+    ProductStatus,
     PredictRequest,
     PredictionOut,
     ScenarioRequest,
@@ -38,6 +41,8 @@ from services.region import REGION_COORDS
 from services.cache import weather_cache, predict_cache
 from data.factory import get_data_adapter
 from data.base import GridLoadData
+from data.ercot import ERCOTAdapter
+from models.real_adapter import RealModelAdapter
 from api.validators import validate_region, validate_temperature, validate_wind_speed, validate_solar_irradiance
 
 # Services
@@ -45,6 +50,58 @@ from api.deps import risk_service, scenario_service
 
 
 router = APIRouter()
+
+_MODEL_EVIDENCE_PATH = (
+    Path(__file__).resolve().parents[1] / "evidence" / "ercot_v1_4_validation.json"
+)
+
+
+def _request_id(request: Request | None) -> str:
+    return str(getattr(getattr(request, "state", None), "request_id", "unavailable"))
+
+
+def _service_failure(message: str, request: Request | None) -> HTTPException:
+    return HTTPException(status_code=500, detail=f"{message} Reference: {_request_id(request)}")
+
+
+def _model_validation_status() -> str:
+    if not isinstance(model_service, RealModelAdapter):
+        return "demonstration_stub"
+    status = model_service.validation_status
+    if status in {"validated_production", "provisional_candidate", "rejected_candidate"}:
+        return status
+    return "provisional_candidate"
+
+
+def _validated_production_model() -> bool:
+    return (
+        isinstance(model_service, RealModelAdapter)
+        and model_service.validation_status == "validated_production"
+    )
+
+
+async def _operational_model_context(
+    req: PredictRequest,
+) -> tuple[dict[str, float] | None, datetime | None]:
+    """Build server-owned features required by the promoted artifact contract."""
+    if not isinstance(model_service, RealModelAdapter):
+        return None, None
+    if not model_service.requires_operational_features:
+        return None, None
+    adapter = get_data_adapter(req.region)
+    if not isinstance(adapter, ERCOTAdapter):
+        raise HTTPException(
+            status_code=422,
+            detail="The active model requires ERCOT system operational context.",
+        )
+    try:
+        return await adapter.fetch_operational_features(req.date)
+    except Exception as exc:
+        logger.error("Operational model feature fetch failed: %s", exc)
+        raise HTTPException(
+            status_code=503,
+            detail="Official ERCOT history is unavailable or stale; prediction was not produced.",
+        ) from exc
 
 
 @router.get("/health")
@@ -56,6 +113,45 @@ async def health_check():
         "ai_enabled": ai_client is not None,
         "env": config.app_env,
     }
+
+
+@router.get("/status", response_model=ProductStatus)
+async def product_status():
+    """Expose public capability state without returning configuration or secrets."""
+    validated_model = _validated_production_model()
+    official_data = ERCOTAdapter().official_api_configured
+    backtest_ready = validated_model and all(
+        model_service.get_artifact_file(name).is_file()
+        for name in ("backtest_sample.json", "evaluation_report.json")
+    )
+    return ProductStatus(
+        status="operational" if official_data and validated_model else "degraded",
+        environment=config.app_env,
+        model_status=_model_validation_status(),
+        model_version=model_service.get_version(),
+        capabilities=ProductCapabilities(
+            official_ercot_data=official_data,
+            probabilistic_prediction=validated_model,
+            scenario_analysis=validated_model,
+            validated_backtest=bool(backtest_ready),
+            ai_analysis=ai_client is not None and validated_model,
+        ),
+    )
+
+
+@router.get("/model/evidence", response_model=ModelEvidence)
+@limiter.limit("30/minute")
+async def model_evidence(request: Request):
+    """Return versioned, sanitized evidence for the latest evaluated candidate."""
+    try:
+        payload = json.loads(_MODEL_EVIDENCE_PATH.read_text(encoding="utf-8"))
+        return ModelEvidence.model_validate(payload)
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        logger.error("Model evidence unavailable: %s", exc)
+        raise HTTPException(
+            status_code=503,
+            detail="Versioned model evidence is temporarily unavailable.",
+        ) from exc
 
 
 @router.get("/weather/live", response_model=WeatherFeatures)
@@ -132,12 +228,17 @@ async def get_current_load(region: str, request: Request):
         }
     except Exception as e:
         logger.error(f"Load data fetch failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch load data: {str(e)}")
+        raise _service_failure("Current load service failed.", request) from e
 
 
 @router.post("/predict", response_model=PredictionOut, status_code=200)
 @limiter.limit("60/minute")
 async def predict_risk(req: PredictRequest, request: Request, db: Session = Depends(get_db)):
+    if config.is_production and not _validated_production_model():
+        raise HTTPException(
+            status_code=503,
+            detail="Validated probabilistic model is not yet available in production.",
+        )
     try:
         # Validate inputs
         req.region = validate_region(req.region)
@@ -151,6 +252,8 @@ async def predict_risk(req: PredictRequest, request: Request, db: Session = Depe
                 "path": request.url.path,
             },
         )
+        operational_features, feature_origin = await _operational_model_context(req)
+
         # Try to fetch real load data to enhance prediction
         try:
             adapter = get_data_adapter(req.region)
@@ -209,11 +312,15 @@ async def predict_risk(req: PredictRequest, request: Request, db: Session = Depe
                     if real_load and real_load.capacity_source == "official_adequacy"
                     else None
                 ),
+                operational_features=operational_features,
             )
             predict_cache.set(cache_key, result, ttl_seconds=30)
         result.diagnostics["temperature"] = req.weather_features.temperature
         result.diagnostics["wind_speed"] = req.weather_features.wind_speed
         result.diagnostics["solar_irradiance"] = req.weather_features.solar_irradiance
+        if feature_origin is not None:
+            result.diagnostics["operational_features_source"] = "official_ercot_history"
+            result.diagnostics["operational_features_as_of"] = feature_origin.isoformat()
         
         # Enhance diagnostics with real data info
         if real_load:
@@ -257,18 +364,19 @@ async def predict_risk(req: PredictRequest, request: Request, db: Session = Depe
                     # Save alert record
                     if alert_results:
                         try:
-                            AlertRepository.create(
-                                db=db,
-                                region=req.region,
-                                risk_level=result.risk_level.value,
-                                risk_score=result.risk_score,
-                                p99_load=result.q99_load_mw,
-                                capacity=result.diagnostics.get("capacity_used", 60000),
-                                margin=margin,
-                                channels_attempted=list(alert_results.keys()),
-                                channels_successful=[k for k, v in alert_results.items() if v],
-                                reason=f"Risk threshold breached: {result.risk_level.value}",
-                            )
+                            with get_db_context() as alert_db:
+                                AlertRepository.create(
+                                    db=alert_db,
+                                    region=req.region,
+                                    risk_level=result.risk_level.value,
+                                    risk_score=result.risk_score,
+                                    p99_load=result.q99_load_mw,
+                                    capacity=result.diagnostics.get("capacity_used", 60000),
+                                    margin=margin,
+                                    channels_attempted=list(alert_results.keys()),
+                                    channels_successful=[k for k, v in alert_results.items() if v],
+                                    reason=f"Risk threshold breached: {result.risk_level.value}",
+                                )
                         except Exception as alert_db_error:
                             logger.warning(f"Failed to save alert record: {alert_db_error}")
                 
@@ -284,19 +392,38 @@ async def predict_risk(req: PredictRequest, request: Request, db: Session = Depe
         raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Prediction Error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise _service_failure("Prediction service failed.", request) from e
 
 
 @router.post("/scenario", response_model=ScenarioResponse)
 @limiter.limit("20/minute")
 async def run_scenario(req: ScenarioRequest, request: Request):
+    if config.is_production and not _validated_production_model():
+        raise HTTPException(
+            status_code=503,
+            detail="Scenario analysis requires a validated production model.",
+        )
     try:
-        return scenario_service.run(req)
+        operational_features, _ = await _operational_model_context(req.baseline_request)
+        adapter = get_data_adapter(req.baseline_request.region)
+        live_context = await adapter.fetch_current_load(req.baseline_request.region)
+        capacity_mw = (
+            live_context.capacity_mw
+            if live_context.capacity_source == "official_adequacy"
+            else None
+        )
+        return scenario_service.run(
+            req,
+            operational_features=operational_features,
+            capacity_mw=capacity_mw,
+        )
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         logger.error(f"Scenario Error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise _service_failure("Scenario service failed.", request) from e
 
 
 @router.post("/analyze", response_model=AIAnalysisResponse)
@@ -305,10 +432,18 @@ async def analyze_risk(req: PredictRequest, request: Request):
     """
     AI-Powered Analysis:
     1) Reuse RiskService.predict to generate a truth snapshot.
-    2) Send snapshot to Gemini (or return mock if not configured).
+    2) Send the typed snapshot to Gemini when the optional service is enabled.
     """
+    if config.is_production and not _validated_production_model():
+        raise HTTPException(
+            status_code=503,
+            detail="AI analysis requires a validated production model.",
+        )
+    if not ai_client:
+        raise HTTPException(status_code=503, detail="AI analysis is not enabled.")
     try:
-        pred = risk_service.predict(req)
+        operational_features, _ = await _operational_model_context(req)
+        pred = risk_service.predict(req, operational_features=operational_features)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     snapshot = {
@@ -324,21 +459,6 @@ async def analyze_risk(req: PredictRequest, request: Request):
         "model": {"type": "quantile", "version": pred.diagnostics.get("model_version")},
     }
 
-    if not ai_client:
-        return AIAnalysisResponse(
-            headline=f"{pred.risk_level} Risk Detected in {req.region}",
-            drivers=[
-                AIDriver(
-                    factor="Simulated Factor",
-                    direction="increase",
-                    evidence="AI Key missing, running in offline mode",
-                )
-            ],
-            uncertainty="N/A",
-            actions=AIActions(operator=["Check API Key"], public=["Contact Admin"]),
-            confidence="LOW",
-        )
-
     try:
         from api.deps import types  # optional import for SDK config
 
@@ -347,7 +467,7 @@ async def analyze_risk(req: PredictRequest, request: Request):
         Analyze the following JSON snapshot of grid conditions.
 
         SNAPSHOT DATA:
-        {snapshot}
+        {json.dumps(snapshot, default=str, sort_keys=True)}
 
         INSTRUCTIONS:
         1. Headline: Summarize the risk situation in one punchy sentence.
@@ -373,14 +493,17 @@ async def analyze_risk(req: PredictRequest, request: Request):
         return AIAnalysisResponse(**parsed)
     except Exception as e:
         logger.error(f"AI Analysis Failed: {e}")
-        raise HTTPException(status_code=500, detail="AI Analysis Service Unavailable")
+        raise HTTPException(
+            status_code=503,
+            detail=f"AI analysis service is unavailable. Reference: {_request_id(request)}",
+        ) from e
 
 
 @router.get("/predictions/history")
 @limiter.limit("30/minute")
 async def get_prediction_history(
     region: Optional[str] = None,
-    limit: int = 100,
+    limit: int = Query(100, ge=1, le=200),
     request: Request = None,
     db: Session = Depends(get_db),
 ):
@@ -392,7 +515,8 @@ async def get_prediction_history(
         limit: Maximum number of records to return
     """
     try:
-        records = PredictionRepository.get_latest(db=db, region=region, limit=limit)
+        validated_region = validate_region(region) if region else None
+        records = PredictionRepository.get_latest(db=db, region=validated_region, limit=limit)
         return {
             "count": len(records),
             "predictions": [
@@ -410,22 +534,25 @@ async def get_prediction_history(
                 for r in records
             ],
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to fetch prediction history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise _service_failure("Prediction history service failed.", request) from e
 
 
 @router.get("/alerts/history")
 @limiter.limit("30/minute")
 async def get_alert_history(
     region: Optional[str] = None,
-    limit: int = 50,
+    limit: int = Query(50, ge=1, le=200),
     request: Request = None,
     db: Session = Depends(get_db),
 ):
     """Get alert history."""
     try:
-        records = AlertRepository.get_latest(db=db, region=region, limit=limit)
+        validated_region = validate_region(region) if region else None
+        records = AlertRepository.get_latest(db=db, region=validated_region, limit=limit)
         return {
             "count": len(records),
             "alerts": [
@@ -441,9 +568,11 @@ async def get_alert_history(
                 for r in records
             ],
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to fetch alert history: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise _service_failure("Alert history service failed.", request) from e
 
 
 @router.get("/backtest", response_model=BacktestResponse)
@@ -451,8 +580,11 @@ async def get_alert_history(
 async def run_backtest(request: Request):
     from models.real_adapter import RealModelAdapter
 
-    if not isinstance(model_service, RealModelAdapter):
-        raise HTTPException(status_code=503, detail="Validated backtest unavailable while MODEL_BACKEND is not real")
+    if not _validated_production_model():
+        raise HTTPException(
+            status_code=503,
+            detail="Validated backtest unavailable until a production-validated artifact is active",
+        )
     sample_path = model_service.get_artifact_file("backtest_sample.json")
     report_path = model_service.get_artifact_file("evaluation_report.json")
     if not sample_path.is_file() or not report_path.is_file():
@@ -504,11 +636,13 @@ async def get_bulletin(request: Request):
         return HTMLResponse(content=html_content, status_code=200)
     except Exception as e:
         logger.error(f"Bulletin Generation Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise _service_failure("Bulletin service failed.", request) from e
 
 
 @router.get("/events/playback/{event_id}", response_model=EventPlaybackResponse)
 async def get_event_playback(event_id: str):
+    if event_id not in {"polar-vortex", "ercot-2021-presentation"}:
+        raise HTTPException(status_code=404, detail="Event reconstruction not found.")
     hours = 48
     steps = []
     logs = []
@@ -528,7 +662,7 @@ async def get_event_playback(event_id: str):
 
         capacity = start_capacity
         if h > 18:
-            loss = (h - 18) * 1500 + random.randint(0, 500)
+            loss = (h - 18) * 1500 + 250 * (1 + math.sin(h * 1.7))
             capacity = max(45000, start_capacity - loss)
 
         gert_p99 = actual_load + 2000 + (abs(temp) * 300)
@@ -564,7 +698,7 @@ async def get_event_playback(event_id: str):
                 )
             )
 
-        actual_load += random.gauss(0, 300)
+        actual_load += 180 * math.sin(h * 0.83)
 
         steps.append(
             EventStep(
@@ -584,4 +718,9 @@ async def get_event_playback(event_id: str):
         total_hours=hours,
         steps=steps,
         logs=logs,
+        provenance="synthetic_reconstruction",
+        methodology_note=(
+            "Deterministic educational reconstruction. Values are not an official ERCOT "
+            "event record and are not evidence of historical GERT performance."
+        ),
     )

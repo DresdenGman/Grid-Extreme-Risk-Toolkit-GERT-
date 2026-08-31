@@ -133,6 +133,8 @@ export interface EventPlaybackResponse {
   total_hours: number;
   steps: EventStep[];
   logs: EventLog[];
+  provenance: 'verified_observation' | 'synthetic_reconstruction';
+  methodology_note: string;
 }
 
 export interface GridLoadResponse {
@@ -153,11 +155,58 @@ export interface HealthStatus {
   env: string;
 }
 
+export interface ProductStatus {
+  status: 'operational' | 'degraded';
+  environment: string;
+  model_status: 'validated_production' | 'provisional_candidate' | 'rejected_candidate' | 'demonstration_stub';
+  model_version: string;
+  capabilities: {
+    official_ercot_data: boolean;
+    probabilistic_prediction: boolean;
+    scenario_analysis: boolean;
+    validated_backtest: boolean;
+    ai_analysis: boolean;
+    presentation_mode: boolean;
+  };
+}
+
+export interface QuantileValidationMetric {
+  quantile: 'q50' | 'q90' | 'q95' | 'q99';
+  target_coverage: number;
+  empirical_coverage: number;
+  absolute_coverage_error: number;
+  pinball_skill_vs_baseline: number;
+}
+
+export interface ValidationGate {
+  gate: string;
+  passed: boolean;
+  observed: number;
+  requirement: string;
+}
+
+export interface ModelEvidence {
+  candidate_id: string;
+  validation_status: 'validated_production' | 'provisional_candidate' | 'rejected_candidate';
+  summary: string;
+  evaluation_window_start: string;
+  evaluation_window_end: string;
+  observations: number;
+  q50_mae_mw: number;
+  quantile_crossings: number;
+  quantile_metrics: QuantileValidationMetric[];
+  gates: ValidationGate[];
+  all_gates_passed: boolean;
+  data_provenance: string;
+  limitations: string[];
+  published_at: string;
+}
+
 // --- Data Provenance ---
 
 export type DataMode = 'live' | 'demo';
 
-export type Provenance = 'live_api' | 'simulated_demo';
+export type Provenance = 'live_api' | 'simulated_demo' | 'versioned_release_evidence';
 
 export interface DataEnvelope<T> {
   data: T;

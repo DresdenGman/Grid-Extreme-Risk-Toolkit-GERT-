@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict, Mapping
 
 from api.schemas import PredictRequest, PredictionOut, WeatherFeatures
 from models.interfaces import ModelInterface
@@ -35,13 +35,20 @@ class RiskService:
         self.model = model
         self.scorer = scorer or RiskScorer()
 
-    def predict(self, req: PredictRequest, capacity_mw: float | None = None) -> PredictionOut:
+    def predict(
+        self,
+        req: PredictRequest,
+        capacity_mw: float | None = None,
+        operational_features: Mapping[str, float] | None = None,
+    ) -> PredictionOut:
         if not self.model.supports_region(req.region):
             raise ValueError(
                 f"Model {self.model.get_version()} does not support region {req.region}"
             )
         capacity = capacity_mw if capacity_mw is not None else get_region_capacity(req.region)
-        quantiles = self._predict_quantiles(req.weather_features, req.date)
+        quantiles = self._predict_quantiles(
+            req.weather_features, req.date, operational_features
+        )
 
         risk = self.scorer.score(p99_load_mw=quantiles.q99, capacity_mw=capacity)
         financials = calculate_financials(p99_load_mw=quantiles.q99, capacity_mw=capacity)
@@ -65,9 +72,14 @@ class RiskService:
         )
 
     def _predict_quantiles(
-        self, features: WeatherFeatures, timestamp: datetime
+        self,
+        features: WeatherFeatures,
+        timestamp: datetime,
+        operational_features: Mapping[str, float] | None = None,
     ) -> QuantilePrediction:
-        raw: Dict[str, float] = self.model.predict(features, timestamp)
+        raw: Dict[str, float] = self.model.predict(
+            features, timestamp, operational_features
+        )
         fixed = enforce_quantile_monotonicity(raw)
         return QuantilePrediction(
             q50=float(fixed["q50"]),

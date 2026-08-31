@@ -20,10 +20,12 @@ export default function ScenarioLab() {
   
   const [result, setResult] = useState<ScenarioResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // AI State
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<AIAnalysisResponse | null>(null);
+  const [analysisNotice, setAnalysisNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('demo') !== '1') return;
@@ -67,6 +69,7 @@ export default function ScenarioLab() {
   const runSimulation = async () => {
     setLoading(true);
     setAnalysis(null);
+    setError(null);
     try {
       const env = await api.scenario({
         baseline_request: {
@@ -82,6 +85,7 @@ export default function ScenarioLab() {
       setResult(env.data);
     } catch (e) {
       console.error(e);
+      setError(e instanceof Error ? e.message : 'Scenario analysis is currently unavailable.');
     } finally {
       setLoading(false);
     }
@@ -90,6 +94,7 @@ export default function ScenarioLab() {
   const runAIAnalysis = async () => {
       if (!result) return;
       setAnalyzing(true);
+      setAnalysisNotice(null);
       try {
         const env = await api.analyze({
           region: 'ERCOT_SYSTEM',
@@ -103,7 +108,7 @@ export default function ScenarioLab() {
         setAnalysis(env.data);
       } catch (e) {
         console.error(e);
-        alert("AI Analysis failed.");
+        setAnalysisNotice('Optional AI commentary is unavailable. The numerical scenario result remains unchanged.');
       } finally {
         setAnalyzing(false);
       }
@@ -116,6 +121,17 @@ export default function ScenarioLab() {
         <h1 className="display-serif mt-3 text-4xl tracking-[-0.045em] text-[#141414] sm:text-6xl">Stress the system<br />before nature does.</h1>
         <p className="mt-4 max-w-2xl text-sm leading-6 text-[#4f4e4a]">Perturb physical drivers, preserve the baseline and expose the resulting tail-risk delta.</p>
       </header>
+
+      {error && (
+        <div className="border border-[#b42318] bg-[#f5dfdc] px-5 py-4 text-sm text-[#7d1a13]" role="alert">
+          <strong>Scenario unavailable.</strong> {error}
+        </div>
+      )}
+      {analysisNotice && (
+        <div className="border border-[#9a6200] bg-[#eee6cf] px-5 py-4 text-sm text-[#5f4300]" role="status">
+          {analysisNotice}
+        </div>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <button onClick={() => applyPreset('POLAR_VORTEX')} className="hairline-panel scenario-cold rounded-2xl p-5 text-left transition hover:-translate-y-0.5">

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 
@@ -21,7 +21,7 @@ class SimpleCache:
         entry = self._store.get(key)
         if not entry:
             return None
-        if entry.expires_at < datetime.utcnow():
+        if entry.expires_at < datetime.now(timezone.utc):
             # Expired: evict and miss
             self._store.pop(key, None)
             return None
@@ -30,11 +30,10 @@ class SimpleCache:
     def set(self, key: str, value: Any, ttl_seconds: int) -> None:
         self._store[key] = CacheEntry(
             value=value,
-            expires_at=datetime.utcnow() + timedelta(seconds=ttl_seconds),
+            expires_at=datetime.now(timezone.utc) + timedelta(seconds=ttl_seconds),
         )
 
 
 # Dedicated caches per concern
 weather_cache = SimpleCache()
 predict_cache = SimpleCache()
-
