@@ -13,19 +13,20 @@ function setEnv(key: string, value: string | undefined) {
 
 describe('API Client (lib/api.ts)', () => {
   let api: any
-  let fetchSpy: ReturnType<typeof vi.fn>
+  let fetchSpy: ReturnType<typeof vi.fn<typeof fetch>>
 
   beforeEach(async () => {
     // Reset env
     process.env = { ...originalEnv }
     vi.resetModules()
     // Mock global fetch
-    fetchSpy = vi.fn()
-    global.fetch = fetchSpy
+    fetchSpy = vi.fn<typeof fetch>()
+    vi.stubGlobal('fetch', fetchSpy)
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
   })
 
   async function loadApi() {
@@ -44,6 +45,18 @@ describe('API Client (lib/api.ts)', () => {
 
       expect(result.source).toBe('simulated_demo')
       expect(result.data.risk_level).toBe('EXTREME')
+      expect(fetchSpy).not.toHaveBeenCalled()
+    })
+
+    it('returns the versioned rejected-candidate evidence without fabrication', async () => {
+      setEnv('NEXT_PUBLIC_DATA_MODE', 'demo')
+      await loadApi()
+
+      const result = await api.modelEvidence()
+
+      expect(result.source).toBe('versioned_release_evidence')
+      expect(result.data.validation_status).toBe('rejected_candidate')
+      expect(result.data.all_gates_passed).toBe(false)
       expect(fetchSpy).not.toHaveBeenCalled()
     })
   })
@@ -133,13 +146,12 @@ describe('API Client (lib/api.ts)', () => {
       setEnv('NEXT_PUBLIC_API_URL', 'http://test.local')
       await loadApi()
 
-      // Return invalid JSON that fetch.json() fails on
-      const badResponse = {
-        ok: true,
-        json: vi.fn().mockRejectedValue(new Error('Invalid JSON')),
-        status: 200,
-      }
-      fetchSpy.mockResolvedValue(badResponse)
+      fetchSpy.mockResolvedValue(
+        new Response('not-json', {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
 
       const { ApiClientError } = await import('../../lib/types')
       await expect(api.health()).rejects.toBeInstanceOf(ApiClientError)

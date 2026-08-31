@@ -23,6 +23,9 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-training.txt
           pip install pytest
+          pip install pip-audit
+      - name: Dependency audit
+        run: pip-audit -r requirements.txt --progress-spinner off
       - name: Lint (compile)
         run: python -m compileall api models services risk features db training
       - name: Tests
@@ -34,11 +37,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
       - name: Install dependencies
         run: npm ci
       - name: Frontend tests
         run: npm run test:frontend
+      - name: Typecheck
+        run: npm run lint
+      - name: Dependency audit
+        run: npm audit --audit-level=high
       - name: Build
         run: npm run build
         env:
@@ -63,7 +70,7 @@ jobs:
             -e APP_ENV=production \
             -e HOST=0.0.0.0 \
             -e PORT=8000 \
-            -e ALLOWED_ORIGINS=https://gert-kappa.vercel.app \
+            -e ALLOWED_ORIGINS=https://grid-extreme-risk-toolkit-gert.vercel.app,https://gert-d.vercel.app \
             -e MODEL_BACKEND=stub \
             -e DATABASE_URL=sqlite:////data/gert.db \
             gert-backend:ci
@@ -75,26 +82,31 @@ jobs:
           done
       - name: Verify endpoints
         run: |
-          echo "=== /health ==="
-          curl -i --max-time 10 http://localhost:8001/health
-          echo ""
-          echo "=== /ready ==="
-          curl -i --max-time 10 http://localhost:8001/ready
-          echo ""
-          echo "=== POST /predict ==="
-          curl -i --max-time 10 \
+          curl --fail --silent --show-error --max-time 10 http://localhost:8001/health
+          curl --fail --silent --show-error --max-time 10 http://localhost:8001/ready
+          curl --fail --silent --show-error --max-time 10 http://localhost:8001/status
+          curl --fail --silent --show-error --max-time 10 http://localhost:8001/model/evidence
+          prediction_status=$(curl --silent --output /tmp/predict-response.json --write-out '%{http_code}' --max-time 10 \
             -X POST http://localhost:8001/predict \
             -H 'Content-Type: application/json' \
-            -d '{"region":"ERCOT_SYSTEM","date":"2026-01-01T01:00:00Z","weather_features":{"temperature":30,"wind_speed":5,"solar_irradiance":600}}'
+            -d '{"region":"ERCOT_SYSTEM","date":"2026-01-01T01:00:00Z","weather_features":{"temperature":30,"wind_speed":5,"solar_irradiance":600}}')
+          test "$prediction_status" = "503"
+      - name: Verify security headers
+        run: |
+          headers=$(curl --silent --dump-header - --output /dev/null --max-time 10 http://localhost:8001/health | tr -d '\r' | tr '[:upper:]' '[:lower:]')
+          grep -q '^x-content-type-options: nosniff$' <<< "$headers"
+          grep -q '^x-frame-options: deny$' <<< "$headers"
+          grep -q '^referrer-policy: no-referrer$' <<< "$headers"
+          grep -q '^strict-transport-security:' <<< "$headers"
       - name: Verify CORS
         run: |
           echo "=== Trusted origin ==="
           curl -i --max-time 10 \
             -X OPTIONS http://localhost:8001/predict \
-            -H 'Origin: https://gert-kappa.vercel.app' \
+            -H 'Origin: https://grid-extreme-risk-toolkit-gert.vercel.app' \
             -H 'Access-Control-Request-Method: POST' \
             -H 'Access-Control-Request-Headers: content-type' 2>&1 | grep -i access-control-allow-origin
-          echo "=== Untrusted origin (should NOT return vercel) ==="
+          echo "=== Untrusted origin (no allow-origin header expected) ==="
           curl -i --max-time 10 \
             -X OPTIONS http://localhost:8001/predict \
             -H 'Origin: https://untrusted.example' \

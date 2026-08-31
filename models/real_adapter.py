@@ -6,7 +6,7 @@ import logging
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Mapping
 from zoneinfo import ZoneInfo
 
 import numpy as np
@@ -72,20 +72,31 @@ class RealModelAdapter(ModelInterface):
     def get_evaluation_metrics(self):
         return self._loaded.metrics
 
+    @property
+    def validation_status(self) -> str:
+        return self._meta.validation_status
+
+    @property
+    def requires_operational_features(self) -> bool:
+        return self._meta.artifact_schema_version == "1.3"
+
     def get_artifact_file(self, name: str) -> Path:
         if Path(name).name != name:
             raise ValueError("Artifact filename must not contain a path")
         return self._artifact_dir / name
 
     def predict(
-        self, features: WeatherFeatures, timestamp: datetime | None = None
+        self,
+        features: WeatherFeatures,
+        timestamp: datetime | None = None,
+        operational_features: Mapping[str, float] | None = None,
     ) -> Dict[str, float]:
         values: dict[str, float] = {
             "temperature": features.temperature,
             "wind_speed": features.wind_speed,
             "solar_irradiance": features.solar_irradiance,
         }
-        if self._meta.artifact_schema_version in {"1.1", "1.2"}:
+        if self._meta.artifact_schema_version in {"1.1", "1.2", "1.3"}:
             effective = timestamp or datetime.now(timezone.utc)
             if effective.tzinfo is None:
                 effective = effective.replace(tzinfo=timezone.utc)
@@ -98,8 +109,26 @@ class RealModelAdapter(ModelInterface):
                     "is_weekend": float(local.weekday() >= 5),
                 }
             )
-            if self._meta.artifact_schema_version == "1.2":
+            if self._meta.artifact_schema_version in {"1.2", "1.3"}:
                 values["year"] = float(local.year)
+        if self._meta.artifact_schema_version == "1.3":
+            required = set(self._meta.feature_names) - set(values)
+            if operational_features is None:
+                raise ModelArtifactError(
+                    "Schema 1.3 requires server-supplied operational load features."
+                )
+            missing = sorted(required - set(operational_features))
+            if missing:
+                raise ModelArtifactError(
+                    f"Operational feature context is missing: {missing}"
+                )
+            for name in required:
+                value = float(operational_features[name])
+                if not np.isfinite(value):
+                    raise ModelArtifactError(
+                        f"Operational feature '{name}' must be finite."
+                    )
+                values[name] = value
         feature_row = [values[name] for name in self._meta.feature_names]
 
         try:

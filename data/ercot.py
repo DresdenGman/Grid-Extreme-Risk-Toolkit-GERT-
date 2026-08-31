@@ -11,8 +11,9 @@ from __future__ import annotations
 import asyncio
 import math
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import httpx
 
@@ -42,6 +43,7 @@ class ERCOTAdapter(GridDataAdapter):
     _shared_id_token: str | None = None
     _shared_token_expires_at: datetime | None = None
     _shared_token_lock: asyncio.Lock | None = None
+    MARKET_TIMEZONE = ZoneInfo("America/Chicago")
 
     def __init__(self) -> None:
         self._username = os.getenv("ERCOT_API_USERNAME", "").strip()
@@ -120,6 +122,100 @@ class ERCOTAdapter(GridDataAdapter):
             elif isinstance(row, list) and len(field_names) == len(row):
                 records.append(dict(zip(field_names, row)))
         return records
+
+    @staticmethod
+    def _normalized_row(row: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "".join(character for character in str(key).lower() if character.isalnum()): value
+            for key, value in row.items()
+        }
+
+    @classmethod
+    def _historical_totals(
+        cls, payload: dict[str, Any]
+    ) -> list[tuple[datetime, float]]:
+        """Convert NP6-346 rows to ordered UTC hourly system totals.
+
+        ERCOT publishes market-day/hour-ending fields in Central time.  Rows
+        are grouped by operating day and converted by sequential UTC interval,
+        matching the offline archive extractor and preserving DST day length.
+        """
+        grouped: dict[date, list[tuple[float, str, float]]] = {}
+        for raw in cls._records(payload):
+            row = cls._normalized_row(raw)
+            day_value = row.get("operday") or row.get("operatingday")
+            hour_value = row.get("hourending") or row.get("hourend")
+            total_value = row.get("total") or row.get("totalload")
+            try:
+                text_day = str(day_value).strip()
+                try:
+                    operating_day = datetime.strptime(text_day, "%m/%d/%Y").date()
+                except ValueError:
+                    operating_day = date.fromisoformat(text_day[:10])
+                hour_text = str(hour_value).strip().split(":", 1)[0]
+                hour_ending = float(hour_text)
+                total_mw = float(total_value)
+            except (TypeError, ValueError):
+                continue
+            if total_mw <= 0 or not math.isfinite(total_mw):
+                continue
+            dst_flag = str(row.get("dstflag", ""))
+            grouped.setdefault(operating_day, []).append(
+                (hour_ending, dst_flag, total_mw)
+            )
+
+        result: list[tuple[datetime, float]] = []
+        for operating_day in sorted(grouped):
+            day_rows = sorted(grouped[operating_day], key=lambda item: (item[0], item[1]))
+            start_utc = datetime.combine(
+                operating_day, time.min, tzinfo=cls.MARKET_TIMEZONE
+            ).astimezone(timezone.utc)
+            result.extend(
+                (start_utc + timedelta(hours=index), total_mw)
+                for index, (_, _, total_mw) in enumerate(day_rows)
+            )
+        return result
+
+    @staticmethod
+    def operational_features_from_series(
+        series: list[tuple[datetime, float]], target_time: datetime
+    ) -> tuple[dict[str, float], datetime]:
+        """Build causal v1.3 features for the hour after the latest observation."""
+        if target_time.tzinfo is None:
+            target_time = target_time.replace(tzinfo=timezone.utc)
+        target_time = target_time.astimezone(timezone.utc)
+        ordered = sorted(series, key=lambda item: item[0])
+        if len(ordered) < 168:
+            raise ValueError("At least 168 official hourly load observations are required")
+        window = ordered[-168:]
+        if any(
+            later[0] - earlier[0] != timedelta(hours=1)
+            for earlier, later in zip(window, window[1:])
+        ):
+            raise ValueError("Official load history is not contiguous for 168 hours")
+        latest_time = window[-1][0].astimezone(timezone.utc)
+        forecast_origin_gap = target_time - (latest_time + timedelta(hours=1))
+        if abs(forecast_origin_gap.total_seconds()) > 3 * 3600:
+            raise ValueError("Official load history is too stale for a one-hour forecast")
+
+        values = [float(value) for _, value in window]
+        prior_24 = values[-24:]
+        mean_24 = sum(prior_24) / 24
+        mean_168 = sum(values) / 168
+        std_24 = (sum((value - mean_24) ** 2 for value in prior_24) / 24) ** 0.5
+        std_168 = (sum((value - mean_168) ** 2 for value in values) / 168) ** 0.5
+        return (
+            {
+                "lag_load_1h": values[-1],
+                "lag_load_24h": values[-24],
+                "lag_load_168h": values[0],
+                "rolling_load_mean_24h": mean_24,
+                "rolling_load_std_24h": std_24,
+                "rolling_load_mean_168h": mean_168,
+                "rolling_load_std_168h": std_168,
+            },
+            latest_time,
+        )
 
     @classmethod
     def _latest_total_mw(cls, payload: dict[str, Any]) -> float:
@@ -218,6 +314,35 @@ class ERCOTAdapter(GridDataAdapter):
                 return load_mw, self._latest_available_generation_mw(adequacy_response.json())
             except Exception:
                 return load_mw, None
+
+    async def fetch_operational_features(
+        self, target_time: datetime
+    ) -> tuple[dict[str, float], datetime]:
+        """Fetch recent official load history and build server-owned v1.3 features."""
+        if not self.official_api_configured:
+            raise RuntimeError("ERCOT Public API credentials are not fully configured")
+        today = datetime.now(self.MARKET_TIMEZONE).date()
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            token = await self._get_id_token(client)
+            response = await client.get(
+                self.LOAD_URL,
+                params={
+                    "operatingDayFrom": (today - timedelta(days=9)).isoformat(),
+                    "operatingDayTo": today.isoformat(),
+                    "page": 1,
+                    "size": 500,
+                    "sort": "operatingDay",
+                    "dir": "ASC",
+                },
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Ocp-Apim-Subscription-Key": self._subscription_key,
+                },
+            )
+            response.raise_for_status()
+        return self.operational_features_from_series(
+            self._historical_totals(response.json()), target_time
+        )
 
     def _estimated_load(self, region: str) -> GridLoadData:
         hour = datetime.now().hour

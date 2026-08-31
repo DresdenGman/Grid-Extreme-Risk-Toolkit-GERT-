@@ -32,6 +32,7 @@ gert.db
 
 # Next.js
 .next/
+*.tsbuildinfo
 
 # ERCOT training data and locally generated experiment artifacts. These are
 # intentionally kept outside version control; only contracts and code belong

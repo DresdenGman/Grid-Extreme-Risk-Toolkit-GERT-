@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import random
 from dataclasses import dataclass
+from typing import Mapping
 
 from api.schemas import PredictionOut, ScenarioRequest, ScenarioResponse, WeatherFeatures
 from risk.financials import calculate_financials
@@ -35,17 +36,30 @@ class ScenarioService:
         self.risk_service = risk_service
         self.comparator = comparator or ScenarioComparator()
 
-    def run(self, req: ScenarioRequest) -> ScenarioResponse:
+    def run(
+        self,
+        req: ScenarioRequest,
+        operational_features: Mapping[str, float] | None = None,
+        capacity_mw: float | None = None,
+    ) -> ScenarioResponse:
         # 1) Baseline: reuse the same prediction service (no duplicated logic).
-        baseline_pred = self.risk_service.predict(req.baseline_request)
-        capacity = get_region_capacity(req.baseline_request.region)
+        baseline_pred = self.risk_service.predict(
+            req.baseline_request,
+            capacity_mw=capacity_mw,
+            operational_features=operational_features,
+        )
+        capacity = capacity_mw or get_region_capacity(req.baseline_request.region)
 
         # 2) Perturbations: apply deltas/replacements to features.
         new_features = self._apply_perturbations(req.baseline_request.weather_features, req.perturbations)
         new_req = req.baseline_request.model_copy(update={"weather_features": new_features})
 
         # 3) Scenario prediction (same flow).
-        scenario_pred = self.risk_service.predict(new_req)
+        scenario_pred = self.risk_service.predict(
+            new_req,
+            capacity_mw=capacity_mw,
+            operational_features=operational_features,
+        )
 
         # 4) Compare + financial impact.
         comp = self.comparator.compare(baseline_pred, scenario_pred, capacity_mw=capacity)
@@ -70,4 +84,3 @@ class ScenarioService:
         if "solar_irradiance" in perturbations:
             updated.solar_irradiance = perturbations["solar_irradiance"]
         return updated
-

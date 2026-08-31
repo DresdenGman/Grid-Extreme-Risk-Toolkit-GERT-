@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { createPresentationPrediction, createPresentationPrior, PRESENTATION_WEATHER } from '@/lib/presentation';
-import { ApiClientError, PredictionOut, Provenance, Region, WeatherFeatures } from '@/lib/types';
+import { ApiClientError, GridLoadResponse, PredictionOut, Provenance, Region, WeatherFeatures } from '@/lib/types';
 import { Badge, Card } from '@/components/ui';
 import { QuantileChart } from '@/components/Charts';
 import GridMap from '@/components/GridMap';
@@ -39,10 +39,19 @@ function sourceLabel(provenance: Provenance | null) {
   return 'AWAITING SOURCE';
 }
 
+function gridSourceLabel(context: GridLoadResponse | null, contextError: string | null) {
+  if (context?.data_source === 'official_live') return 'OFFICIAL ERCOT SYSTEM CONTEXT';
+  if (context) return 'ESTIMATED GRID CONTEXT';
+  if (contextError) return `GRID CONTEXT UNAVAILABLE — ${contextError}`;
+  return 'GRID CONTEXT SYNCING';
+}
+
 export default function Home() {
   const [inputs, setInputs] = useState<WeatherFeatures>({ temperature: 32, wind_speed: 15, solar_irradiance: 800 });
   const [draftInputs, setDraftInputs] = useState<WeatherFeatures>({ temperature: 32, wind_speed: 15, solar_irradiance: 800 });
   const [liveSnapshot, setLiveSnapshot] = useState<WeatherFeatures | null>(null);
+  const [gridContext, setGridContext] = useState<GridLoadResponse | null>(null);
+  const [contextError, setContextError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<PredictionOut | null>(null);
   const [prevData, setPrevData] = useState<PredictionOut | null>(null);
@@ -62,23 +71,43 @@ export default function Home() {
     setModeResolved(true);
   }, []);
 
-  useEffect(() => {
-    if (!modeResolved) return;
+  const syncLiveContext = useCallback(async () => {
     if (presentationMode) {
       setInputs(PRESENTATION_WEATHER);
       setDraftInputs(PRESENTATION_WEATHER);
       setLiveSnapshot(PRESENTATION_WEATHER);
+      setContextError(null);
       return;
     }
-    api.liveWeather(REGION)
-      .then((envelope) => {
-        if (!mountedRef.current) return;
-        setInputs(envelope.data);
-        setDraftInputs(envelope.data);
-        setLiveSnapshot(envelope.data);
-      })
-      .catch((err) => console.warn('Weather sync failed', err));
-  }, [modeResolved, presentationMode]);
+
+    const [weatherResult, loadResult] = await Promise.allSettled([
+      api.liveWeather(REGION),
+      api.getCurrentLoad(REGION),
+    ]);
+    if (!mountedRef.current) return;
+
+    const failures: string[] = [];
+    if (weatherResult.status === 'fulfilled') {
+      setInputs(weatherResult.value.data);
+      setDraftInputs(weatherResult.value.data);
+      setLiveSnapshot(weatherResult.value.data);
+    } else {
+      failures.push('weather');
+    }
+
+    if (loadResult.status === 'fulfilled') {
+      setGridContext(loadResult.value.data);
+      setLastUpdated(new Date(loadResult.value.data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    } else {
+      failures.push('load');
+    }
+
+    setContextError(failures.length ? `${failures.join(' and ')} sync failed` : null);
+  }, [presentationMode]);
+
+  useEffect(() => {
+    if (modeResolved) syncLiveContext();
+  }, [modeResolved, syncLiveContext]);
 
   const fetchPrediction = useCallback(async (featuresOverride?: WeatherFeatures) => {
     const features = featuresOverride ?? inputs;
@@ -121,15 +150,19 @@ export default function Home() {
     if (modeResolved) fetchPrediction();
   }, [fetchPrediction, modeResolved]);
 
-  const capacity = data?.diagnostics.capacity_used ?? 60000;
-  const marginMw = data ? capacity - data.q99_load_mw : null;
+  const capacity = data?.diagnostics.capacity_used ?? gridContext?.capacity_mw ?? null;
+  const marginMw = data && capacity !== null ? capacity - data.q99_load_mw : null;
   const riskDelta = data && prevData ? data.risk_score - prevData.risk_score : null;
   const riskLevel = data?.risk_level ?? 'LOW';
   const danger = riskLevel === 'HIGH' || riskLevel === 'EXTREME';
   const marginState = marginMw === null ? 'AWAITING MODEL' : marginMw < 0 ? 'CAPACITY BREACH' : marginMw < 2000 ? 'TIGHT MARGIN' : 'BUFFER INTACT';
   const backendReal = data?.diagnostics.backend_type === 'real';
-  const officialLoad = data?.diagnostics.load_data_source === 'official_live';
-  const officialCapacity = data?.diagnostics.capacity_data_source === 'official_adequacy';
+  const officialLoad = data?.diagnostics.load_data_source === 'official_live' || gridContext?.data_source === 'official_live';
+  const officialCapacity = data?.diagnostics.capacity_data_source === 'official_adequacy' || gridContext?.capacity_source === 'official_adequacy';
+
+  const refreshProduct = async () => {
+    await Promise.allSettled([syncLiveContext(), fetchPrediction()]);
+  };
 
   const applyScenario = () => setInputs({ ...draftInputs });
   const resetScenario = () => {
@@ -163,6 +196,13 @@ export default function Home() {
         </div>
       </header>
 
+      {!presentationMode && error && (
+        <div role="status" className="reveal flex items-start gap-3 border border-[#9a6200]/45 bg-[#9a6200]/10 px-4 py-3 text-sm text-[#5f4700]">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+          <p><strong>Prediction layer gated.</strong> {error} Official grid context remains visible independently when available.</p>
+        </div>
+      )}
+
       <section className="reveal reveal-delay-1 grid gap-5 xl:grid-cols-12">
         <div className="relative min-h-[430px] overflow-hidden border border-[#141414] bg-[#f1efe9] p-6 shadow-[7px_7px_0_#ff4d00] sm:p-8 xl:col-span-8">
           <div className={clsx('absolute inset-x-0 top-0 h-1', danger ? 'bg-[#ff6b57]' : 'bg-[#ff4d00]')} />
@@ -177,11 +217,11 @@ export default function Home() {
               </div>
               <button
                 type="button"
-                onClick={() => fetchPrediction()}
+                onClick={refreshProduct}
                 disabled={loading}
                 className="technical-label flex items-center gap-2 border border-[#141414] bg-transparent px-4 py-2 text-[#141414] transition hover:bg-[#141414] hover:text-[#e4e3e0] disabled:opacity-50"
               >
-                <RefreshCw className={clsx('h-3.5 w-3.5', loading && 'animate-spin')} /> {presentationMode ? 'Replay snapshot' : 'Refresh inference'}
+                <RefreshCw className={clsx('h-3.5 w-3.5', loading && 'animate-spin')} /> {presentationMode ? 'Replay snapshot' : 'Refresh system'}
               </button>
             </div>
 
@@ -219,7 +259,9 @@ export default function Home() {
                 </h2>
                 <p className="mt-3 text-sm leading-6 text-[#4f4e4a]">
                   {data
-                    ? `P99 demand is ${(data.q99_load_mw / 1000).toFixed(2)} GW against ${(capacity / 1000).toFixed(2)} GW of capacity context.`
+                    ? capacity !== null
+                      ? `P99 demand is ${(data.q99_load_mw / 1000).toFixed(2)} GW against ${(capacity / 1000).toFixed(2)} GW of capacity context.`
+                      : `P99 demand is ${(data.q99_load_mw / 1000).toFixed(2)} GW; verified capacity context is not available.`
                     : 'No forecast is substituted or fabricated while the live service is unavailable.'}
                 </p>
                 <button type="button" onClick={() => setShowWhy((value) => !value)} disabled={!data} className="mt-5 flex items-center gap-2 text-xs font-medium text-[#ff4d00] disabled:text-[#a29f98]">
@@ -239,15 +281,17 @@ export default function Home() {
             </div>
           </div>
           <div className="grid flex-1 grid-cols-2">
+            <MetricCell label="Current system load" value={gridContext ? `${(gridContext.current_load_mw / 1000).toFixed(1)} GW` : '—'} icon={<Radio />} />
+            <MetricCell label="Available capacity" value={capacity !== null ? `${(capacity / 1000).toFixed(1)} GW` : '—'} icon={<Gauge />} />
             <MetricCell label="Expected / P50" value={data ? `${(data.q50_load_mw / 1000).toFixed(1)} GW` : '—'} icon={<Activity />} />
             <MetricCell label="Extreme / P99" value={data ? `${(data.q99_load_mw / 1000).toFixed(1)} GW` : '—'} icon={<Zap />} />
             <MetricCell label="Temperature" value={`${inputs.temperature.toFixed(1)}°C`} icon={<Thermometer />} />
             <MetricCell label="Wind signal" value={`${inputs.wind_speed.toFixed(1)} m/s`} icon={<Wind />} />
           </div>
           <div className="border-t border-black/[0.08] px-6 py-4">
-            <div className={clsx('flex items-center gap-2 technical-label', error ? 'text-[#b42318]' : 'text-[#4f4d49]')}>
-              <span className={clsx('h-1.5 w-1.5 rounded-full', error ? 'bg-[#b42318]' : 'signal-dot bg-[#9a6200]')} />
-              {error ? (data ? `STALE DATA — ${error}` : `DATA UNAVAILABLE — ${error}`) : sourceLabel(provenance)}
+            <div className={clsx('flex items-center gap-2 technical-label', contextError && !gridContext ? 'text-[#b42318]' : 'text-[#4f4d49]')}>
+              <span className={clsx('h-1.5 w-1.5 rounded-full', contextError && !gridContext ? 'bg-[#b42318]' : officialLoad ? 'signal-dot bg-[#2f6b4f]' : 'bg-[#9a6200]')} />
+              {presentationMode ? sourceLabel(provenance) : gridSourceLabel(gridContext, contextError)}
             </div>
           </div>
         </Card>
@@ -298,8 +342,8 @@ export default function Home() {
       </section>
 
       <section className="grid gap-px overflow-hidden border border-[#141414] bg-[#141414] shadow-[5px_5px_0_#ff4d00] md:grid-cols-4">
-        <EvidenceCell icon={<Database />} title="Load context" value={presentationMode ? 'Simulated peak-day load' : officialLoad ? 'Official live' : 'Estimated fallback'} verified={!presentationMode && officialLoad} />
-        <EvidenceCell icon={<ShieldCheck />} title="Capacity basis" value={presentationMode ? 'Simulated adequacy margin' : officialCapacity ? 'ERCOT adequacy' : 'Configured reference'} verified={!presentationMode && officialCapacity} />
+        <EvidenceCell icon={<Database />} title="Load context" value={presentationMode ? 'Simulated peak-day load' : officialLoad ? 'Official ERCOT live' : gridContext ? 'Estimated fallback' : 'Unavailable'} verified={!presentationMode && officialLoad} />
+        <EvidenceCell icon={<ShieldCheck />} title="Capacity basis" value={presentationMode ? 'Simulated adequacy margin' : officialCapacity ? gridContext?.capacity_basis ?? 'ERCOT adequacy' : gridContext?.capacity_basis ?? 'Unavailable'} verified={!presentationMode && officialCapacity} />
         <EvidenceCell icon={<Cpu />} title="Model artifact" value={presentationMode ? 'Presentation candidate' : backendReal ? data?.diagnostics.model_version ?? 'Trained' : 'Stub / demo'} verified={!presentationMode && backendReal} />
         <EvidenceCell icon={<Braces />} title="Decision contract" value="P50 → P99 + provenance" verified />
       </section>

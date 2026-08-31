@@ -16,12 +16,13 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, mean_pinball_loss
 
 from models.artifacts import load_model_artifact
-from models.trend_quantile import TrendQuantileBundle
+from models.residual_quantile import ResidualQuantileBundle
 from training.ercot.features import SERVED_FEATURE_COLUMNS
 
 
 QUANTILES = (0.5, 0.9, 0.95, 0.99)
 QUANTILE_KEYS = {0.5: "q50", 0.9: "q90", 0.95: "q95", 0.99: "q99"}
+CALIBRATION_SHRINKAGE = {"q50": 0.40, "q90": 0.90, "q95": 0.90, "q99": 0.55}
 INPUT_PATH = Path("training_runs/ercot_v1/features.csv")
 ARTIFACT_DIR = Path("training_runs/ercot_v1/artifact")
 
@@ -38,6 +39,73 @@ def split_periods(
             f"Expected non-empty pre-{evaluation_year} training and {evaluation_year} evaluation periods"
         )
     return training, evaluation
+
+
+def split_evaluation_window(
+    frame: pd.DataFrame,
+    evaluation_year: int,
+    evaluation_start: str | None = None,
+    evaluation_end: str | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Return strictly earlier training data and a closed UTC evaluation window."""
+    if evaluation_start is None and evaluation_end is None:
+        return split_periods(frame, evaluation_year)
+    if not evaluation_start or not evaluation_end:
+        raise ValueError("evaluation_start and evaluation_end must be provided together")
+    timestamps = pd.to_datetime(frame["timestamp_utc"], utc=True)
+    start = pd.to_datetime(evaluation_start, utc=True)
+    end = pd.to_datetime(evaluation_end, utc=True) + pd.Timedelta(days=1) - pd.Timedelta(hours=1)
+    if start > end:
+        raise ValueError("evaluation_start must not be after evaluation_end")
+    training = frame.loc[timestamps < start].copy()
+    evaluation = frame.loc[(timestamps >= start) & (timestamps <= end)].copy()
+    if training.empty or evaluation.empty:
+        raise ValueError("Expected non-empty training and evaluation windows")
+    return training, evaluation
+
+
+def fit_center_estimator(
+    frame: pd.DataFrame, feature_names: list[str]
+) -> HistGradientBoostingRegressor:
+    estimator = HistGradientBoostingRegressor(
+        loss="absolute_error",
+        max_iter=300,
+        max_depth=6,
+        learning_rate=0.08,
+        l2_regularization=1.0,
+        random_state=42,
+    )
+    estimator.fit(
+        frame[feature_names].to_numpy(dtype=float),
+        (
+            frame["actual_load_mw"].to_numpy(dtype=float)
+            - frame["lag_load_1h"].to_numpy(dtype=float)
+        ),
+    )
+    return estimator
+
+
+def residual_offsets(
+    development: pd.DataFrame,
+    calibration: pd.DataFrame,
+    feature_names: list[str],
+) -> dict[str, float]:
+    center = fit_center_estimator(development, feature_names)
+    residuals = (
+        calibration["actual_load_mw"].to_numpy(dtype=float)
+        - calibration["lag_load_1h"].to_numpy(dtype=float)
+        - center.predict(calibration[feature_names].to_numpy(dtype=float))
+    )
+    offsets = {
+        QUANTILE_KEYS[quantile]: float(np.quantile(residuals, quantile))
+        * CALIBRATION_SHRINKAGE[QUANTILE_KEYS[quantile]]
+        for quantile in QUANTILES
+    }
+    ordered = np.sort(np.array([offsets[QUANTILE_KEYS[q]] for q in QUANTILES]))
+    return {
+        QUANTILE_KEYS[quantile]: float(ordered[index])
+        for index, quantile in enumerate(QUANTILES)
+    }
 
 
 def monotonic_predictions(predictions: dict[str, np.ndarray]) -> tuple[dict[str, np.ndarray], float]:
@@ -152,52 +220,43 @@ def train(
     features_path: Path,
     artifact_dir: Path,
     evaluation_year: int = 2025,
-    model_version: str = "ercot-trend-conformal-gbt-v1.2.0-candidate",
+    model_version: str = "ercot-lag-conformal-gbt-v1.3.0-candidate",
+    evaluation_start: str | None = None,
+    evaluation_end: str | None = None,
 ) -> dict[str, object]:
     frame = pd.read_csv(features_path)
     required = {"timestamp_utc", "actual_load_mw", *SERVED_FEATURE_COLUMNS}
     missing = required - set(frame.columns)
     if missing:
         raise ValueError(f"Feature table missing columns: {sorted(missing)}")
-    training, evaluation = split_periods(frame, evaluation_year)
+    training, evaluation = split_evaluation_window(
+        frame, evaluation_year, evaluation_start, evaluation_end
+    )
     feature_names = list(SERVED_FEATURE_COLUMNS)
-    core_features = [name for name in feature_names if name != "year"]
     y_eval = evaluation["actual_load_mw"].to_numpy(dtype=float)
 
-    training_years = local_years(training)
-    rolling_residual_ratios: list[np.ndarray] = []
-    calibration_years = tuple(range(evaluation_year - 3, evaluation_year))
-    for calibration_year in calibration_years:
-        development = training.loc[training_years < calibration_year].copy()
-        calibration = training.loc[training_years == calibration_year].copy()
-        if development.empty or calibration.empty:
-            raise ValueError(f"Missing rolling-origin data for calibration year {calibration_year}")
-        calibration_estimators, calibration_trend = fit_normalized_estimators(development, core_features)
-        calibration_predictions, calibration_scale = predict_with_components(
-            calibration_estimators, calibration_trend, calibration, core_features
+    evaluation_first = pd.to_datetime(evaluation["timestamp_utc"], utc=True).min()
+    calibration_start = evaluation_first - pd.DateOffset(years=1)
+    training_timestamps = pd.to_datetime(training["timestamp_utc"], utc=True)
+    development = training.loc[training_timestamps < calibration_start].copy()
+    calibration = training.loc[training_timestamps >= calibration_start].copy()
+    if development.empty or calibration.empty:
+        raise ValueError(
+            "A recent calibration window and earlier development data are required"
         )
-        y_calibration = calibration["actual_load_mw"].to_numpy(dtype=float)
-        rolling_residual_ratios.append(
-            (y_calibration - calibration_predictions["q50"]) / calibration_scale
-        )
-    pooled_residual_ratio = np.concatenate(rolling_residual_ratios)
-    calibration_ratio = {
-        QUANTILE_KEYS[quantile]: float(np.quantile(pooled_residual_ratio, quantile))
-        for quantile in QUANTILES
-    }
+    offsets = residual_offsets(development, calibration, feature_names)
 
-    estimators, trend = fit_normalized_estimators(training, core_features)
-    raw_predictions, _ = predict_with_components(
-        estimators, trend, evaluation, core_features, calibration_ratio
-    )
-    intercept, slope, base_year = trend
-    bundle = TrendQuantileBundle(
-        estimators=estimators,
-        trend_intercept=intercept,
-        trend_slope=slope,
-        trend_base_year=base_year,
-        calibration_ratio=calibration_ratio,
-        year_feature_index=feature_names.index("year"),
+    center_estimator = fit_center_estimator(training, feature_names)
+    center_predictions = center_estimator.predict(
+        evaluation[feature_names].to_numpy(dtype=float)
+    ) + evaluation["lag_load_1h"].to_numpy(dtype=float)
+    raw_predictions = {
+        key: center_predictions + offset for key, offset in offsets.items()
+    }
+    bundle = ResidualQuantileBundle(
+        center_estimator=center_estimator,
+        residual_offsets_mw=offsets,
+        anchor_feature_index=feature_names.index("lag_load_1h"),
     )
     predictions, crossing_rate = monotonic_predictions(raw_predictions)
     model_metrics = metric_bundle(y_eval, predictions)
@@ -220,15 +279,27 @@ def train(
     artifact_dir.mkdir(parents=True, exist_ok=True)
     joblib.dump(bundle, artifact_dir / "model.joblib")
     created_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    training_local_dates = pd.to_datetime(training["timestamp_utc"], utc=True).dt.tz_convert(
+        "America/Chicago"
+    ).dt.date
+    evaluation_local_dates = pd.to_datetime(evaluation["timestamp_utc"], utc=True).dt.tz_convert(
+        "America/Chicago"
+    ).dt.date
+    calibration_local_dates = pd.to_datetime(calibration["timestamp_utc"], utc=True).dt.tz_convert(
+        "America/Chicago"
+    ).dt.date
     metadata = {
-        "artifact_schema_version": "1.2",
+        "artifact_schema_version": "1.3",
+        "validation_status": (
+            "provisional_candidate" if all(gates.values()) else "rejected_candidate"
+        ),
         "model_name": "gert_ercot_system_quantile",
         "model_version": model_version,
         "model_type": "sklearn_quantile_bundle",
         "created_at": created_at,
         "training_period": {
-            "start": str(local_years(training).min()) + "-01-01",
-            "end": str(evaluation_year - 1) + "-12-31",
+            "start": min(training_local_dates).isoformat(),
+            "end": max(training_local_dates).isoformat(),
         },
         "forecast_contract": {
             "forecast_origin": "request_time",
@@ -241,6 +312,9 @@ def train(
             "hour": "local_hour", "day_of_week": "integer_0_monday",
             "month": "integer_1_january", "is_weekend": "binary",
             "year": "ercot_local_year",
+            "lag_load_1h": "MW", "lag_load_24h": "MW", "lag_load_168h": "MW",
+            "rolling_load_mean_24h": "MW", "rolling_load_std_24h": "MW",
+            "rolling_load_mean_168h": "MW", "rolling_load_std_168h": "MW",
         },
         "quantiles": list(QUANTILES),
         "supported_regions": ["ERCOT_SYSTEM"],
@@ -248,23 +322,22 @@ def train(
             "source": "ERCOT NP6-346-CD + Open-Meteo ERA5",
             "provenance": (
                 "Official ERCOT hourly system load joined to fixed-weight four-zone ERA5 weather; "
-                f"{evaluation_year} held out"
+                f"{min(evaluation_local_dates).isoformat()} through "
+                f"{max(evaluation_local_dates).isoformat()} held out"
             ),
         },
         "runtime": {
             "python_version": platform.python_version(),
             "scikit_learn_version": sklearn.__version__,
         },
-        "trend": {
-            "form": "log_linear_annual_mean",
-            "base_year": base_year,
-            "annual_growth_rate": float(np.exp(slope) - 1.0),
-            "calibration_period": "rolling-origin " + "/".join(str(year) for year in calibration_years),
+        "calibration": {
+            "form": "lag-1 anchored load increments plus ordered residual quantiles",
+            "period_start": min(calibration_local_dates).isoformat(),
+            "period_end": max(calibration_local_dates).isoformat(),
+            "shrinkage": CALIBRATION_SHRINKAGE,
+            "residual_offsets_mw": offsets,
         },
     }
-    evaluation_local_dates = pd.to_datetime(evaluation["timestamp_utc"], utc=True).dt.tz_convert(
-        "America/Chicago"
-    ).dt.date
     metrics = {
         "evaluation_period": {
             "start": min(evaluation_local_dates).isoformat(),
@@ -285,12 +358,10 @@ def train(
         "model": model_metrics,
         "known_limitations": [
             "Historical training uses ERA5 realized target-hour weather; production uses a one-hour weather forecast.",
-            "No lagged-load features are used until an operational feature store exists.",
+            "Operational load features require 168 contiguous official ERCOT observations.",
+            "The conditional center is anchored to the latest official load and predicts a one-hour increment.",
             "WIS is unavailable because the served artifact contains upper quantiles only.",
-            (
-                f"Annual demand growth is extrapolated log-linearly from pre-{evaluation_year} "
-                "years and may miss structural breaks."
-            ),
+            "Calibration shrinkage was frozen on the development evaluation before the final blind holdout.",
         ],
     }
     peak_index = int(np.argmax(y_eval))
@@ -320,9 +391,11 @@ def main() -> None:
     parser.add_argument("--features", type=Path, default=INPUT_PATH)
     parser.add_argument("--artifact-dir", type=Path, default=ARTIFACT_DIR)
     parser.add_argument("--evaluation-year", type=int, default=2025)
+    parser.add_argument("--evaluation-start", help="Optional UTC evaluation start date (YYYY-MM-DD)")
+    parser.add_argument("--evaluation-end", help="Optional UTC evaluation end date (YYYY-MM-DD)")
     parser.add_argument(
         "--model-version",
-        default="ercot-trend-conformal-gbt-v1.2.0-candidate",
+        default="ercot-lag-conformal-gbt-v1.3.0-candidate",
     )
     args = parser.parse_args()
     report = train(
@@ -330,6 +403,8 @@ def main() -> None:
         args.artifact_dir,
         evaluation_year=args.evaluation_year,
         model_version=args.model_version,
+        evaluation_start=args.evaluation_start,
+        evaluation_end=args.evaluation_end,
     )
     print(json.dumps(report, indent=2, sort_keys=True))
 

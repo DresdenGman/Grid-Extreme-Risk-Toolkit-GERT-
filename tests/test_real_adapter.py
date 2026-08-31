@@ -199,6 +199,53 @@ class TestRealModelAdapter:
 
         assert result["q50"] == 2563.0
 
+    def test_schema_1_3_requires_server_operational_features(self, tmp_path):
+        metadata = dict(VALID_METADATA)
+        metadata["artifact_schema_version"] = "1.3"
+        metadata["feature_names"] = [
+            "temperature", "wind_speed", "solar_irradiance",
+            "hour", "day_of_week", "month", "is_weekend", "year",
+            "lag_load_1h", "lag_load_24h", "lag_load_168h",
+            "rolling_load_mean_24h", "rolling_load_std_24h",
+            "rolling_load_mean_168h", "rolling_load_std_168h",
+        ]
+        metadata["feature_units"] = {
+            "temperature": "degC", "wind_speed": "m/s", "solar_irradiance": "W/m2",
+            "hour": "local_hour", "day_of_week": "integer_0_monday",
+            "month": "integer_1_january", "is_weekend": "binary",
+            "year": "ercot_local_year",
+            "lag_load_1h": "MW", "lag_load_24h": "MW", "lag_load_168h": "MW",
+            "rolling_load_mean_24h": "MW", "rolling_load_std_24h": "MW",
+            "rolling_load_mean_168h": "MW", "rolling_load_std_168h": "MW",
+        }
+        (tmp_path / "metadata.json").write_text(json.dumps(metadata))
+        (tmp_path / "metrics.json").write_text(json.dumps(VALID_METRICS))
+        bundle = {key: _SumEstimator() for key in ("q50", "q90", "q95", "q99")}
+        (tmp_path / "model.joblib").write_bytes(pickle.dumps(bundle))
+        adapter = RealModelAdapter(artifact_dir=str(tmp_path))
+        weather = __import__("api.schemas", fromlist=["WeatherFeatures"]).WeatherFeatures(
+            temperature=25, wind_speed=10, solar_irradiance=500
+        )
+
+        with pytest.raises(ModelArtifactError, match="server-supplied"):
+            adapter.predict(weather, datetime(2025, 1, 1, 6, tzinfo=timezone.utc))
+
+        operational = {
+            "lag_load_1h": 50_000,
+            "lag_load_24h": 49_000,
+            "lag_load_168h": 48_000,
+            "rolling_load_mean_24h": 49_500,
+            "rolling_load_std_24h": 1_000,
+            "rolling_load_mean_168h": 48_500,
+            "rolling_load_std_168h": 1_500,
+        }
+        result = adapter.predict(
+            weather,
+            datetime(2025, 1, 1, 6, tzinfo=timezone.utc),
+            operational,
+        )
+        assert result["q50"] == 250_063.0
+
     def test_get_version_returns_artifact_version(self, object_bundle_dir):
         a = RealModelAdapter(artifact_dir=object_bundle_dir)
         assert a.get_version() == "0.1.0-test"

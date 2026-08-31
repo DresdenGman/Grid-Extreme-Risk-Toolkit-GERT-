@@ -1,9 +1,11 @@
 import {
   PredictRequest, PredictionOut, ScenarioRequest, ScenarioResponse,
   BacktestResponse, AIAnalysisResponse, WeatherFeatures,
-  EventPlaybackResponse, HealthStatus, GridLoadResponse,
+  EventPlaybackResponse, HealthStatus, ProductStatus, GridLoadResponse,
+  ModelEvidence,
   ApiClientError, ApiErrorKind, DataMode, DataEnvelope, Provenance
 } from "./types";
+import releaseModelEvidence from '../evidence/ercot_v1_4_validation.json';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || (
   process.env.NODE_ENV === 'production'
@@ -142,6 +144,8 @@ const MOCK_EVENT: EventPlaybackResponse = {
     { hour: 23, message: 'Sustained generation outages constrain the recovery window.', source: 'OPS', severity: 'CRITICAL' },
     { hour: 31, message: 'Capacity margin begins recovering as temperature pressure eases.', source: 'OPS', severity: 'INFO' },
   ],
+  provenance: 'synthetic_reconstruction',
+  methodology_note: 'Deterministic educational reconstruction; not an official historical event record.',
 };
 
 // --- DEMO MODE: return mock data with envelope ---
@@ -281,6 +285,33 @@ export const api = {
           env: 'presentation'
         }))
       : liveFetch<HealthStatus>('/health', { method: 'GET' }),
+
+  status: async (): Promise<DataEnvelope<ProductStatus>> =>
+    getDataMode() === 'demo'
+      ? Promise.resolve(demoEnvelope({
+          status: 'operational',
+          environment: 'presentation',
+          model_status: 'demonstration_stub',
+          model_version: 'tail-qrf.demo',
+          capabilities: {
+            official_ercot_data: false,
+            probabilistic_prediction: false,
+            scenario_analysis: false,
+            validated_backtest: false,
+            ai_analysis: false,
+            presentation_mode: true,
+          },
+        }))
+      : liveFetch<ProductStatus>('/status', { method: 'GET' }),
+
+  modelEvidence: async (): Promise<DataEnvelope<ModelEvidence>> =>
+    getDataMode() === 'demo'
+      ? Promise.resolve({
+          data: releaseModelEvidence as ModelEvidence,
+          source: 'versioned_release_evidence',
+          fetchedAt: releaseModelEvidence.published_at,
+        })
+      : liveFetch<ModelEvidence>('/model/evidence', { method: 'GET' }),
 
   fetchEventPlayback: (id: string): Promise<DataEnvelope<EventPlaybackResponse>> =>
     getDataMode() === 'demo'

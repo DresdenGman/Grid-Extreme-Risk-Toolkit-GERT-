@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import re
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -18,14 +21,41 @@ from api.routes import router
 from db.connection import init_db
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        init_db()
+        logger.info("Database initialized successfully")
+    except Exception as exc:
+        logger.warning("Database initialization failed (continuing without DB): %s", exc)
+    yield
+    logger.info("GERT backend shutting down — connections closed.")
+
+
 class RequestIDMiddleware(BaseHTTPMiddleware):
     """Attach a request-id to each request for tracing."""
 
     async def dispatch(self, request: Request, call_next):
-        request_id = request.headers.get("X-Request-ID") or str(uuid4())
+        supplied = request.headers.get("X-Request-ID", "")
+        request_id = supplied if re.fullmatch(r"[A-Za-z0-9._:-]{1,128}", supplied) else str(uuid4())
         request.state.request_id = request_id
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
+        return response
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Apply browser-safe defaults to API and documentation responses."""
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        if config.is_production:
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response
 
 
@@ -33,10 +63,12 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Grid Extreme Risk Toolkit API",
         description=f"Backend for GERT. Running Mode: {config.model_backend.upper()}",
-        version="0.2.1",
+        version="1.0.0",
+        lifespan=lifespan,
     )
 
     app.state.limiter = limiter
+    app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(RequestIDMiddleware)
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -77,21 +109,7 @@ def create_app() -> FastAPI:
             "model_backend": config.model_backend,
         }
 
-    # ---- Shutdown event ----
-    @app.on_event("shutdown")
-    def shutdown_event():
-        logger.info("GERT backend shutting down — connections closed.")
-
     app.include_router(router)
-
-    # Initialize database on startup
-    @app.on_event("startup")
-    def startup_event():
-        try:
-            init_db()
-            logger.info("Database initialized successfully")
-        except Exception as e:
-            logger.warning(f"Database initialization failed (continuing without DB): {e}")
 
     logger.info(
         f"GERT API initialized. "
