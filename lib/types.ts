@@ -9,6 +9,11 @@ export interface WeatherFeatures {
   solar_irradiance: number;
 }
 
+export interface WeatherSnapshot extends WeatherFeatures {
+  timestamp: string;
+  data_source: 'external_forecast' | 'estimated_fallback';
+}
+
 export interface PredictRequest {
   region: string;
   date: string;
@@ -153,6 +158,9 @@ export interface HealthStatus {
   backend: string;
   ai_enabled: boolean;
   env: string;
+  api_version: string;
+  release_sha: string;
+  deployment_platform: 'sites' | 'vercel' | 'railway' | 'local';
 }
 
 export interface ProductStatus {
@@ -160,6 +168,9 @@ export interface ProductStatus {
   environment: string;
   model_status: 'validated_production' | 'provisional_candidate' | 'rejected_candidate' | 'demonstration_stub';
   model_version: string;
+  api_version: string;
+  release_sha: string;
+  deployment_platform: 'sites' | 'vercel' | 'railway' | 'local';
   capabilities: {
     official_ercot_data: boolean;
     probabilistic_prediction: boolean;

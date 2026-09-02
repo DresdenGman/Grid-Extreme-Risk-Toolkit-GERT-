@@ -2,7 +2,7 @@ const securityHeaders = [
   { key: 'Content-Security-Policy', value: [
     "default-src 'self'",
     "base-uri 'self'",
-    "connect-src 'self' https://*.up.railway.app",
+    "connect-src 'self'",
     "font-src 'self' data:",
     "form-action 'self'",
     "frame-ancestors 'none'",

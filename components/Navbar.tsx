@@ -11,6 +11,8 @@ const navItems = [
   { name: 'Scenario', href: '/scenario' },
   { name: 'Benchmark', href: '/benchmark' },
   { name: 'Events', href: '/events/polar-vortex' },
+  { name: 'Method', href: '/about' },
+  { name: 'Research', href: '/research' },
 ];
 
 export default function Navbar() {

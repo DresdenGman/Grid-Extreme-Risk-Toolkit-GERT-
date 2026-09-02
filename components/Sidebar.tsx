@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Activity, LayoutDashboard, CloudLightning, LineChart, History, BookOpen, ArrowUpRight } from 'lucide-react';
+import { Activity, LayoutDashboard, CloudLightning, LineChart, History, BookOpen, ArrowUpRight, Code2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -14,6 +14,7 @@ const navItems = [
   { name: 'Benchmarks', href: '/benchmark', icon: LineChart },
   { name: 'Event Replay', href: '/events/polar-vortex', icon: History },
   { name: 'Methodology', href: '/about', icon: BookOpen },
+  { name: 'Open Research', href: '/research', icon: Code2 },
 ];
 
 export default function Sidebar() {
@@ -96,6 +97,14 @@ export default function Sidebar() {
       </nav>
 
       <div className="border-t border-[#141414] p-4">
+        <a
+          href="https://github.com/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-"
+          target="_blank"
+          rel="noreferrer"
+          className="technical-label mb-4 flex items-center justify-between border border-[#141414] px-4 py-3 text-[#141414] transition hover:bg-[#141414] hover:text-[#e4e3e0]"
+        >
+          Inspect source <ArrowUpRight className="h-3.5 w-3.5" />
+        </a>
         <div className="border border-[#141414] bg-[#deddd9] p-4 shadow-[4px_4px_0_#141414]">
           <div className="mb-3 flex items-center gap-3">
           <div className="relative">

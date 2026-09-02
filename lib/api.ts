@@ -3,15 +3,11 @@ import {
   BacktestResponse, AIAnalysisResponse, WeatherFeatures,
   EventPlaybackResponse, HealthStatus, ProductStatus, GridLoadResponse,
   ModelEvidence,
-  ApiClientError, ApiErrorKind, DataMode, DataEnvelope, Provenance
+  ApiClientError, DataMode, DataEnvelope, Provenance
 } from "./types";
 import releaseModelEvidence from '../evidence/ercot_v1_4_validation.json';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || (
-  process.env.NODE_ENV === 'production'
-    ? 'https://gert-backend-production.up.railway.app'
-    : 'http://localhost:8000'
-);
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api/gert';
 
 function getDataMode(): DataMode {
   if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('demo') === '1') {
@@ -212,13 +208,12 @@ async function liveFetch<T>(
   const timeoutId = setTimeout(() => controller.abort(), 8000);
 
   try {
+    const headers = new Headers(options.headers);
+    headers.set('Content-Type', 'application/json');
     const res = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
       signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
     });
 
     clearTimeout(timeoutId);
@@ -282,7 +277,10 @@ export const api = {
           status: 'ok',
           backend: 'tail-qrf.demo',
           ai_enabled: false,
-          env: 'presentation'
+          env: 'presentation',
+          api_version: 'demo',
+          release_sha: 'demo',
+          deployment_platform: 'vercel',
         }))
       : liveFetch<HealthStatus>('/health', { method: 'GET' }),
 
@@ -293,6 +291,9 @@ export const api = {
           environment: 'presentation',
           model_status: 'demonstration_stub',
           model_version: 'tail-qrf.demo',
+          api_version: 'demo',
+          release_sha: 'demo',
+          deployment_platform: 'vercel',
           capabilities: {
             official_ercot_data: false,
             probabilistic_prediction: false,
