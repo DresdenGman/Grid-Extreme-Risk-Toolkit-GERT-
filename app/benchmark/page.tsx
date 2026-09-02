@@ -209,6 +209,20 @@ export default function BenchmarkPage() {
               </output>
             </div>
 
+            <div className="mt-3 grid grid-cols-4 gap-2" role="group" aria-label="Calibration tolerance presets">
+              {[2.5, 3, 4, 4.5].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  aria-pressed={tolerancePp === preset}
+                  onClick={() => setTolerancePp(preset)}
+                  className={`border px-2 py-2 font-mono text-xs font-semibold transition ${tolerancePp === preset ? 'border-[#141414] bg-[#141414] text-white' : 'border-black/15 bg-white hover:border-[#ff4d00]'}`}
+                >
+                  ±{preset} pp
+                </button>
+              ))}
+            </div>
+
             <button
               type="button"
               onClick={() => setTolerancePp(PREDECLARED_CALIBRATION_TOLERANCE * 100)}
