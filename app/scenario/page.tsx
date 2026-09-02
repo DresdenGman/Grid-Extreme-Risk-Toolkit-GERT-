@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 import { ScenarioResponse, AIAnalysisResponse, RiskLevel } from '@/lib/types';
 import { Card, Badge } from '@/components/ui';
@@ -125,6 +126,9 @@ export default function ScenarioLab() {
       {error && (
         <div className="border border-[#b42318] bg-[#f5dfdc] px-5 py-4 text-sm text-[#7d1a13]" role="alert">
           <strong>Scenario unavailable.</strong> {error}
+          <Link href="/benchmark#evidence-rehearsal" className="ml-2 font-semibold underline underline-offset-4">
+            Run the evidence rehearsal instead.
+          </Link>
         </div>
       )}
       {analysisNotice && (

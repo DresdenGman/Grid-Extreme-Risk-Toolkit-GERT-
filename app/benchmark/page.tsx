@@ -2,6 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
+import {
+  evaluateCalibrationTolerance,
+  PREDECLARED_CALIBRATION_TOLERANCE,
+} from '@/lib/calibration';
 import { BacktestResponse, ModelEvidence, ProductStatus } from '@/lib/types';
 import { Card, SkeletonCard } from '@/components/ui';
 import {
@@ -22,6 +26,7 @@ import {
   Gauge,
   LockKeyhole,
   ShieldAlert,
+  SlidersHorizontal,
   XCircle,
 } from 'lucide-react';
 
@@ -33,6 +38,8 @@ export default function BenchmarkPage() {
   const [backtest, setBacktest] = useState<BacktestResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tolerancePp, setTolerancePp] = useState(3);
+  const [selectedQuantile, setSelectedQuantile] = useState<ModelEvidence['quantile_metrics'][number]['quantile']>('q99');
 
   useEffect(() => {
     let active = true;
@@ -98,6 +105,13 @@ export default function BenchmarkPage() {
 
   const productionValidated = status?.model_status === 'validated_production';
   const minSkill = Math.min(...evidence.quantile_metrics.map((metric) => metric.pinball_skill_vs_baseline));
+  const selectedMetric = evidence.quantile_metrics.find((metric) => metric.quantile === selectedQuantile)
+    ?? evidence.quantile_metrics[0];
+  const hypotheticalDecision = evaluateCalibrationTolerance(evidence.quantile_metrics, tolerancePp / 100);
+  const originalDecision = evaluateCalibrationTolerance(
+    evidence.quantile_metrics,
+    PREDECLARED_CALIBRATION_TOLERANCE,
+  );
 
   return (
     <div className="space-y-8 pb-12">
@@ -164,6 +178,96 @@ export default function BenchmarkPage() {
         </div>
       </section>
 
+      <section id="evidence-rehearsal" className="scroll-mt-8 overflow-hidden border border-[#141414] bg-[#f7f6f2] shadow-[7px_7px_0_#f3c64d]">
+        <div className="grid border-b border-black/10 lg:grid-cols-[0.85fr_1.15fr]">
+          <div className="border-b border-black/10 p-6 sm:p-8 lg:border-b-0 lg:border-r">
+            <div className="flex items-center gap-2 text-[#ff4d00]">
+              <SlidersHorizontal className="h-4 w-4" />
+              <span className="technical-label">Interactive evidence rehearsal</span>
+            </div>
+            <h2 className="display-serif mt-4 text-4xl tracking-[-0.04em]">Would you authorize this model?</h2>
+            <p className="mt-4 text-sm leading-6 text-[#4f4e4a]">
+              Stress-test the calibration tolerance against the frozen 96-hour record. This changes only the hypothetical rule below—not the predeclared ±3 percentage-point gate or the published rejection.
+            </p>
+
+            <label className="mt-8 block text-xs font-semibold uppercase tracking-[0.16em] text-[#6d6b66]" htmlFor="calibration-tolerance">
+              Hypothetical tolerance
+            </label>
+            <div className="mt-3 flex items-center gap-4">
+              <input
+                id="calibration-tolerance"
+                type="range"
+                min="1"
+                max="6"
+                step="0.25"
+                value={tolerancePp}
+                onChange={(event) => setTolerancePp(Number(event.target.value))}
+                className="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-[#d0cfca] accent-[#ff4d00]"
+              />
+              <output htmlFor="calibration-tolerance" className="w-20 border border-black/15 bg-white px-3 py-2 text-right font-mono text-lg font-semibold">
+                ±{tolerancePp.toFixed(2)} pp
+              </output>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setTolerancePp(PREDECLARED_CALIBRATION_TOLERANCE * 100)}
+              className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-[#6d6b66] underline decoration-[#ff4d00] underline-offset-4 hover:text-[#141414]"
+            >
+              Restore predeclared 3 pp gate
+            </button>
+          </div>
+
+          <div className="grid p-6 sm:p-8">
+            <div className={`border p-6 ${hypotheticalDecision.allPassed ? 'border-[#2f6b4f] bg-[#dce9e1]' : 'border-[#b42318] bg-[#f7e6e2]'}`} role="status" aria-live="polite">
+              <span className="technical-label text-black/55">Hypothetical result</span>
+              <div className="mt-3 flex items-start gap-3">
+                {hypotheticalDecision.allPassed
+                  ? <CheckCircle2 className="mt-1 h-6 w-6 shrink-0 text-[#2f6b4f]" />
+                  : <XCircle className="mt-1 h-6 w-6 shrink-0 text-[#b42318]" />}
+                <div>
+                  <p className="display-serif text-3xl tracking-tight">
+                    {hypotheticalDecision.allPassed ? 'Calibration would pass.' : 'Calibration would still fail.'}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-[#4f4e4a]">
+                    {hypotheticalDecision.allPassed
+                      ? 'All four observed coverage errors fall inside this hypothetical tolerance.'
+                      : `${hypotheticalDecision.failedQuantiles.map((quantile) => quantile.toUpperCase()).join(', ')} remain outside this hypothetical tolerance.`}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <span className="technical-label text-[#6d6b66]">Inspect one quantile</span>
+              <div className="mt-3 grid grid-cols-4 gap-2" role="group" aria-label="Quantile selection">
+                {evidence.quantile_metrics.map((metric) => (
+                  <button
+                    key={metric.quantile}
+                    type="button"
+                    aria-pressed={selectedQuantile === metric.quantile}
+                    onClick={() => setSelectedQuantile(metric.quantile)}
+                    className={`border px-2 py-3 font-mono text-sm font-semibold uppercase transition ${selectedQuantile === metric.quantile ? 'border-[#141414] bg-[#141414] text-white' : 'border-black/15 bg-white hover:border-[#ff4d00]'}`}
+                  >
+                    {metric.quantile}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <RehearsalMetric label="Target coverage" value={percent(selectedMetric.target_coverage, 0)} />
+                <RehearsalMetric label="Observed coverage" value={percent(selectedMetric.empirical_coverage, 2)} />
+                <RehearsalMetric label="Absolute error" value={`${(selectedMetric.absolute_coverage_error * 100).toFixed(2)} pp`} />
+              </div>
+            </div>
+
+            <div className="mt-6 border-t border-black/10 pt-5 text-xs leading-5 text-[#6d6b66]">
+              Published decision: <strong className="text-[#141414]">{originalDecision.allPassed ? 'pass' : 'reject'}</strong> at the frozen ±3 pp rule. A looser after-the-fact threshold can explain sensitivity, but cannot retroactively authorize the candidate.
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="grid gap-5 lg:grid-cols-12">
         <div className="hairline-panel rounded-[28px] p-6 sm:p-8 lg:col-span-7">
           <span className="technical-label text-[#6d6b66]">Promotion gates</span>
@@ -223,6 +327,15 @@ export default function BenchmarkPage() {
           <LockKeyhole className="h-9 w-9 text-[#87847e]" />
         </section>
       )}
+    </div>
+  );
+}
+
+function RehearsalMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="border border-black/10 bg-white p-4">
+      <p className="technical-label text-[#6d6b66]">{label}</p>
+      <p className="mt-2 font-mono text-xl font-semibold text-[#141414]">{value}</p>
     </div>
   );
 }
