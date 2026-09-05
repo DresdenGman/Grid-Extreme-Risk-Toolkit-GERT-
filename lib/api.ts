@@ -1,6 +1,6 @@
 import {
   PredictRequest, PredictionOut, ScenarioRequest, ScenarioResponse,
-  BacktestResponse, AIAnalysisResponse, WeatherFeatures,
+  BacktestResponse, WeatherFeatures,
   EventPlaybackResponse, HealthStatus, ProductStatus, GridLoadResponse,
   ModelEvidence,
   ApiClientError, DataMode, DataEnvelope, Provenance
@@ -93,20 +93,6 @@ const MOCK_BACKTEST: BacktestResponse = {
       { prob_bucket: "95-99%", observed_freq: 0.985, ideal_freq: 0.99 },
       { prob_bucket: ">99%", observed_freq: 0.996, ideal_freq: 0.999 },
   ]
-};
-
-const MOCK_ANALYSIS: AIAnalysisResponse = {
-  headline: "EXTREME Risk: P99 Load Exceeds Capacity by 1.5GW",
-  drivers: [
-    { factor: "Temperature", direction: "Increase", evidence: "Low temperature (-5C) driving heating demand" },
-    { factor: "Wind Volatility", direction: "Uncertainty", evidence: "High wind variance widens P99-P50 gap" }
-  ],
-  uncertainty: "Wind generation reliability is the primary uncertainty factor.",
-  actions: {
-    operator: ["Activate contingency reserves", "Prepare for load shedding"],
-    public: ["Reduce heating setpoints", "Avoid major appliances"]
-  },
-  confidence: "HIGH"
 };
 
 const MOCK_WEATHER: WeatherFeatures = {
@@ -256,11 +242,6 @@ export const api = {
       ? Promise.resolve(demoEnvelope(MOCK_SCENARIO))
       : liveFetch<ScenarioResponse>('/scenario', { method: 'POST', body: JSON.stringify(data) }),
 
-  analyze: (data: PredictRequest): Promise<DataEnvelope<AIAnalysisResponse>> =>
-    getDataMode() === 'demo'
-      ? Promise.resolve(demoEnvelope(MOCK_ANALYSIS))
-      : liveFetch<AIAnalysisResponse>('/analyze', { method: 'POST', body: JSON.stringify(data) }),
-
   liveWeather: (region: string): Promise<DataEnvelope<WeatherFeatures>> =>
     getDataMode() === 'demo'
       ? Promise.resolve(demoEnvelope(MOCK_WEATHER))
@@ -276,7 +257,6 @@ export const api = {
       ? Promise.resolve(demoEnvelope({
           status: 'ok',
           backend: 'tail-qrf.demo',
-          ai_enabled: false,
           env: 'presentation',
           api_version: 'demo',
           release_sha: 'demo',
@@ -299,7 +279,6 @@ export const api = {
             probabilistic_prediction: false,
             scenario_analysis: false,
             validated_backtest: false,
-            ai_analysis: false,
             presentation_mode: true,
           },
         }))

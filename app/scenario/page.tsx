@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
-import { ScenarioResponse, AIAnalysisResponse, RiskLevel } from '@/lib/types';
+import { ScenarioResponse, RiskLevel } from '@/lib/types';
 import { Card, Badge } from '@/components/ui';
-import { ArrowRight, AlertTriangle, CloudSnow, Sun, CloudRain, BrainCircuit, Sparkles, RefreshCw } from 'lucide-react';
+import { ArrowRight, AlertTriangle, CloudSnow, Sun, CloudRain } from 'lucide-react';
 
 function scoreToLevel(score: number): RiskLevel {
   if (score >= 90) return 'EXTREME';
@@ -23,11 +23,6 @@ export default function ScenarioLab() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // AI State
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<AIAnalysisResponse | null>(null);
-  const [analysisNotice, setAnalysisNotice] = useState<string | null>(null);
-
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get('demo') !== '1') return;
 
@@ -37,20 +32,10 @@ export default function ScenarioLab() {
       weather_features: { temperature: 15, wind_speed: 10, solar_irradiance: 500 },
     };
     setLoading(true);
-    setAnalyzing(true);
-    Promise.all([
-      api.scenario({ baseline_request: request, perturbations: { temperature: 15, wind_speed: 10 } }),
-      api.analyze(request),
-    ])
-      .then(([scenario, explanation]) => {
-        setResult(scenario.data);
-        setAnalysis(explanation.data);
-      })
+    api.scenario({ baseline_request: request, perturbations: { temperature: 15, wind_speed: 10 } })
+      .then((scenario) => setResult(scenario.data))
       .catch(console.error)
-      .finally(() => {
-        setLoading(false);
-        setAnalyzing(false);
-      });
+      .finally(() => setLoading(false));
   }, []);
 
   // Presets
@@ -69,7 +54,6 @@ export default function ScenarioLab() {
 
   const runSimulation = async () => {
     setLoading(true);
-    setAnalysis(null);
     setError(null);
     try {
       const env = await api.scenario({
@@ -92,29 +76,6 @@ export default function ScenarioLab() {
     }
   };
 
-  const runAIAnalysis = async () => {
-      if (!result) return;
-      setAnalyzing(true);
-      setAnalysisNotice(null);
-      try {
-        const env = await api.analyze({
-          region: 'ERCOT_SYSTEM',
-          date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-          weather_features: { 
-              temperature: 20 - tempDrop,
-              wind_speed: 10 + windChange,
-              solar_irradiance: 500
-          }
-        });
-        setAnalysis(env.data);
-      } catch (e) {
-        console.error(e);
-        setAnalysisNotice('Optional AI commentary is unavailable. The numerical scenario result remains unchanged.');
-      } finally {
-        setAnalyzing(false);
-      }
-    };
-
   return (
     <div className="mx-auto max-w-6xl space-y-7 pb-12">
       <header className="border-b border-white/[0.09] pb-7">
@@ -129,11 +90,6 @@ export default function ScenarioLab() {
           <Link href="/benchmark#evidence-rehearsal" className="ml-2 font-semibold underline underline-offset-4">
             Run the evidence rehearsal instead.
           </Link>
-        </div>
-      )}
-      {analysisNotice && (
-        <div className="border border-[#9a6200] bg-[#eee6cf] px-5 py-4 text-sm text-[#5f4300]" role="status">
-          {analysisNotice}
         </div>
       )}
       
@@ -294,47 +250,6 @@ export default function ScenarioLab() {
             </Card>
           </div>
           
-           {/* AI Analysis Section */}
-            {!analysis ? (
-              <div className="flex justify-center">
-                 <button 
-                  onClick={runAIAnalysis}
-                  disabled={analyzing}
-                  className="group relative inline-flex items-center justify-center border border-[#141414] bg-[#141414] font-medium text-[#e4e3e0] shadow-[4px_4px_0_#ff4d00] focus:outline-none"
-                >
-                  <span className="relative flex items-center gap-2 px-5 py-2.5 transition-all duration-75 group-hover:bg-[#ff4d00] group-hover:text-[#141414]">
-                     {analyzing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                     {analyzing ? "AI: Explain This Scenario" : "AI: Explain This Scenario"}
-                  </span>
-                </button>
-              </div>
-            ) : (
-              <Card className="border-[#141414] bg-[#e4e3e0]">
-                <div className="mb-4 flex items-center justify-between border-b border-black/20 pb-3">
-                  <div className="flex items-center gap-2 text-[#ff4d00]">
-                    <BrainCircuit className="h-5 w-5" />
-                    <span className="font-bold tracking-wide text-sm">SCENARIO ANALYSIS</span>
-                  </div>
-                  <Badge level={analysis.confidence === 'HIGH' ? 'HIGH' : 'MODERATE'} />
-                </div>
-                
-                <h3 className="text-xl font-bold text-[#141414] mb-4">{analysis.headline}</h3>
-                <p className="text-[#454545] mb-4">{analysis.uncertainty}</p>
-                
-                <h4 className="text-xs font-bold text-[#6d6b66] uppercase mb-3">Implications</h4>
-                 <ul className="space-y-2">
-                      {analysis.drivers.map((d, i) => (
-                        <li key={i} className="flex gap-2 text-sm text-[#454545]">
-                          <span className="font-bold text-[#ff4d00]">•</span>
-                          <span>
-                            <span className="font-semibold text-[#141414]">{d.factor}:</span> {d.evidence}
-                          </span>
-                        </li>
-                      ))}
-                </ul>
-              </Card>
-            )}
-
         </div>
       )}
     </div>

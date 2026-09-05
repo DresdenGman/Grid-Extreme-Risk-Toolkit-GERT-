@@ -110,20 +110,6 @@ Imagine:
 
 ---
 
-### 5. **AI Analysis (AI Analysis)**
-
-**Features**:
-- Uses AI to generate text explanations:
-  - Risk drivers (temperature, wind speed, etc.)
-  - Sources of uncertainty
-  - Recommended actions (for operators, public)
-
-**Value**:
-- Makes risks understandable to non-experts
-- Provides actionable recommendations
-
----
-
 ## 🏗 Technical Architecture (Simple Understanding)
 
 ### Overall Architecture
@@ -158,7 +144,7 @@ Imagine:
 - Technologies: React, TypeScript, Tailwind CSS, Recharts
 
 **Backend (FastAPI)**:
-- Responsibilities: Calculate predictions, assess risks, call AI, store data
+- Responsibilities: Calculate predictions, assess risks, and store data
 - Technologies: Python, FastAPI, SQLAlchemy, Pydantic
 
 **Database (SQLite/PostgreSQL)**:
@@ -378,7 +364,7 @@ Otherwise: Risk Score = 0 (LOW)
 | Technology | Purpose | Why Choose |
 |------------|---------|------------|
 | **FastAPI** | Web Framework | High performance, auto documentation, type validation |
-| **Python** | Programming Language | Scientific computing, AI integration, rich ecosystem |
+| **Python** | Programming Language | Scientific computing, numerical modeling, rich ecosystem |
 | **SQLAlchemy** | ORM | Database operations, connection pooling, migrations |
 | **Pydantic** | Data Validation | Type safety, automatic validation |
 | **httpx** | HTTP Client | Async, good performance |
@@ -407,7 +393,6 @@ Otherwise: Risk Score = 0 (LOW)
 - ✅ **Real Data Integration**: Supports multiple ISO data sources
 - ✅ **Alert System**: Multi-channel notifications
 - ✅ **Data Persistence**: Historical data storage
-- ✅ **AI Integration**: Intelligent analysis and recommendations
 
 ### 3. **Great User Experience**
 

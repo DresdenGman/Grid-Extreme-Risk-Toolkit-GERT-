@@ -92,27 +92,6 @@ export interface BacktestResponse {
   calibration_curve: CalibrationBin[]; // New: Reliability Diagram Data
 }
 
-// --- AI Analysis Types ---
-
-export interface AIDriver {
-  factor: string;
-  direction: string;
-  evidence: string;
-}
-
-export interface AIActions {
-  operator: string[];
-  public: string[];
-}
-
-export interface AIAnalysisResponse {
-  headline: string;
-  drivers: AIDriver[];
-  uncertainty: string;
-  actions: AIActions;
-  confidence: string;
-}
-
 // --- Event Playback Types ---
 
 export interface EventLog {
@@ -156,7 +135,6 @@ export interface GridLoadResponse {
 export interface HealthStatus {
   status: string;
   backend: string;
-  ai_enabled: boolean;
   env: string;
   api_version: string;
   release_sha: string;
@@ -176,7 +154,6 @@ export interface ProductStatus {
     probabilistic_prediction: boolean;
     scenario_analysis: boolean;
     validated_backtest: boolean;
-    ai_analysis: boolean;
     presentation_mode: boolean;
   };
 }

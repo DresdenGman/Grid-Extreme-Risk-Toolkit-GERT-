@@ -11,7 +11,7 @@ The product is built around a simple question: **how close is an unlikely but pl
 - **Official operating context:** the backend can retrieve current ERCOT load and adequacy data with server-side ERCOT credentials.
 - **Weather context:** live weather is retrieved from external public sources with timestamps and provenance.
 - **Probabilistic model:** the latest `ercot-delta-quantile-v1.4` candidate is **rejected for production**. It demonstrated positive pinball skill at every reported quantile, but missed the predeclared ±3 percentage-point calibration tolerance at Q90, Q95, and Q99 on the frozen 96-hour evaluation window.
-- **Production behavior:** prediction, scenario, AI-analysis, and validated-backtest endpoints return an explicit `503` until a `validated_production` artifact is active.
+- **Production behavior:** prediction, scenario, and validated-backtest endpoints return an explicit `503` until a `validated_production` artifact is active.
 - **Evidence:** sanitized candidate results remain public through `GET /model/evidence` and the Evidence page.
 - **Presentation mode:** `?demo=1` is an explicit simulated mode for interface demonstrations. Live mode never falls back to simulated predictions after an error.
 
@@ -25,7 +25,6 @@ The release contract and promotion gates are documented in [`docs/PRODUCT_RELEAS
 | Scenario Lab | Perturb weather and physical drivers through the active model contract | Gated until model validation |
 | Event Replay | Explain how tail pressure can evolve during an extreme event | Labeled educational reconstruction |
 | Evidence | Publish skill, coverage, promotion gates, provenance, and limitations | Versioned observed evidence |
-| AI Analysis | Explain a typed risk snapshot when both model and AI service are enabled | Optional and gated |
 
 ## Mathematical core
 
@@ -104,7 +103,6 @@ Backend secrets belong only in Railway or a local ignored environment file. Neve
 | `ERCOT_API_USERNAME` | ERCOT Public API credential, backend only |
 | `ERCOT_API_PASSWORD` | ERCOT Public API credential, backend only |
 | `ERCOT_API_SUBSCRIPTION_KEY` | ERCOT subscription key, backend only |
-| `API_KEY` | Optional Google GenAI credential, backend only |
 | `NEXT_PUBLIC_API_URL` | Public backend base URL compiled into the frontend |
 | `NEXT_PUBLIC_DATA_MODE` | `live` for public use; `demo` only for explicit presentation builds |
 

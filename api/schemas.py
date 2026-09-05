@@ -57,25 +57,6 @@ class ScenarioResponse(BaseModel):
     new_prediction: PredictionOut
 
 
-class AIDriver(BaseModel):
-    factor: str
-    direction: str
-    evidence: str
-
-
-class AIActions(BaseModel):
-    operator: List[str]
-    public: List[str]
-
-
-class AIAnalysisResponse(BaseModel):
-    headline: str
-    drivers: List[AIDriver]
-    uncertainty: str
-    actions: AIActions
-    confidence: str
-
-
 class TimePoint(BaseModel):
     hour: int
     actual_load: float
@@ -134,7 +115,6 @@ class ProductCapabilities(BaseModel):
     probabilistic_prediction: bool
     scenario_analysis: bool
     validated_backtest: bool
-    ai_analysis: bool
     presentation_mode: bool = True
 
 

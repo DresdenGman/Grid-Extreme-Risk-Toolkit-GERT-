@@ -4,7 +4,6 @@ pydantic==2.13.5
 httpx==0.28.1
 matplotlib==3.11.1
 slowapi==0.1.10
-google-genai==2.20.0
 sqlalchemy==2.0.52
 psycopg2-binary==2.9.12
 joblib==1.5.3

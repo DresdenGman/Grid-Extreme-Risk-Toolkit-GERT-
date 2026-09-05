@@ -38,7 +38,6 @@ def test_public_status_reports_capabilities_without_secrets() -> None:
         "probabilistic_prediction",
         "scenario_analysis",
         "validated_backtest",
-        "ai_analysis",
         "presentation_mode",
     }
     serialized = response.text.lower()
@@ -68,6 +67,12 @@ def test_production_stub_refuses_prediction(monkeypatch) -> None:
 
     assert response.status_code == 503
     assert "validated probabilistic model" in response.json()["detail"].lower()
+
+
+def test_removed_analysis_endpoint_is_not_exposed() -> None:
+    response = client.post("/analyze", json=_prediction_payload())
+
+    assert response.status_code == 404
 
 
 def test_security_headers_and_request_id_are_applied() -> None:

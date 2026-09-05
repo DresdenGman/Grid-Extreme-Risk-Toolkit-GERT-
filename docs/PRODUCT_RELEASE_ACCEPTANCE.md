@@ -13,7 +13,7 @@ Every user-visible result must identify three independent states:
 3. **Capacity** — official adequacy value, configured reference, or simulated.
 
 Simulation is allowed only in an explicitly selected presentation mode. Live
-mode must never substitute simulated predictions, AI analysis, backtests, or
+mode must never substitute simulated predictions, backtests, or
 historical events after a service failure.
 
 ## Model promotion contract
@@ -45,7 +45,7 @@ does not become a pass by changing the threshold after inspecting results.
 - The canonical URL runs the same release as the backend.
 - Live mode remains useful when prediction is gated by showing official load,
   capacity context, timestamps, provenance, and the reason prediction is unavailable.
-- Scenario, benchmark, AI, and event surfaces expose their evidence status.
+- Scenario, benchmark, and event surfaces expose their evidence status.
 - Loading, empty, stale, rate-limited, and offline states are actionable.
 - Keyboard navigation, responsive layouts, contrast, and reduced-motion behavior are verified.
 

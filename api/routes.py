@@ -11,15 +11,12 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 import generate_bulletin
-from api.deps import ai_client, logger, model_service, alert_manager
+from api.deps import logger, model_service, alert_manager
 from api.config import config
 from api.limiting import limiter
 from db.connection import get_db, get_db_context
 from db.repository import PredictionRepository, AlertRepository, GridLoadRepository
 from api.schemas import (
-    AIAnalysisResponse,
-    AIActions,
-    AIDriver,
     BacktestResponse,
     CalibrationBin,
     EventLog,
@@ -110,7 +107,6 @@ async def health_check():
         "status": "ok",
         "timestamp": datetime.now(),
         "backend": model_service.get_version(),
-        "ai_enabled": ai_client is not None,
         "env": config.app_env,
     }
 
@@ -134,7 +130,6 @@ async def product_status():
             probabilistic_prediction=validated_model,
             scenario_analysis=validated_model,
             validated_backtest=bool(backtest_ready),
-            ai_analysis=ai_client is not None and validated_model,
         ),
     )
 
@@ -424,79 +419,6 @@ async def run_scenario(req: ScenarioRequest, request: Request):
     except Exception as e:
         logger.error(f"Scenario Error: {str(e)}")
         raise _service_failure("Scenario service failed.", request) from e
-
-
-@router.post("/analyze", response_model=AIAnalysisResponse)
-@limiter.limit("10/minute")
-async def analyze_risk(req: PredictRequest, request: Request):
-    """
-    AI-Powered Analysis:
-    1) Reuse RiskService.predict to generate a truth snapshot.
-    2) Send the typed snapshot to Gemini when the optional service is enabled.
-    """
-    if config.is_production and not _validated_production_model():
-        raise HTTPException(
-            status_code=503,
-            detail="AI analysis requires a validated production model.",
-        )
-    if not ai_client:
-        raise HTTPException(status_code=503, detail="AI analysis is not enabled.")
-    try:
-        operational_features, _ = await _operational_model_context(req)
-        pred = risk_service.predict(req, operational_features=operational_features)
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
-    snapshot = {
-        "region": req.region,
-        "capacity_mw": pred.diagnostics.get("capacity_used"),
-        "features": req.weather_features.model_dump(),
-        "prediction": {
-            "p50_load": pred.q50_load_mw,
-            "p99_extreme_load": pred.q99_load_mw,
-            "margin_mw": float(pred.diagnostics.get("capacity_used")) - float(pred.q99_load_mw),
-            "risk_level": pred.risk_level,
-        },
-        "model": {"type": "quantile", "version": pred.diagnostics.get("model_version")},
-    }
-
-    try:
-        from api.deps import types  # optional import for SDK config
-
-        prompt = f"""
-        You are GERT (Grid Extreme Risk Toolkit), an expert AI grid analyst.
-        Analyze the following JSON snapshot of grid conditions.
-
-        SNAPSHOT DATA:
-        {json.dumps(snapshot, default=str, sort_keys=True)}
-
-        INSTRUCTIONS:
-        1. Headline: Summarize the risk situation in one punchy sentence.
-        2. Drivers: Identify top 2 factors (weather/load) driving the P99 load. MUST reference specific numbers from snapshot 'evidence'.
-        3. Uncertainty: Explain why P99 is higher than P50 (e.g. wind volatility).
-        4. Actions: Recommend specific actions for Grid Operators and the Public based on the Risk Level.
-
-        CONSTRAINTS:
-        - Do not hallucinate capacity or weather values not in the snapshot.
-        - Strict JSON output matching the schema.
-        """
-
-        response = ai_client.models.generate_content(  # type: ignore[union-attr]
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(  # type: ignore[union-attr]
-                response_mime_type="application/json",
-                response_schema=AIAnalysisResponse,
-                temperature=0.2,
-            ),
-        )
-        parsed = json.loads(response.text)
-        return AIAnalysisResponse(**parsed)
-    except Exception as e:
-        logger.error(f"AI Analysis Failed: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail=f"AI analysis service is unavailable. Reference: {_request_id(request)}",
-        ) from e
 
 
 @router.get("/predictions/history")

@@ -63,7 +63,7 @@ export default function Sidebar() {
             {presentationMode
               ? 'Model: tail-qrf.demo • Presentation'
               : status
-              ? `Model: ${status.model_version} • ${modelLabel} • AI: ${status.capabilities.ai_analysis ? 'ON' : 'OFF'}`
+              ? `Model: ${status.model_version} • ${modelLabel}`
               : 'Model: loading…'}
           </div>
         </div>

@@ -80,7 +80,7 @@
   "limitations": [
     "The final frozen window contains only 96 hourly observations and is not sufficient for production promotion by itself.",
     "Strict calibration tolerance was missed at Q90, Q95, and Q99.",
-    "The candidate is retained as research evidence only; production prediction, scenario, backtest, and AI-analysis endpoints remain gated.",
+    "The candidate is retained as research evidence only; production prediction, scenario, and backtest endpoints remain gated.",
     "GERT is decision-support research and must not be used for autonomous grid control."
   ],
   "published_at": "2026-08-30T00:00:00Z"

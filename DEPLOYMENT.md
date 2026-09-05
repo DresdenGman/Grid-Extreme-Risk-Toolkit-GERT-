@@ -53,7 +53,6 @@ Should return:
   "status": "ok",
   "timestamp": "...",
   "backend": "stub-v1",
-  "ai_enabled": false,
   "env": "dev"
 }
 ```
@@ -215,8 +214,6 @@ DATABASE_URL=sqlite:///./gert.db  # or postgresql://user:pass@localhost/gert
 ALERT_EMAIL_ENABLED=false
 ALERT_WEBHOOK_ENABLED=false
 
-# AI Features (optional)
-API_KEY=your-google-genai-api-key
 ```
 
 ---

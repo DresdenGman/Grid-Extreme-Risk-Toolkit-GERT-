@@ -526,7 +526,6 @@ export async function handleGertRequest(
       api_version: '1.2.0',
       release_sha: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) ?? 'local',
       deployment_platform: 'vercel',
-      ai_enabled: false,
       env: 'production',
     });
   }
@@ -546,7 +545,6 @@ export async function handleGertRequest(
         probabilistic_prediction: false,
         scenario_analysis: false,
         validated_backtest: false,
-        ai_analysis: false,
         presentation_mode: true,
       },
     });
@@ -607,13 +605,12 @@ export async function handleGertRequest(
   }
 
   if (
-    (request.method === 'POST' && ['/predict', '/scenario', '/analyze'].includes(route)) ||
+    (request.method === 'POST' && ['/predict', '/scenario'].includes(route)) ||
     (request.method === 'GET' && route === '/backtest')
   ) {
     const messages: Record<string, string> = {
       '/predict': 'Validated probabilistic model is not yet available in production.',
       '/scenario': 'Scenario analysis requires a validated production model.',
-      '/analyze': 'AI analysis requires a validated prediction snapshot.',
       '/backtest': 'Validated model backtest is not yet available in production.',
     };
     return publicError(messages[route], 503, requestId);
