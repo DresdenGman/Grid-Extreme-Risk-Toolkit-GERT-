@@ -1,5 +1,23 @@
 # Grid Extreme Risk Toolkit (GERT)
 
+## Try the Historical Lab
+
+[Open the working lab](https://gert-d.vercel.app/history) ·
+[Review it in 10 minutes](https://gert-d.vercel.app/review) ·
+[Reproduce the calculations](docs/HISTORICAL_LAB.md) ·
+[Run a 20-minute workshop](docs/WORKSHOP.md)
+
+The public landing page now supports a complete workflow using **216 observed
+hourly ERCOT native-load values** across three historical windows. Select a case,
+set an assumed capacity and uniform load reduction, compare outcomes, then export
+the hourly CSV and a JSON report with sources, assumptions, and checksums.
+
+This is a deterministic historical analysis. Capacity and interventions are
+counterfactual assumptions; the calculated gap energy is not a probabilistic
+forecast, expected unserved energy, or realized savings. The live probabilistic
+candidate remains gated. Reviewers can use the Historical Lab without credentials
+or a model server.
+
 GERT is an evidence-first decision-support platform for power-grid tail risk. It combines official ERCOT operating context, probabilistic load research, scenario stress testing, event reconstruction, and explicit model-governance controls in one interface.
 
 The product is built around a simple question: **how close is an unlikely but plausible demand tail to the system boundary?** Conventional dashboards emphasize a single expected-load line. GERT makes the P50–P99 uncertainty geometry, data provenance, capacity basis, and model authority visible.
@@ -57,10 +75,20 @@ Weather sources ──┘               │
 
 - **Frontend:** Next.js 16, React 18, TypeScript, Tailwind CSS, Recharts.
 - **Backend:** FastAPI, Pydantic 2, SQLAlchemy 2, NumPy/SciPy/scikit-learn.
-- **Production:** Vercel frontend and Railway containerized backend.
+- **Public release:** Vercel Next.js frontend with same-origin `/api/gert` runtime. Historical analysis runs entirely in the browser. FastAPI/Railway remains a separate supported deployment path.
 - **Security:** explicit production CORS, request IDs, rate limits, no-store API responses, browser security headers, non-root container, and server-only credentials.
 
 ## Local development
+
+To run the public Historical Lab alone:
+
+```bash
+npm ci
+npm run dev
+```
+
+No ERCOT credentials, Python environment, or running backend are required for
+that workflow. The optional separate backend setup is below.
 
 Requirements:
 

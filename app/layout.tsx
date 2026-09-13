@@ -11,7 +11,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://gert-d.vercel.app";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: "GERT — Grid Extreme Risk Intelligence",
-  description: "Decision intelligence for power-system tail risk, capacity stress and extreme events.",
+  description: "Explore historical ERCOT load, compare capacity assumptions, and reproduce grid-risk calculations with downloadable evidence.",
   applicationName: "GERT",
   keywords: [
     "power grid risk",
@@ -65,9 +65,9 @@ export default function RootLayout({
         />
         <ToastProvider>
           <Sidebar />
-          <div className="min-w-0 flex-1 overflow-hidden">
+          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <Navbar />
-            <main className="relative h-full overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent md:h-screen">
+            <main className="relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
               <div className="mx-auto max-w-[1720px] px-4 py-5 sm:px-6 sm:py-7 xl:px-10 xl:py-9">
               <PresentationNotice />
               {children}

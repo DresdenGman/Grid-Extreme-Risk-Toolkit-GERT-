@@ -7,12 +7,14 @@ import { useState } from 'react';
 import { clsx } from 'clsx';
 
 const navItems = [
-  { name: 'Dashboard', href: '/' },
+  { name: 'Historical Lab', href: '/' },
+  { name: 'Live Monitor', href: '/monitor' },
   { name: 'Scenario', href: '/scenario' },
   { name: 'Benchmark', href: '/benchmark' },
   { name: 'Events', href: '/events/polar-vortex' },
   { name: 'Method', href: '/about' },
   { name: 'Research', href: '/research' },
+  { name: 'Review & Reproduce', href: '/review' },
 ];
 
 export default function Navbar() {

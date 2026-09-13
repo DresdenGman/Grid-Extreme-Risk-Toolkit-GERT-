@@ -541,6 +541,7 @@ export async function handleGertRequest(
       release_sha: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) ?? 'local',
       deployment_platform: 'vercel',
       capabilities: {
+        historical_analysis: true,
         official_ercot_data: officialData,
         probabilistic_prediction: false,
         scenario_analysis: false,

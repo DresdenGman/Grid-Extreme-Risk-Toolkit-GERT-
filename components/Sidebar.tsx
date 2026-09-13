@@ -9,12 +9,14 @@ import { api } from '@/lib/api';
 import type { ProductStatus } from '@/lib/types';
 
 const navItems = [
-  { name: 'Live Monitor', href: '/', icon: LayoutDashboard },
+  { name: 'Historical Lab', href: '/', icon: History },
+  { name: 'Live Monitor', href: '/monitor', icon: LayoutDashboard },
   { name: 'Scenario Lab', href: '/scenario', icon: CloudLightning },
   { name: 'Benchmarks', href: '/benchmark', icon: LineChart },
   { name: 'Event Replay', href: '/events/polar-vortex', icon: History },
   { name: 'Methodology', href: '/about', icon: BookOpen },
   { name: 'Open Research', href: '/research', icon: Code2 },
+  { name: 'Review & Reproduce', href: '/review', icon: BookOpen },
 ];
 
 export default function Sidebar() {
@@ -36,6 +38,7 @@ export default function Sidebar() {
   }, []);
 
   const isHealthy = status?.status === 'operational';
+  const isHistorical = pathname === '/' || pathname === '/history';
   const modelLabel = status?.model_status === 'validated_production'
     ? 'VALIDATED'
     : status?.model_status === 'provisional_candidate'
@@ -48,7 +51,7 @@ export default function Sidebar() {
 
   return (
     <aside className="hidden h-full w-[276px] shrink-0 flex-col border-r border-[#141414] bg-[#e4e3e0] md:flex">
-      <div className="flex min-h-24 items-center border-b border-[#141414] px-6">
+      <div className="flex shrink-0 items-center border-b border-[#141414] px-6 py-5">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-3.5">
             <div className="grid h-10 w-10 place-items-center border border-[#141414] bg-[#141414] text-[#ff4d00] shadow-[4px_4px_0_#ff4d00]">
@@ -59,9 +62,10 @@ export default function Sidebar() {
               <span className="technical-label text-[8px] text-[#6d6b66]">Grid extreme risk toolkit</span>
             </div>
           </div>
-          <div className="technical-label pl-[54px] text-[8px] text-[#87847e]">
-            {presentationMode
+          <div className="technical-label max-w-[226px] truncate text-[8px] text-[#6d6b66]">
+            {presentationMode && !isHistorical
               ? 'Model: tail-qrf.demo • Presentation'
+              : isHistorical ? 'Historical load • Interactive analysis'
               : status
               ? `Model: ${status.model_version} • ${modelLabel}`
               : 'Model: loading…'}
@@ -69,18 +73,18 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-7">
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-4">
         <div className="technical-label mb-3 px-3 text-[#87847e]">
           Decision workflow
         </div>
         {navItems.map((item) => {
-          const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+          const isActive = item.href === '/' ? isHistorical : pathname.startsWith(item.href);
           const Icon = item.icon;
           
           return (
             <Link
               key={item.href}
-              href={presentationMode ? `${item.href}?demo=1` : item.href}
+              href={presentationMode && !['/', '/review'].includes(item.href) ? `${item.href}?demo=1` : item.href}
               className={clsx(
                 "group flex items-center gap-3 border px-3 py-3 text-sm font-medium transition-all duration-200",
                 isActive
@@ -96,7 +100,7 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-[#141414] p-4">
+      <div className="shrink-0 border-t border-[#141414] p-4">
         <a
           href="https://github.com/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-"
           target="_blank"
@@ -111,9 +115,9 @@ export default function Sidebar() {
             <div className={`h-2 w-2 ${isHealthy ? 'signal-dot bg-[#ff4d00]' : 'bg-amber-500'}`}></div>
           </div>
           <div className="flex flex-1 items-center justify-between">
-            <span className="technical-label text-[#6d6b66]">System</span>
+            <span className="technical-label text-[#6d6b66]">{isHistorical ? 'Historical lab' : 'Forecast service'}</span>
             <span className={`technical-label ${isHealthy ? 'text-[#ff4d00]' : 'text-amber-700'}`}>
-              {status ? (presentationMode ? 'SIMULATED' : status.status.toUpperCase()) : 'CHECKING'}
+              {isHistorical ? 'AVAILABLE' : status ? (presentationMode ? 'SIMULATED' : status.status.toUpperCase()) : 'CHECKING'}
             </span>
           </div>
           </div>

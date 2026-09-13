@@ -150,6 +150,7 @@ export interface ProductStatus {
   release_sha: string;
   deployment_platform: 'sites' | 'vercel' | 'railway' | 'local';
   capabilities: {
+    historical_analysis?: boolean;
     official_ercot_data: boolean;
     probabilistic_prediction: boolean;
     scenario_analysis: boolean;

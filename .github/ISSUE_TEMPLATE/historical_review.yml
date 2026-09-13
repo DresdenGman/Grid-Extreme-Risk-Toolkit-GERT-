@@ -1,0 +1,40 @@
+name: Historical Lab independent review
+description: Record a completed calculation check or a concrete critique
+title: "[Historical review]: "
+body:
+  - type: markdown
+    attributes:
+      value: "This review will be public. Include only tasks you actually completed. Do not include personal contact details or private data."
+  - type: dropdown
+    id: case
+    attributes:
+      label: Case reviewed
+      options: [summer-2023, spring-2023, winter-2021]
+    validations:
+      required: true
+  - type: input
+    id: assumptions
+    attributes:
+      label: Capacity (MW) and reduction (%)
+      placeholder: "80000 MW; 5%"
+    validations:
+      required: true
+  - type: textarea
+    id: checked
+    attributes:
+      label: What did you independently check?
+      description: "Record the observed result and your calculation or reproduction command. If you only explored the interface, say so."
+    validations:
+      required: true
+  - type: textarea
+    id: critique
+    attributes:
+      label: What should change, and why?
+      description: "Point to a specific assumption, source, formula, label, or user workflow."
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Dataset or report version
+      placeholder: ercot-native-load-cases-v1 / historical-capacity-v1

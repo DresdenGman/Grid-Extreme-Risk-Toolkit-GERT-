@@ -1,15 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function PresentationNotice() {
   const [visible, setVisible] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     setVisible(new URLSearchParams(window.location.search).get('demo') === '1');
-  }, []);
+  }, [pathname]);
 
-  if (!visible) return null;
+  if (!visible || ['/', '/history', '/review'].includes(pathname)) return null;
 
   return (
     <div className="mb-5 flex flex-col gap-3 border border-[#141414] bg-[#141414] px-5 py-4 text-[#e4e3e0] shadow-[5px_5px_0_#ff4d00] sm:flex-row sm:items-center sm:justify-between">
