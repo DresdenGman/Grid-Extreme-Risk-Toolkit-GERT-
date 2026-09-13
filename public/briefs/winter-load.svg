@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1200" viewBox="0 0 1600 1200" role="img" aria-labelledby="title desc">
+<title id="title">A falling load curve isn't a safety signal</title>
+<desc id="desc">72 hourly ERCOT native-load observations, February 14 to 16, 2021. The vertical scale is zero to 80 gigawatts. The curve does not measure unmet demand. A dashed reference marks the reported start of rotating outages, not the duration or quantity of lost load.</desc>
+<rect width="1600" height="1200" fill="#f7f6f2"/>
+<rect width="1600" height="14" fill="#b73700"/>
+<g fill="#171717" font-family="Arial, Helvetica, sans-serif">
+<text x="80" y="82" font-size="26" font-weight="700" letter-spacing="3">GERT / GRID NOTES 01</text>
+<text x="80" y="174" font-size="66" font-weight="700">A falling load curve</text>
+<text x="80" y="251" font-size="66" font-weight="700">isn't a safety signal.</text>
+<text x="80" y="306" font-size="29" fill="#514e48">Recorded electricity use can fall when customers lose power.</text>
+<text x="80" y="365" font-size="24" font-weight="700">ERCOT native load · February 14–16, 2021 · hourly interval starts (CST)</text>
+<text x="80" y="397" font-size="22" fill="#514e48">Recorded load (GW) · 72 observations · zero-based scale</text>
+<line x1="136" x2="1464" y1="816" y2="816" stroke="#d1d0c9"/><text x="112" y="824" text-anchor="end" font-size="25">0</text><line x1="136" x2="1464" y1="715" y2="715" stroke="#d1d0c9"/><text x="112" y="723" text-anchor="end" font-size="25">20</text><line x1="136" x2="1464" y1="614" y2="614" stroke="#d1d0c9"/><text x="112" y="622" text-anchor="end" font-size="25">40</text><line x1="136" x2="1464" y1="513" y2="513" stroke="#d1d0c9"/><text x="112" y="521" text-anchor="end" font-size="25">60</text><line x1="136" x2="1464" y1="412" y2="412" stroke="#d1d0c9"/><text x="112" y="420" text-anchor="end" font-size="25">80</text><line x1="136" y1="412" x2="136" y2="816" stroke="#171717"/><line x1="136" y1="816" x2="1464" y2="816" stroke="#171717"/>
+<line x1="611.3990610328639" y1="412" x2="611.3990610328639" y2="816" stroke="#514e48" stroke-width="2" stroke-dasharray="8 7"/>
+<polyline points="136.00,536.82 154.70,539.53 173.41,539.76 192.11,538.22 210.82,535.07 229.52,529.76 248.23,522.74 266.93,515.47 285.63,506.44 304.34,497.48 323.04,491.86 341.75,488.44 360.45,487.51 379.15,487.60 397.86,486.80 416.56,484.94 435.27,480.34 453.97,472.12 472.68,464.34 491.38,464.05 510.08,465.91 528.79,470.21 547.49,476.64 566.20,481.33 584.90,483.83 603.61,493.25 622.31,543.39 641.01,542.78 659.72,540.66 678.42,554.21 697.13,557.70 715.83,557.34 734.54,565.29 753.24,566.31 771.94,570.49 790.65,575.88 809.35,582.70 828.06,586.61 846.76,588.24 865.46,586.65 884.17,584.88 902.87,586.60 921.58,588.44 940.28,592.50 958.99,591.96 977.69,589.28 996.39,593.29 1015.10,595.29 1033.80,593.45 1052.51,591.15 1071.21,587.44 1089.92,583.15 1108.62,585.73 1127.32,585.31 1146.03,581.17 1164.73,579.68 1183.44,584.43 1202.14,589.01 1220.85,592.81 1239.55,592.33 1258.25,592.42 1276.96,593.91 1295.66,587.86 1314.37,585.87 1333.07,583.08 1351.77,580.86 1370.48,584.49 1389.18,586.23 1407.89,587.20 1426.59,591.82 1445.30,596.13 1464.00,600.41" fill="none" stroke="#b73700" stroke-width="5" stroke-linejoin="round"/>
+<rect x="631.3990610328639" y="431" width="595" height="76" fill="#f7f6f2"/>
+<text x="645.3990610328639" y="459" font-size="23">Rotating outages began Feb 15, 01:25 CST</text>
+<text x="645.3990610328639" y="490" font-size="22" fill="#514e48">Context: ERCOT's February 15 news release</text>
+<text x="136" y="858" text-anchor="start" font-size="24">Feb 14 · 00h</text><text x="584.9014084507041" y="858" text-anchor="middle" font-size="24">Feb 15 · 00h</text><text x="1033.8028169014083" y="858" text-anchor="middle" font-size="24">Feb 16 · 00h</text><text x="1464" y="858" text-anchor="end" font-size="24">Feb 16 · 23h</text>
+<rect x="80" y="902" width="1440" height="142" fill="#ebe3cf"/>
+<text x="108" y="944" font-size="29" font-weight="700">What is missing from the curve?</text>
+<text x="108" y="987" font-size="26">The electricity people would have used without interruptions.</text>
+<text x="108" y="1024" font-size="23">Do not treat the drop as measured outage losses, energy savings, or improved reliability.</text>
+<text x="80" y="1090" font-size="25" font-weight="700">Try the exercise &amp; inspect sources: gert-d.vercel.app/briefs/winter-load</text>
+<text x="80" y="1135" font-size="21" fill="#514e48">Data: ERCOT Native Load 2021 archive. Context and full hourly table linked with the exercise.</text>
+<text x="80" y="1170" font-size="20" fill="#514e48">GERT · Dresden Goehner · Historical education, not a live forecast · Original material: repository MIT license</text>
+</g></svg>

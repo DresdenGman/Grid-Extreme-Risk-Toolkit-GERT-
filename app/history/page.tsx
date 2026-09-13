@@ -48,6 +48,7 @@ export default function HistoryPage() {
         <h1 className="display-serif mt-4 text-[clamp(2.8rem,6vw,5.8rem)] leading-[0.94] tracking-[-0.055em]">A real load curve.<br />Your planning decision.</h1></div>
       <p className="max-w-lg text-sm leading-6 text-[#4f4e4a]">Explore published ERCOT load, choose a hypothetical capacity, and compare a load-reduction assumption. Every result can be downloaded and independently reproduced. No account required.</p>
     </header>
+    <Link href="/briefs/winter-load" className="block border border-black/20 bg-[#ebe3cf] p-4 text-sm leading-6"><span className="font-semibold">New to grid data?</span> Why can electricity use fall during a blackout? Read the 90-second introduction →</Link>
     <div className="border-l-4 border-[#2f6b4f] bg-[#dce9e1] p-4 text-sm leading-6"><strong>Observed load · Hypothetical intervention.</strong> This lab works from a bundled historical archive. Capacity and load reductions are assumptions; the results are not live forecasts or measured outage savings.</div>
     <section aria-label="Choose a historical window" className="grid gap-3 md:grid-cols-3">
       {historicalCases.map((item) => <button key={item.id} onClick={() => { setCaseId(item.id); setCapacity(item.default_capacity_mw); setReduction(5); setNotice(''); }} aria-pressed={caseId === item.id} className={`border p-5 text-left transition ${caseId === item.id ? 'border-[#141414] bg-[#141414] text-white shadow-[4px_4px_0_#ff4d00]' : 'border-black/20 bg-[#f7f6f2] hover:border-[#141414]'}`}>

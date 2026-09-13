@@ -3,6 +3,7 @@ import type { MetadataRoute } from 'next';
 const routes = [
   '',
   '/history',
+  '/briefs/winter-load',
   '/monitor',
   '/review',
   '/scenario',

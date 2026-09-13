@@ -1,0 +1,78 @@
+GERT / GRID NOTES 01 — FORWARDING PACK
+Version: winter-load-brief-v1 | Prepared September 13, 2026
+
+SUBJECT IDEA
+Why can electricity use fall during a blackout?
+
+READY-TO-FORWARD TEXT
+Why can electricity use fall during a blackout? GERT offers a short,
+source-linked exercise using 72 hourly observations from the February 2021
+Texas winter storm. Explore the recorded load, distinguish what the curve
+shows from what it cannot establish, and try a capacity assumption in the
+Historical Lab. Includes a downloadable chart, original-source links, and a
+self-check. Free to try, with no account required. This is a historical
+educational exercise, not a live forecast or an estimate of prevented outages.
+
+https://gert-d.vercel.app/briefs/winter-load
+
+LINKS
+PNG graphic: https://gert-d.vercel.app/briefs/winter-load.png
+Vector graphic: https://gert-d.vercel.app/briefs/winter-load.svg
+Exact plotted data: https://gert-d.vercel.app/briefs/winter-load-figure-data.json
+Interactive case: https://gert-d.vercel.app/history?case=winter-2021&capacity=60000&reduction=0
+Review: https://gert-d.vercel.app/review
+
+SHORT FIGURE CREDIT
+Graphic and exercise: GERT / Dresden Goehner. Data: ERCOT Native Load 2021.
+Event context: ERCOT news release, February 15, 2021. Sources and limitations:
+https://gert-d.vercel.app/briefs/winter-load
+
+ALT TEXT
+72 hourly ERCOT native-load observations, February 14–16, 2021, on a zero-to-
+80-GW scale. A dashed line marks the reported onset of rotating outages at
+01:25 CST on February 15. The curve falls but does not measure unmet demand
+or reliability. All values and sources are available with the exercise.
+
+INTERPRETATION AND PRIVACY
+The event marker indicates onset, not the amount or duration of lost load.
+The load curve does not identify how much electricity customers would have
+used without interruptions. Do not label the drop as measured outage losses,
+energy savings, improved reliability, or GERT's effect on the grid.
+The two-question self-check runs locally in the visitor's browser. Its optional
+download is self-reported, contains no name or email, and is not a certificate
+or independently verified participant record. There is no automatic submission.
+
+SOURCE AND REUSE NOTES
+Raw data:
+https://www.ercot.com/files/docs/2021/11/12/Native_Load_2021.zip
+Event context:
+https://www.ercot.com/news/release?id=9c552983-008a-3906-8066-8b76315ed3e7
+Data terms (section 5 permits public raw data in compilations/charts/analyses):
+https://www.ercot.com/help/terms
+Archive SHA256: 63d77e711fbcf838aff1666df475cd86a1fa939ad8aecd60a1bfe5039c4e5b91
+No affiliation with, or endorsement by, ERCOT or another organization is implied.
+The license below covers original GERT software and associated material, not
+ownership of ERCOT's data, third-party reports, logos, or trademarks. Preserve
+the chart's credit, source links, and material limitations in redistribution.
+
+MIT License
+
+Copyright (c) 2026 Dresden Goehner
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

@@ -10,6 +10,7 @@ import type { ProductStatus } from '@/lib/types';
 
 const navItems = [
   { name: 'Historical Lab', href: '/', icon: History },
+  { name: 'Grid Notes', href: '/briefs/winter-load', icon: BookOpen },
   { name: 'Live Monitor', href: '/monitor', icon: LayoutDashboard },
   { name: 'Scenario Lab', href: '/scenario', icon: CloudLightning },
   { name: 'Benchmarks', href: '/benchmark', icon: LineChart },
@@ -39,6 +40,7 @@ export default function Sidebar() {
 
   const isHealthy = status?.status === 'operational';
   const isHistorical = pathname === '/' || pathname === '/history';
+  const isHistoricalContent = isHistorical || pathname.startsWith('/briefs/');
   const modelLabel = status?.model_status === 'validated_production'
     ? 'VALIDATED'
     : status?.model_status === 'provisional_candidate'
@@ -63,9 +65,9 @@ export default function Sidebar() {
             </div>
           </div>
           <div className="technical-label max-w-[226px] truncate text-[8px] text-[#6d6b66]">
-            {presentationMode && !isHistorical
+            {presentationMode && !isHistoricalContent
               ? 'Model: tail-qrf.demo • Presentation'
-              : isHistorical ? 'Historical load • Interactive analysis'
+              : isHistoricalContent ? 'Historical load • Interactive analysis'
               : status
               ? `Model: ${status.model_version} • ${modelLabel}`
               : 'Model: loading…'}
@@ -84,7 +86,7 @@ export default function Sidebar() {
           return (
             <Link
               key={item.href}
-              href={presentationMode && !['/', '/review'].includes(item.href) ? `${item.href}?demo=1` : item.href}
+              href={presentationMode && !['/', '/review', '/briefs/winter-load'].includes(item.href) ? `${item.href}?demo=1` : item.href}
               className={clsx(
                 "group flex items-center gap-3 border px-3 py-3 text-sm font-medium transition-all duration-200",
                 isActive
@@ -115,9 +117,9 @@ export default function Sidebar() {
             <div className={`h-2 w-2 ${isHealthy ? 'signal-dot bg-[#ff4d00]' : 'bg-amber-500'}`}></div>
           </div>
           <div className="flex flex-1 items-center justify-between">
-            <span className="technical-label text-[#6d6b66]">{isHistorical ? 'Historical lab' : 'Forecast service'}</span>
+            <span className="technical-label text-[#6d6b66]">{isHistoricalContent ? 'Historical lab' : 'Forecast service'}</span>
             <span className={`technical-label ${isHealthy ? 'text-[#ff4d00]' : 'text-amber-700'}`}>
-              {isHistorical ? 'AVAILABLE' : status ? (presentationMode ? 'SIMULATED' : status.status.toUpperCase()) : 'CHECKING'}
+              {isHistoricalContent ? 'AVAILABLE' : status ? (presentationMode ? 'SIMULATED' : status.status.toUpperCase()) : 'CHECKING'}
             </span>
           </div>
           </div>
