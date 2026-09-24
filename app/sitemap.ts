@@ -4,6 +4,7 @@ const routes = [
   '',
   '/history',
   '/briefs/winter-load',
+  '/briefs/same-meter',
   '/monitor',
   '/review',
   '/scenario',
@@ -19,7 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return routes.map((route) => ({
     url: `${siteUrl}${route}`,
-    lastModified,
+    lastModified: ['/briefs/same-meter', '/briefs/winter-load', '/review'].includes(route) ? new Date('2026-09-24T00:00:00.000Z') : lastModified,
     changeFrequency: route === '' ? 'daily' : 'monthly',
     priority: route === '' ? 1 : route === '/benchmark' || route === '/research' ? 0.9 : 0.8,
   }));
