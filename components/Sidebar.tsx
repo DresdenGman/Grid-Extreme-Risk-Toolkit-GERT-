@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Activity, LayoutDashboard, CloudLightning, LineChart, History, BookOpen, ArrowUpRight, Code2 } from 'lucide-react';
+import { Activity, LayoutDashboard, CloudLightning, LineChart, History, BookOpen, ArrowUpRight, Code2, MessageSquareText } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -18,6 +18,7 @@ const navItems = [
   { name: 'Methodology', href: '/about', icon: BookOpen },
   { name: 'Open Research', href: '/research', icon: Code2 },
   { name: 'Review & Reproduce', href: '/review', icon: BookOpen },
+  { name: 'Community Evidence', href: '/community', icon: MessageSquareText },
 ];
 
 export default function Sidebar() {
@@ -86,7 +87,7 @@ export default function Sidebar() {
           return (
             <Link
               key={item.href}
-              href={presentationMode && !['/', '/review', '/briefs/winter-load'].includes(item.href) ? `${item.href}?demo=1` : item.href}
+              href={presentationMode && !['/', '/review', '/community', '/briefs/winter-load'].includes(item.href) ? `${item.href}?demo=1` : item.href}
               className={clsx(
                 "group flex items-center gap-3 border px-3 py-3 text-sm font-medium transition-all duration-200",
                 isActive

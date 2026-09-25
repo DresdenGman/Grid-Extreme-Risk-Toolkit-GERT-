@@ -53,6 +53,9 @@ export default function SameMeterChallenge() {
         <label htmlFor="same-meter-demand" className="mt-5 block text-sm font-semibold">World B: second-hour demand — {demand / 1000} GW</label>
         <input id="same-meter-demand" type="range" min={45000} max={90000} step={5000} value={demand} onChange={(event) => setDemand(Number(event.target.value))} aria-valuetext={`${demand / 1000} gigawatts`} className="my-3 w-full accent-[#a83400]" />
         <div className="flex justify-between font-mono text-xs"><span>45 GW</span><span>90 GW</span></div>
+        <p className="mt-4 border border-[#a83400] bg-white/50 px-3 py-2 text-sm font-semibold" role="status" aria-live="polite">
+          Applied input: {demand / 1000} GW. The model outputs below have been recalculated.
+        </p>
         <div className="mt-5 flex flex-wrap gap-x-8 gap-y-3" aria-live="polite" aria-atomic="true">
           <div><p className="text-sm">Hour-two meter</p><p className="mt-1 font-mono text-2xl">45 GW</p></div>
           <div><p className="text-sm">Model unserved energy, two hours</p><p className="mt-1 font-mono text-2xl">{format(scenario.b.totalUnservedMwh)} MWh</p></div>
@@ -60,10 +63,11 @@ export default function SameMeterChallenge() {
       </div>
     </div>
 
-    <div className="border-l-4 border-[#175a73] bg-[#f7f6f2] p-5" role="status">
-      <p className="font-semibold">{scenario.differentUnservedEnergy ? 'Same two readings. Different unserved energy.' : 'At 45 GW, both worlds serve all demand. Move above 45 GW to construct the counterexample.'}</p>
+    <details className="border-l-4 border-[#175a73] bg-[#f7f6f2] p-5">
+      <summary className="cursor-pointer font-semibold">Reveal the interpretation after recording your own</summary>
+      <p className="mt-3 font-semibold">{scenario.differentUnservedEnergy ? 'Same two readings. Different unserved energy.' : 'At 45 GW, both worlds serve all demand. Move above 45 GW to construct the counterexample.'}</p>
       <p className="mt-2 text-sm leading-6">{scenario.differentUnservedEnergy ? `World A leaves 0 MWh unserved; World B leaves ${format(scenario.b.totalUnservedMwh)} MWh unserved under its assumptions. The readings alone do not tell you which world you are in.` : 'The different delivery ceilings alone do not imply unserved energy: demand must exceed the ceiling in this model.'}</p>
-    </div>
+    </details>
 
     <section className="border-t border-black/20 pt-6" aria-labelledby="arithmetic-heading">
       <span className="technical-label">02 / Inspect every assumption</span>

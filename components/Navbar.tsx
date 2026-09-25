@@ -16,6 +16,7 @@ const navItems = [
   { name: 'Method', href: '/about' },
   { name: 'Research', href: '/research' },
   { name: 'Review & Reproduce', href: '/review' },
+  { name: 'Community Evidence', href: '/community' },
 ];
 
 export default function Navbar() {

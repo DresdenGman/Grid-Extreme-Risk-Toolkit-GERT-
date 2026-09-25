@@ -38,7 +38,7 @@ export default function SameMeterPage() {
     <section className="border-t border-black/20 pt-7 text-sm leading-6">
       <h2 className="display-serif text-3xl">Found a confusing sentence or a broken assumption?</h2>
       <p className="mt-3">A specific counterexample or correction is more useful than a rating. Note your chosen demand, what you expected, and what happened. Downloading a model does not send feedback.</p>
-      <Link href="/review" className="mt-4 inline-block font-semibold underline">Choose how to inspect and share a review →</Link>
+      <div className="mt-4 flex flex-wrap gap-4"><Link href="/review" className="font-semibold underline">Choose how to inspect and share a review →</Link><a href={`${REPO_URL}/discussions/3`} target="_blank" rel="noreferrer" className="font-semibold underline">Leave one public field note →</a></div>
       <p className="mt-4 text-xs text-[#514e48]">The review page links to public GitHub issues, which require a GitHub account. Do not post student names, private class records, or personal contact information. Original GERT material uses the repository MIT license. No institutional endorsement is implied.</p>
     </section>
   </article>;

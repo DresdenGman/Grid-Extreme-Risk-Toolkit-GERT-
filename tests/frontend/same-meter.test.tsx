@@ -34,11 +34,19 @@ describe('same-meter teaching counterexample', () => {
     const slider = screen.getByRole('slider', { name: /World B: second-hour demand/ });
     fireEvent.change(slider, { target: { value: '70000' } });
     expect(slider).toHaveAttribute('aria-valuetext', '70 gigawatts');
+    expect(screen.getByText(/Applied input: 70 GW/)).toBeInTheDocument();
     expect(screen.getByText('25,000 MWh')).toBeInTheDocument();
     fireEvent.change(slider, { target: { value: '45000' } });
+    expect(screen.getByText(/Applied input: 45 GW/)).toBeInTheDocument();
     expect(screen.getByText(/At 45 GW, both worlds serve all demand/)).toBeInTheDocument();
     expect(request).not.toHaveBeenCalled();
     request.mockRestore();
+  });
+  it('keeps the interpretation behind an explicit reveal control', () => {
+    render(<SameMeterChallenge />);
+    const disclosure = screen.getByText('Reveal the interpretation after recording your own').closest('details');
+    expect(disclosure).not.toBeNull();
+    expect(disclosure).not.toHaveAttribute('open');
   });
   it('provides a copy-from-table fallback when download is unavailable', () => {
     const create = vi.fn(() => { throw new Error('downloads disabled'); });
