@@ -1,0 +1,30 @@
+name: Tail sample diagnostic
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/diagnose_tail_sample.py'
+      - 'tests/test_tail_sample_diagnostic.py'
+      - 'evidence/ercot_v1_4_validation.json'
+      - '.github/workflows/tail-diagnostic.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/diagnose_tail_sample.py'
+      - 'tests/test_tail_sample_diagnostic.py'
+      - 'evidence/ercot_v1_4_validation.json'
+      - '.github/workflows/tail-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -p test_tail_sample_diagnostic.py
+      - run: python scripts/diagnose_tail_sample.py
