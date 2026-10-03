@@ -35,6 +35,10 @@ The product is built around a simple question: **how close is an unlikely but pl
 
 The release contract and promotion gates are documented in [`docs/PRODUCT_RELEASE_ACCEPTANCE.md`](docs/PRODUCT_RELEASE_ACCEPTANCE.md).
 
+The dependency-free [tail sample diagnostic](docs/TAIL_SAMPLE_DIAGNOSTIC.md)
+explains the coverage resolution and limits of the candidate's 96-hour window.
+It leaves the rejection and production gates unchanged.
+
 ## Product surfaces
 
 | Surface | Purpose | Authority |
