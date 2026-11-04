@@ -1,18 +1,27 @@
 #!/bin/bash
 echo ">>> Setting up GERT Environment..."
 
-# Install Frontend Dependencies
-if [ ! -d "node_modules" ]; then
-  echo ">>> Installing Node modules..."
-  npm install
+# Setup Python Virtual Environment and Install Dependencies
+if [ ! -d ".venv" ]; then
+    echo ">>> Creating Python virtual environment (.venv)..."
+    python3 -m venv .venv
+fi
+source .venv/bin/activate
+
+if [ -f "requirements.txt" ]; then
+    echo ">>> Installing Python dependencies..."
+    pip install -r requirements.txt
 fi
 
-# Check if python venv exists (optional check, assuming python environment is managed by user or system)
-# echo ">>> Ensure your Python environment is active and 'uvicorn' is installed."
+# Install Frontend Dependencies
+if [ ! -d "node_modules" ]; then
+    echo ">>> Installing Node modules..."
+    npm install
+fi
 
 echo ">>> Starting Services..."
-echo "    - Backend: http://localhost:8000"
-echo "    - Frontend: http://localhost:3000"
+echo "  - Backend: http://localhost:8000"
+echo "  - Frontend: http://localhost:3000"
 
 # Run both in parallel using &
 python3 main.py &
