@@ -46,7 +46,8 @@ Ninety-six hourly observations is a small sample for tail quantiles — the [tai
 [Open the working lab](https://gert-d.vercel.app/history) ·
 [Review it in 10 minutes](https://gert-d.vercel.app/review) ·
 [Reproduce the calculations](docs/HISTORICAL_LAB.md) ·
-[Run a 20-minute workshop](docs/WORKSHOP.md)
+[Run a 20-minute workshop](docs/WORKSHOP.md) ·
+[Pilot feedback — 57 responses](docs/FEEDBACK.md)
 
 The public landing page now supports a complete workflow using **216 observed
 hourly ERCOT native-load values** across three historical windows. Select a case,

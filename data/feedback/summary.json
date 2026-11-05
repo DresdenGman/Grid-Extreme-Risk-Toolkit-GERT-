@@ -1,0 +1,164 @@
+{
+  "responses": 57,
+  "questions": {
+    "Your role": {
+      "title": "Your role",
+      "answers": 57,
+      "counts": {
+        "Student": 43,
+        "Community member": 8,
+        "Teacher": 4,
+        "Other": 2
+      },
+      "percent": {
+        "Student": 75.4,
+        "Community member": 14.0,
+        "Teacher": 7.0,
+        "Other": 3.5
+      }
+    },
+    "Which session did you attend?": {
+      "title": "Which session did you attend?",
+      "answers": 57,
+      "counts": {
+        "Session 1 (May 2026)": 27,
+        "Session 2 (fall 2026)": 26,
+        "Volunteer run (completed the activity on my own)": 4
+      },
+      "percent": {
+        "Session 1 (May 2026)": 47.4,
+        "Session 2 (fall 2026)": 45.6,
+        "Volunteer run (completed the activity on my own)": 7.0
+      }
+    },
+    "Before this activity, how much experience did you have with energy or data analysis?": {
+      "title": "Before this activity, how much experience did you have with energy or data analysis?",
+      "answers": 57,
+      "counts": {
+        "None": 26,
+        "A little": 23,
+        "A lot": 8
+      },
+      "percent": {
+        "None": 45.6,
+        "A little": 40.4,
+        "A lot": 14.0
+      }
+    },
+    "The instructions were clear and easy to follow.": {
+      "title": "The instructions were clear and easy to follow.",
+      "answers": 57,
+      "mean": 4.11,
+      "median": 4,
+      "distribution": {
+        "2": 4,
+        "3": 9,
+        "4": 21,
+        "5": 23
+      }
+    },
+    "The data activity (finding grid-stress hours) was engaging.": {
+      "title": "The data activity (finding grid-stress hours) was engaging.",
+      "answers": 57,
+      "mean": 4.23,
+      "median": 4,
+      "distribution": {
+        "2": 2,
+        "3": 10,
+        "4": 18,
+        "5": 27
+      }
+    },
+    "The checker tool was easy to use.": {
+      "title": "The checker tool was easy to use.",
+      "answers": 57,
+      "mean": 3.89,
+      "median": 4,
+      "distribution": {
+        "2": 6,
+        "3": 13,
+        "4": 19,
+        "5": 19
+      }
+    },
+    "Overall, how would you rate this activity?": {
+      "title": "Overall, how would you rate this activity?",
+      "answers": 57,
+      "mean": 4.33,
+      "median": 5,
+      "distribution": {
+        "2": 2,
+        "3": 6,
+        "4": 20,
+        "5": 29
+      }
+    },
+    "Were you able to identify the grid-stress hours from the data?": {
+      "title": "Were you able to identify the grid-stress hours from the data?",
+      "answers": 57,
+      "counts": {
+        "Yes, with help": 27,
+        "Yes, on my own": 23,
+        "No": 7
+      },
+      "percent": {
+        "Yes, with help": 47.4,
+        "Yes, on my own": 40.4,
+        "No": 12.3
+      }
+    },
+    "Did your answers match the checker results?": {
+      "title": "Did your answers match the checker results?",
+      "answers": 57,
+      "counts": {
+        "Fully": 32,
+        "Partly": 17,
+        "I did not reach the checker step": 5,
+        "No": 3
+      },
+      "percent": {
+        "Fully": 56.1,
+        "Partly": 29.8,
+        "I did not reach the checker step": 8.8,
+        "No": 5.3
+      }
+    },
+    "What is the most important thing you learned?": {
+      "title": "What is the most important thing you learned?",
+      "answers": 45,
+      "type": "free_text"
+    },
+    "What was the most confusing or difficult part?": {
+      "title": "What was the most confusing or difficult part?",
+      "answers": 44,
+      "type": "free_text"
+    },
+    "What would you change or improve?": {
+      "title": "What would you change or improve?",
+      "answers": 43,
+      "type": "free_text"
+    },
+    "Would you recommend this activity to a class or club? Why or why not?": {
+      "title": "Would you recommend this activity to a class or club? Why or why not?",
+      "answers": 47,
+      "type": "free_text"
+    },
+    "May we quote your feedback (anonymously) in reports about this activity?": {
+      "title": "May we quote your feedback (anonymously) in reports about this activity?",
+      "answers": 57,
+      "counts": {
+        "Yes": 51,
+        "No": 6
+      },
+      "percent": {
+        "Yes": 89.5,
+        "No": 10.5
+      }
+    },
+    "Name and contact (optional - only if you are willing to be contacted for follow-up)": {
+      "title": "Name and contact (optional - only if you are willing to be contacted for follow-up)",
+      "answers": 56,
+      "type": "free_text"
+    }
+  }
+}
