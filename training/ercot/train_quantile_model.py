@@ -220,7 +220,7 @@ def train(
     features_path: Path,
     artifact_dir: Path,
     evaluation_year: int = 2025,
-    model_version: str = "ercot-lag-conformal-gbt-v1.3.0-candidate",
+    model_version: str = "ercot-lag-residual-gbt-v1.3.0-candidate",
     evaluation_start: str | None = None,
     evaluation_end: str | None = None,
 ) -> dict[str, object]:
@@ -395,7 +395,7 @@ def main() -> None:
     parser.add_argument("--evaluation-end", help="Optional UTC evaluation end date (YYYY-MM-DD)")
     parser.add_argument(
         "--model-version",
-        default="ercot-lag-conformal-gbt-v1.3.0-candidate",
+        default="ercot-lag-residual-gbt-v1.3.0-candidate",
     )
     args = parser.parse_args()
     report = train(

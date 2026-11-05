@@ -53,7 +53,7 @@ def render_html(context: Dict[str, object], images: Dict[str, str]) -> str:
     risk_level = context["risk_level"]
     risk_color = context["risk_color"]
     issued_at: datetime = context["issued_at"]  # type: ignore[assignment]
-    date_str = issued_at.strftime("%Y-%m-%d %H:%00")
+    date_str = issued_at.strftime("%Y-%m-%d %H:%M")
     chart_b64 = images["main_chart_b64"]
 
     html = f"""

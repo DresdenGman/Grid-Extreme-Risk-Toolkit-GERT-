@@ -3,7 +3,7 @@
 ## Overview
 
 GERT now supports integration with real grid data, including:
-1. **Real Load Data**: Fetch real-time load from ISOs like ERCOT, CAISO, PJM, NYISO
+1. **Real Load Data**: Fetch real-time load from ERCOT's official API. The CAISO, PJM, and NYISO adapters are placeholders that return clearly labeled estimates (`estimated_fallback`), not live ISO feeds.
 2. **Alert Notification System**: Automatically send email/SMS/Webhook notifications when risk exceeds thresholds
 3. **Database Persistence**: Automatically save all prediction and alert history to database
 
@@ -13,11 +13,11 @@ GERT now supports integration with real grid data, including:
 
 ### Data Source Adapters
 
-The system has implemented data adapters for the following ISOs:
-- `ERCOTAdapter`: Texas grid
-- `CAISOAdapter`: California grid
-- `PJMAdapter`: Pennsylvania-New Jersey-Maryland grid
-- `NYISOAdapter`: New York grid
+The system has data adapters for the following ISOs:
+- `ERCOTAdapter`: Texas grid (official API; any fallback is a clearly labeled estimate)
+- `CAISOAdapter`: California grid (estimate placeholder — returns `estimated_fallback`, not live data)
+- `PJMAdapter`: Pennsylvania-New Jersey-Maryland grid (estimate placeholder — returns `estimated_fallback`, not live data)
+- `NYISOAdapter`: New York grid (estimate placeholder — returns `estimated_fallback`, not live data)
 
 ### Usage
 

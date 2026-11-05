@@ -49,7 +49,7 @@ export function createPresentationPrediction(
     },
     diagnostics: {
       input_region: 'ERCOT_SYSTEM',
-      model_version: 'gert-tail-qrf.presentation',
+      model_version: 'gert.presentation',
       backend_type: 'presentation_demo',
       capacity_used: CAPACITY_MW,
       load_data_source: 'estimated_fallback',
