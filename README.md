@@ -1,14 +1,16 @@
-# Grid Extreme Risk Toolkit (GERT)
-
-![GERT — Grid Extreme Risk Toolkit](public/og.png)
-
-**Probabilistic grid-risk decision support with tail-risk analysis, calibration gates, and explicit data/model provenance.**
+![GERT — Grid Extreme Risk Toolkit](docs/assets/hero.png)
 
 [![CI](https://github.com/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-/actions/workflows/ci.yml/badge.svg)](https://github.com/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/github/license/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-)](LICENSE)
 [![Software DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23982226.svg)](https://doi.org/10.5281/zenodo.23982226)
 [![Dataset DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22975251.svg)](https://doi.org/10.5281/zenodo.22975251)
 [![Live site](https://img.shields.io/badge/live-gert--d.vercel.app-orange)](https://gert-d.vercel.app)
+
+**Probabilistic grid-risk decision support with tail-risk analysis, calibration gates, and explicit data/model provenance.**
+
+| 216 | 115+ participants | Skill is not enough | Archived |
+| --- | --- | --- | --- |
+| recorded ERCOT hours in the public Historical Lab — every number on this page can be recomputed from them | ran the lab in two pilot sessions; **57** returned the survey, and their criticism is printed below, not buried | the latest model candidate scored pinball skill **+0.76 to +0.84** — and was **rejected** for missing its calibration gates | software and dataset carry separate Zenodo DOIs (badges above); releases are versioned and citable |
 
 ## Start here
 
@@ -18,16 +20,19 @@
 | Review the evidence, including why the latest model candidate was rejected | [Evidence page](https://gert-d.vercel.app/review) and the [v1.4 decision record](docs/DECISION_RECORD_ERCOT_v1_4.md) | ~10 min |
 | Run GERT with a class or group | [20-minute workshop plan](docs/WORKSHOP.md) | 20 min |
 
-## Evidence at a glance
+## The problem, in one picture
 
-**Historical Lab (public, no credentials needed)** — 216 observed hourly ERCOT native-load values across three 72-hour windows (Aug 9–11 2023, Apr 10–12 2023, Feb 14–16 2021). Reference check for one case (`summer-2023`, 72 h, assumed capacity 80,000 MW), recomputed with the repo's independent Python checker (`scripts/verify_historical_report.py`):
+![Recorded ERCOT load, Aug 9–11 2023, against an assumed 80,000 MW capacity](docs/assets/load-curve.png)
 
-| Setting | Hours above capacity | Gap energy | Minimum uniform reduction to clear the peak |
-| --- | --- | --- | --- |
-| 0% reduction | 21 | 66,683 MWh | 6.393% |
-| 5% reduction | 7 | 4,458 MWh | 6.393% |
+In August 2023, Texas electricity demand crossed an 80,000 MW line 21 times in three days. A grid does not fail at the average — it fails at the tail. GERT exists to make that tail visible early: how close an unlikely-but-plausible demand peak comes to the system boundary, what would have to change to stay clear of it, and — just as visibly — when its own forecasting model is not good enough to be trusted with the answer.
 
-The minimum uniform reduction is a property of the recorded peak (85,464 MW) against the assumed capacity, so it is identical in both rows by definition.
+## How a candidate earns the right to serve
+
+![Pipeline: real data, features, quantile model, preregistered gates, then either serving or a 503 with a public record](docs/assets/pipeline.png)
+
+Every model candidate is judged against gates that are written down **before** its evaluation window is opened — and the verdict is published either way.
+
+![v1.4 coverage errors against the preregistered 0.030 gate: Q50 passes, Q90, Q95 and Q99 fail](docs/assets/gate-chart.png)
 
 **Latest probabilistic candidate (`ercot-delta-quantile-v1.4`) — rejected for production, by its own predeclared gates** (frozen 96-hour evaluation window; machine-readable evidence in [`evidence/ercot_v1_4_validation.json`](evidence/ercot_v1_4_validation.json), full record in [`docs/DECISION_RECORD_ERCOT_v1_4.md`](docs/DECISION_RECORD_ERCOT_v1_4.md)):
 
@@ -40,9 +45,20 @@ The minimum uniform reduction is a property of the recorded peak (85,464 MW) aga
 | Q99 calibration error | ≤ 0.03 | 0.032 | **Fail** |
 | Quantile crossings | 0 | 0 | Pass |
 
-Ninety-six hourly observations is a small sample for tail quantiles — the [tail sample diagnostic](docs/TAIL_SAMPLE_DIAGNOSTIC.md) documents what this window can and cannot resolve. The gates were applied exactly as predeclared: the thresholds were fixed before the evaluation window was opened and were not relaxed after the failure. Until a candidate passes every gate, the prediction, scenario, and validated-backtest endpoints return an explicit `503`.
+Ninety-six hourly observations is a small sample for tail quantiles — the [tail sample diagnostic](docs/TAIL_SAMPLE_DIAGNOSTIC.md) documents what this window can and cannot resolve. The gates were applied exactly as predeclared: the thresholds were fixed before the evaluation window was opened and were not relaxed after the failure. Until a candidate passes every gate, the prediction, scenario, and validated-backtest endpoints return an explicit `503`. The next candidate (v1.5, per-quantile recalibration) is already [preregistered](docs/PREREGISTRATION_ERCOT_v1_5.md) under the same rules.
 
-## Try the Historical Lab
+## Historical Lab — the part anyone can run today
+
+![Gap energy above 80,000 MW under 0%, 5%, and 6.393% uniform demand reduction, summer 2023](docs/assets/scenario-chart.png)
+
+**Historical Lab (public, no credentials needed)** — 216 observed hourly ERCOT native-load values across three 72-hour windows (Aug 9–11 2023, Apr 10–12 2023, Feb 14–16 2021). Reference check for one case (`summer-2023`, 72 h, assumed capacity 80,000 MW), recomputed with the repo's independent Python checker (`scripts/verify_historical_report.py`):
+
+| Setting | Hours above capacity | Gap energy | Minimum uniform reduction to clear the peak |
+| --- | --- | --- | --- |
+| 0% reduction | 21 | 66,683 MWh | 6.393% |
+| 5% reduction | 7 | 4,458 MWh | 6.393% |
+
+The minimum uniform reduction is a property of the recorded peak (85,464 MW) against the assumed capacity, so it is identical in both rows by definition.
 
 [Open the working lab](https://gert-d.vercel.app/history) ·
 [Review it in 10 minutes](https://gert-d.vercel.app/review) ·
@@ -50,22 +66,33 @@ Ninety-six hourly observations is a small sample for tail quantiles — the [tai
 [Run a 20-minute workshop](docs/WORKSHOP.md) ·
 [Pilot feedback — 57 responses](docs/FEEDBACK.md)
 
-The public landing page now supports a complete workflow using **216 observed
-hourly ERCOT native-load values** across three historical windows. Select a case,
-set an assumed capacity and uniform load reduction, compare outcomes, then export
-the hourly CSV and a JSON report with sources, assumptions, and checksums.
+Select a case, set an assumed capacity and a uniform load reduction, compare outcomes, then export the hourly CSV and a JSON report with sources, assumptions, and checksums. This is deterministic historical analysis: capacity and interventions are counterfactual assumptions, and the calculated gap energy is not a probabilistic forecast, expected unserved energy, or realized savings. Reviewers can use the Historical Lab without credentials or a model server.
 
-This is a deterministic historical analysis. Capacity and interventions are
-counterfactual assumptions; the calculated gap energy is not a probabilistic
-forecast, expected unserved energy, or realized savings. The live probabilistic
-candidate remains gated. Reviewers can use the Historical Lab without credentials
-or a model server.
+## What participants said
 
-GERT is an evidence-first decision-support platform for power-grid tail risk. It combines official ERCOT operating context, probabilistic load research, scenario stress testing, event reconstruction, and explicit model-governance controls in one interface.
+![Mean participant ratings: overall 4.33, engaging 4.23, instructions 4.11, checker ease 3.89 of 5](docs/assets/feedback-chart.png)
 
-The product is built around a simple question: **how close is an unlikely but plausible demand tail to the system boundary?** Conventional dashboards emphasize a single expected-load line. GERT makes the P50–P99 uncertainty geometry, data provenance, capacity basis, and model authority visible.
+> "The checker tool's validation logic felt like a black box; it was hard to deduce why an hour with 94% peak demand was graded incorrect."
+> — pilot participant, quoted with consent ([full feedback report](docs/FEEDBACK.md))
 
-> GERT is research and decision-support software, not autonomous grid control. Unvalidated, simulated, fallback, and unavailable states are labeled and never silently promoted to production authority.
+That criticism was acted on in the open: the checker now explains every rejection field by field — expected value, submitted value, difference, and the likely cause — and the lab page works a real example end to end before asking anyone to trust it.
+
+## See it
+
+The Historical Lab, running on the bundled 216-hour dataset — assumptions on the left, the crossing chart and the three headline numbers on the right, then a worked example that shows every step of one hour's arithmetic:
+
+![The Historical Lab: summer 2023 case at 80,000 MW assumed capacity and 5% reduction — 21 to 7 hours above capacity, 4,458 MWh gap energy, 6.39% needed to clear the peak](docs/assets/shot-lab.png)
+
+<table>
+<tr>
+<td width="50%"><img src="docs/assets/shot-monitor.png" alt="Live Monitor with the prediction layer gated: model labeled REJECTED, AWAITING MODEL, no forecast substituted"></td>
+<td width="50%"><img src="docs/assets/shot-review.png" alt="Review and Reproduce page: Try it. Check it. Challenge it."></td>
+</tr>
+<tr>
+<td><b>Live Monitor.</b> The gate is visible in the product itself: the candidate is labeled REJECTED, the signal reads AWAITING MODEL, and no forecast is substituted or fabricated while the service is unavailable.</td>
+<td><b>Review &amp; Reproduce.</b> The standing invitation: a five-minute counterexample, a guided 10-minute review, and full reproduction without the website.</td>
+</tr>
+</table>
 
 ## Public product state
 
@@ -76,11 +103,9 @@ The product is built around a simple question: **how close is an unlikely but pl
 - **Evidence:** sanitized candidate results remain public through `GET /model/evidence` and the Evidence page.
 - **Presentation mode:** `?demo=1` is an explicit simulated mode for interface demonstrations. Live mode never falls back to simulated predictions after an error.
 
-The release contract and promotion gates are documented in [`docs/PRODUCT_RELEASE_ACCEPTANCE.md`](docs/PRODUCT_RELEASE_ACCEPTANCE.md).
+> GERT is research and decision-support software, not autonomous grid control. Unvalidated, simulated, fallback, and unavailable states are labeled and never silently promoted to production authority.
 
-The dependency-free [tail sample diagnostic](docs/TAIL_SAMPLE_DIAGNOSTIC.md)
-explains the coverage resolution and limits of the candidate's 96-hour window.
-It leaves the rejection and production gates unchanged.
+The release contract and promotion gates are documented in [`docs/PRODUCT_RELEASE_ACCEPTANCE.md`](docs/PRODUCT_RELEASE_ACCEPTANCE.md).
 
 ## Product surfaces
 
@@ -90,6 +115,7 @@ It leaves the rejection and production gates unchanged.
 | Scenario Lab | Perturb weather and physical drivers through the active model contract | Gated until model validation |
 | Event Replay | Explain how tail pressure can evolve during an extreme event | Labeled educational reconstruction |
 | Evidence | Publish skill, coverage, promotion gates, provenance, and limitations | Versioned observed evidence |
+
 
 ## Mathematical core
 

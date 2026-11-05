@@ -13,6 +13,17 @@ All notable changes to this project are documented here. The format follows
   badge row now labels the software and dataset DOIs separately, and
   CITATION.cff records the concept DOI and the 1.2.0 release date.
 
+### Changed
+
+- GitHub homepage redesigned around a Bauhaus visual system (cream ground,
+  red/blue/yellow/ink, geometric type): new hero banner, five evidence
+  graphics generated from the repository's own data (summer-2023 load curve,
+  v1.4 gate chart, Historical Lab scenario chart, participant ratings,
+  decision pipeline), and framed product screenshots. The README now leads
+  with headline numbers and routing, then the evidence. No figures changed —
+  the README drift-guard test still passes against the evidence bundle and
+  the independent checker.
+
 ## [1.2.0] - 2026-11-05
 
 ### Fixed
