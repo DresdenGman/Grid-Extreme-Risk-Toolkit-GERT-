@@ -218,23 +218,20 @@ ALERT_WEBHOOK_ENABLED=false
 
 ---
 
-## ✅ Current Status
+## Deployment status
 
-- ✅ Backend Service: Running at `http://localhost:8000`
-- ✅ Frontend Service: Running at `http://localhost:3000`
-- ✅ Database: SQLite (auto-initialized)
-- ✅ Real Data Integration: ERCOT official API only (any fallback is returned as a clearly labeled `estimated_fallback`). The CAISO/PJM/NYISO adapters return clearly labeled estimates (`estimated_fallback`), not live feeds.
-- ✅ Alert System: Configured (requires environment variables to enable)
-- ✅ Data Persistence: Enabled (automatically saves prediction and alert history)
+- **Hosted demo**: https://gert-d.vercel.app — historical lab and review surfaces.
+- **Local development**: backend at `http://localhost:8000` and frontend at `http://localhost:3000`, after you start them with the steps above. Nothing runs until you start it.
+- **Data**: ERCOT official API only (any fallback is returned as a clearly labeled `estimated_fallback`). The CAISO/PJM/NYISO adapters return clearly labeled estimates (`estimated_fallback`), not live feeds.
+- **Model inference**: gated. The ERCOT v1.4 candidate failed its preregistered validation gate (see `docs/DECISION_RECORD_ERCOT_v1_4.md`), so prediction endpoints return HTTP 503 until a candidate passes. Demo mode (`?demo=1`) shows clearly labeled simulated data instead.
+- **Database**: SQLite by default (auto-initialized); PostgreSQL via `DATABASE_URL`.
+- **Alerts and persistence**: available when enabled through the environment variables above; both are off unless you configure them.
 
 ---
 
-## 🎉 Getting Started
+## After it is running
 
-1. Open browser and visit: **http://localhost:3000**
-2. View **Live Monitor** page to see real-time risk predictions
-3. Try **Scenario Lab** to test different weather scenarios
-4. View **Benchmarks** to understand model performance
-5. Replay **Event Replay** to view historical event analysis
-
-Enjoy using GERT! 🚀
+1. Open **http://localhost:3000** (or the hosted demo at https://gert-d.vercel.app).
+2. Start with the **Historical Lab** — a deterministic replay of 216 recorded ERCOT hours that works without a model.
+3. Use the **Review** surfaces to walk through the v1.4 validation evidence, including why the candidate was rejected.
+4. Live Monitor, Scenario Lab, and Benchmarks depend on model inference and stay gated (HTTP 503) until a candidate passes the validation gate; add `?demo=1` to explore them with labeled simulated data.
