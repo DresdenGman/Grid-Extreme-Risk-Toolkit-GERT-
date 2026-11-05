@@ -6,7 +6,8 @@
 
 [![CI](https://github.com/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-/actions/workflows/ci.yml/badge.svg)](https://github.com/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/github/license/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-)](LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22975251.svg)](https://doi.org/10.5281/zenodo.22975251)
+[![Software DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23982226.svg)](https://doi.org/10.5281/zenodo.23982226)
+[![Dataset DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22975251.svg)](https://doi.org/10.5281/zenodo.22975251)
 [![Live site](https://img.shields.io/badge/live-gert--d.vercel.app-orange)](https://gert-d.vercel.app)
 
 ## Start here
