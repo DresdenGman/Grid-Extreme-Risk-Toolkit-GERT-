@@ -16,8 +16,9 @@ All notable changes to this project are documented here. The format follows
 ### Changed
 
 - GitHub homepage re-skinned: new hero banner and five evidence posters in
-  the Swiss light-poster tradition — deep blue-black grounds, one luminous
-  subject per poster, grotesque type set quietly, red reserved for failure
+  the Swiss light-poster tradition — dark grounds and one white sheet, a
+  single luminous subject per poster, grotesque type set quietly, red
+  reserved for failure
   and exceedance. The hero is a calm field of light with a single spike
   through the capacity line; the summer-2023 load curve, the v1.4 gate
   verdict, the Historical Lab scenario, the participant feedback and the
