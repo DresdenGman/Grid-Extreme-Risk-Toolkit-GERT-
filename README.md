@@ -1,5 +1,44 @@
 # Grid Extreme Risk Toolkit (GERT)
 
+![GERT — Grid Extreme Risk Toolkit](public/og.png)
+
+**Probabilistic grid-risk decision support with tail-risk analysis, calibration gates, and explicit data/model provenance.**
+
+[![CI](https://github.com/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-/actions/workflows/ci.yml/badge.svg)](https://github.com/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/github/license/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22975251.svg)](https://doi.org/10.5281/zenodo.22975251)
+[![Live site](https://img.shields.io/badge/live-gert--d.vercel.app-orange)](https://gert-d.vercel.app)
+
+## Start here
+
+| If you want to… | Go here | Time |
+| --- | --- | --- |
+| Reproduce the Historical Lab calculations yourself | [One-click Colab notebook](docs/notebooks/README.md) or [reproduction guide](docs/HISTORICAL_LAB.md) | ~15 min |
+| Review the evidence, including why the latest model candidate was rejected | [Evidence page](https://gert-d.vercel.app/review) and the [v1.4 decision record](docs/DECISION_RECORD_ERCOT_v1_4.md) | ~10 min |
+| Run GERT with a class or group | [20-minute workshop plan](docs/WORKSHOP.md) | 20 min |
+
+## Evidence at a glance
+
+**Historical Lab (public, no credentials needed)** — 216 observed hourly ERCOT native-load values across three 72-hour windows (Aug 9–11 2023, Apr 10–12 2023, Feb 14–16 2021). Reference check, independently recomputed with `scripts/verify_historical_report.py` (case `summer-2023`, assumed capacity 80,000 MW):
+
+| Setting | Hours above capacity | Gap energy | Minimum uniform reduction to clear the peak |
+| --- | --- | --- | --- |
+| 0% reduction | 21 | 66,683 MWh | 6.393% |
+| 5% reduction | 7 | 4,458 MWh | 6.393% |
+
+**Latest probabilistic candidate (`ercot-delta-quantile-v1.4`) — rejected for production, by its own predeclared gates** (frozen 96-hour evaluation window; full record in [`docs/DECISION_RECORD_ERCOT_v1_4.md`](docs/DECISION_RECORD_ERCOT_v1_4.md)):
+
+| Gate | Requirement | Observed | Result |
+| --- | --- | --- | --- |
+| Pinball skill vs baseline | > 0 at every quantile | +0.76 to +0.84 | Pass |
+| Q50 calibration error | ≤ 0.03 | 0.021 | Pass |
+| Q90 calibration error | ≤ 0.03 | 0.035 | **Fail** |
+| Q95 calibration error | ≤ 0.03 | 0.044 | **Fail** |
+| Q99 calibration error | ≤ 0.03 | 0.032 | **Fail** |
+| Quantile crossings | 0 | 0 | Pass |
+
+The thresholds were fixed before the evaluation window was opened and were not relaxed after the failure. Until a candidate passes every gate, the prediction, scenario, and validated-backtest endpoints return an explicit `503`.
+
 ## Try the Historical Lab
 
 [Open the working lab](https://gert-d.vercel.app/history) ·
