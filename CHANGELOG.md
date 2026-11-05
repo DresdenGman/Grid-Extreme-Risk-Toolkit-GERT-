@@ -15,14 +15,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
-- GitHub homepage redesigned around a Bauhaus visual system (cream ground,
-  red/blue/yellow/ink, geometric type): new hero banner, five evidence
-  graphics generated from the repository's own data (summer-2023 load curve,
-  v1.4 gate chart, Historical Lab scenario chart, participant ratings,
-  decision pipeline), and framed product screenshots. The README now leads
-  with headline numbers and routing, then the evidence. No figures changed —
+- GitHub homepage redesigned: new hero banner, five evidence graphics
+  generated from the repository's own data (summer-2023 load curve, v1.4
+  gate chart, Historical Lab scenario chart, participant ratings, decision
+  pipeline), and framed product screenshots. The README now leads with
+  headline numbers and routing, then the evidence. No figures changed —
   the README drift-guard test still passes against the evidence bundle and
-  the independent checker.
+  the independent checker. The visual system is the Swiss photo-poster
+  direction — a deep blue-black ground, the recorded load curve as a single
+  luminous subject, grotesque type set quietly, and red reserved for failure
+  and exceedance — which superseded a brief Bauhaus treatment before it was
+  ever released.
 
 ## [1.2.0] - 2026-11-05
 
