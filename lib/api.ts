@@ -74,16 +74,16 @@ const MOCK_BACKTEST: BacktestResponse = {
   }),
   metrics: [
     {
-      model_name: "Baseline (Mean/OLS)",
+      model_name: "Demo baseline (illustrative)",
       coverage_p99: 85.2,
       pinball_loss: 450.5,
-      description: "Standard regression. Fails to capture tail risk."
+      description: "Simulated values for interface demonstration only. Not measured model performance."
     },
     {
-      model_name: "GERT (Quantile)",
+      model_name: "Demo series (illustrative)",
       coverage_p99: 99.1,
       pinball_loss: 120.3,
-      description: "Adapts to volatility. High coverage."
+      description: "Simulated values for interface demonstration only. Not measured model performance."
     }
   ],
   calibration_curve: [
@@ -256,7 +256,7 @@ export const api = {
     getDataMode() === 'demo'
       ? Promise.resolve(demoEnvelope({
           status: 'ok',
-          backend: 'tail-qrf.demo',
+          backend: 'gert.demo',
           env: 'presentation',
           api_version: 'demo',
           release_sha: 'demo',
@@ -270,7 +270,7 @@ export const api = {
           status: 'operational',
           environment: 'presentation',
           model_status: 'demonstration_stub',
-          model_version: 'tail-qrf.demo',
+          model_version: 'gert.demo',
           api_version: 'demo',
           release_sha: 'demo',
           deployment_platform: 'vercel',

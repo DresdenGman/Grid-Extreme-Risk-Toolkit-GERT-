@@ -295,10 +295,10 @@ Otherwise: Risk Score = 0 (LOW)
 ### 3. Real Data Integration
 
 **Data sources**:
-- **ERCOT** (Texas Grid)
-- **CAISO** (California Grid)
-- **PJM** (Pennsylvania-New Jersey-Maryland)
-- **NYISO** (New York Grid)
+- **ERCOT** (Texas Grid) — official API (any fallback is a clearly labeled estimate)
+- **CAISO** (California Grid) — estimate placeholder only (`estimated_fallback`, not a live feed)
+- **PJM** (Pennsylvania-New Jersey-Maryland) — estimate placeholder only (`estimated_fallback`, not a live feed)
+- **NYISO** (New York Grid) — estimate placeholder only (`estimated_fallback`, not a live feed)
 
 **Data adapters**:
 - Each ISO has different API formats

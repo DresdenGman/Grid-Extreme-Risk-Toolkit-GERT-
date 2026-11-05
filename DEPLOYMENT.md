@@ -223,7 +223,7 @@ ALERT_WEBHOOK_ENABLED=false
 - ✅ Backend Service: Running at `http://localhost:8000`
 - ✅ Frontend Service: Running at `http://localhost:3000`
 - ✅ Database: SQLite (auto-initialized)
-- ✅ Real Data Integration: Enabled (ERCOT/CAISO/PJM/NYISO)
+- ✅ Real Data Integration: ERCOT official API only (any fallback is returned as a clearly labeled `estimated_fallback`). The CAISO/PJM/NYISO adapters return clearly labeled estimates (`estimated_fallback`), not live feeds.
 - ✅ Alert System: Configured (requires environment variables to enable)
 - ✅ Data Persistence: Enabled (automatically saves prediction and alert history)
 

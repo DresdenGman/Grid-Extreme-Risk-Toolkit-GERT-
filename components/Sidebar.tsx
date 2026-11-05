@@ -67,7 +67,7 @@ export default function Sidebar() {
           </div>
           <div className="technical-label max-w-[226px] truncate text-[8px] text-[#6d6b66]">
             {presentationMode && !isHistoricalContent
-              ? 'Model: tail-qrf.demo • Presentation'
+              ? 'Model: gert.demo • Presentation'
               : isHistoricalContent ? 'Historical load • Interactive analysis'
               : status
               ? `Model: ${status.model_version} • ${modelLabel}`
