@@ -15,17 +15,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
-- GitHub homepage redesigned: new hero banner, five evidence graphics
-  generated from the repository's own data (summer-2023 load curve, v1.4
-  gate chart, Historical Lab scenario chart, participant ratings, decision
-  pipeline), and framed product screenshots. The README now leads with
-  headline numbers and routing, then the evidence. No figures changed —
-  the README drift-guard test still passes against the evidence bundle and
-  the independent checker. The visual system is the Swiss photo-poster
-  direction — a deep blue-black ground, the recorded load curve as a single
-  luminous subject, grotesque type set quietly, and red reserved for failure
-  and exceedance — which superseded a brief Bauhaus treatment before it was
-  ever released.
+- GitHub homepage re-skinned: new hero banner and five evidence posters in
+  the Swiss light-poster tradition — deep blue-black grounds, one luminous
+  subject per poster, grotesque type set quietly, red reserved for failure
+  and exceedance. The hero is a calm field of light with a single spike
+  through the capacity line; the summer-2023 load curve, the v1.4 gate
+  verdict, the Historical Lab scenario, the participant feedback and the
+  decision pipeline each get their own poster, and the product screenshots
+  are re-framed on dark mats. Every figure printed on the posters was
+  checked against the repository's evidence bundle before publication;
+  no figures changed, and the README drift-guard test still passes. This
+  superseded a brief Bauhaus treatment before it was ever released.
 
 ## [1.2.0] - 2026-11-05
 
