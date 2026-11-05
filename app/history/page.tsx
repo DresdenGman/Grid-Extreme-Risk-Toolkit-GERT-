@@ -7,6 +7,7 @@ import { ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, CartesianGrid, 
 import { analyzeHistory, analysisReport, historicalCases, historicalSource, reportCsv } from '@/lib/historical';
 
 const number = (n: number) => n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+const precise = (n: number) => n.toLocaleString('en-US', { maximumFractionDigits: 2 });
 function download(filename: string, content: string, type: string) {
   const url = URL.createObjectURL(new Blob([content], { type }));
   const link = document.createElement('a');
@@ -41,6 +42,13 @@ export default function HistoryPage() {
   const selected = historicalCases.find((item) => item.id === caseId)!;
   const result = useMemo(() => analyzeHistory(selected, capacity, reduction), [selected, capacity, reduction]);
   const report = useMemo(() => analysisReport(selected, capacity, reduction), [selected, capacity, reduction]);
+  const worked = useMemo(() => {
+    const example = historicalCases.find((item) => item.id === 'summer-2023') ?? historicalCases[0];
+    const { rows } = analyzeHistory(example, 80000, 5);
+    const row = rows.find((item) => item.timestamp.startsWith('2023-08-10T15:00')) ?? rows[0];
+    const peak = Math.max(...example.hours.map((hour) => hour.load_mw));
+    return { row, peak };
+  }, []);
 
   return <div className="space-y-8 pb-16">
     <header className="grid gap-6 border-b border-black/15 pb-8 xl:grid-cols-[1.2fr_0.8fr] xl:items-end">
@@ -98,6 +106,28 @@ export default function HistoryPage() {
         <button onClick={() => { download(`gert-${caseId}-hourly.csv`, reportCsv(report), 'text/csv'); setNotice('Hourly CSV downloaded. Assumptions and limitations are in the JSON report.'); }} className="flex items-center gap-2 border border-[#141414] px-5 py-3 text-sm"><Download size={16} /> Hourly CSV</button>
         <button onClick={async () => { try { await navigator.clipboard.writeText(window.location.href); setNotice('Link copied with your case and assumptions.'); } catch { setNotice('Copy the URL from your address bar; your assumptions are included.'); } }} className="flex items-center gap-2 border border-[#141414] px-5 py-3 text-sm"><Link2 size={16} /> Copy this analysis</button>
       </div><p role="status" className="mt-3 min-h-5 text-xs">{notice}</p>
+    </section>
+    <section className="grid gap-8 border border-black/20 bg-[#f7f6f2] p-6 sm:p-8 lg:grid-cols-2">
+      <div>
+        <span className="technical-label text-[#6d6b66]">Worked example</span>
+        <h2 className="display-serif mt-3 text-3xl">One hour, worked in full.</h2>
+        <p className="mt-3 text-sm leading-6">Summer 2023, {worked.row.timestamp.replace('T', ' ')} (interval start, America/Chicago), at the workshop settings: 80,000 MW assumed capacity and a 5% uniform reduction. These numbers are computed from the bundled data, not typed in.</p>
+        <dl className="mt-5 space-y-3 text-sm leading-6">
+          <div><dt className="font-semibold">Recorded load</dt><dd>{precise(worked.row.recordedLoadMw)} MW — {(100 * worked.row.recordedLoadMw / worked.peak).toFixed(1)}% of this case's recorded peak ({precise(worked.peak)} MW).</dd></div>
+          <div><dt className="font-semibold">Adjusted load</dt><dd>{precise(worked.row.recordedLoadMw)} × (1 − 5 / 100) = {precise(worked.row.adjustedLoadMw)} MW.</dd></div>
+          <div><dt className="font-semibold">Gap against capacity</dt><dd>max(0, {precise(worked.row.adjustedLoadMw)} − 80,000) = {precise(worked.row.adjustedGapMw)} MW. The hour counts as above capacity after the reduction — and before it, with a recorded gap of {precise(worked.row.originalGapMw)} MW.</dd></div>
+        </dl>
+      </div>
+      <div>
+        <span className="technical-label text-[#6d6b66]">How the check works</span>
+        <h2 className="display-serif mt-3 text-3xl">What counts as a stress hour?</h2>
+        <ul className="mt-3 list-disc space-y-3 pl-5 text-sm leading-6">
+          <li>A stress hour is an hour with a <strong>strictly positive gap</strong>: load above the assumed capacity you set. It is not a percentage of the peak — an hour at 94% of peak demand can still sit below the assumed capacity, and then it is not a stress hour.</li>
+          <li>Equality is not exceedance. Load exactly equal to capacity has a gap of zero.</li>
+          <li>Timestamps are hourly interval starts in America/Chicago.</li>
+          <li>The independent checker recomputes all 72 hourly rows and every summary metric from the bundled source data and compares them with your downloaded report. If anything differs, it lists each field with the expected and reported values and the likely cause — different assumptions, rows shifted by an hour, rounding, or a wrong value shown with its formula inputs.</li>
+        </ul>
+      </div>
     </section>
     <section className="grid gap-8 border-t border-black/20 pt-8 lg:grid-cols-2">
       <div><span className="technical-label text-[#6d6b66]">04 / Challenge the result</span><h2 className="display-serif mt-3 text-3xl">What would change your decision?</h2><p className="mt-3 text-sm leading-6">Review a source value, reproduce the calculation, or identify a missing constraint. A useful critique becomes an inspectable issue and a documented product change.</p><Link href="/review" className="mt-5 inline-flex items-center gap-2 border-b border-[#b73700] pb-1 text-sm font-semibold">Open the 10-minute review guide <ArrowUpRight size={16} /></Link></div>
