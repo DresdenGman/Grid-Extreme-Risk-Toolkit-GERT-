@@ -13,31 +13,33 @@
 
 | If you want to… | Go here | Time |
 | --- | --- | --- |
-| Reproduce the Historical Lab calculations yourself | [One-click Colab notebook](docs/notebooks/README.md) or [reproduction guide](docs/HISTORICAL_LAB.md) | ~15 min |
+| Reproduce the Historical Lab calculations yourself | [Colab reproduction notebook](docs/notebooks/README.md) or [reproduction guide](docs/HISTORICAL_LAB.md) | ~15 min |
 | Review the evidence, including why the latest model candidate was rejected | [Evidence page](https://gert-d.vercel.app/review) and the [v1.4 decision record](docs/DECISION_RECORD_ERCOT_v1_4.md) | ~10 min |
 | Run GERT with a class or group | [20-minute workshop plan](docs/WORKSHOP.md) | 20 min |
 
 ## Evidence at a glance
 
-**Historical Lab (public, no credentials needed)** — 216 observed hourly ERCOT native-load values across three 72-hour windows (Aug 9–11 2023, Apr 10–12 2023, Feb 14–16 2021). Reference check, independently recomputed with `scripts/verify_historical_report.py` (case `summer-2023`, assumed capacity 80,000 MW):
+**Historical Lab (public, no credentials needed)** — 216 observed hourly ERCOT native-load values across three 72-hour windows (Aug 9–11 2023, Apr 10–12 2023, Feb 14–16 2021). Reference check for one case (`summer-2023`, 72 h, assumed capacity 80,000 MW), recomputed with the repo's independent Python checker (`scripts/verify_historical_report.py`):
 
 | Setting | Hours above capacity | Gap energy | Minimum uniform reduction to clear the peak |
 | --- | --- | --- | --- |
 | 0% reduction | 21 | 66,683 MWh | 6.393% |
 | 5% reduction | 7 | 4,458 MWh | 6.393% |
 
-**Latest probabilistic candidate (`ercot-delta-quantile-v1.4`) — rejected for production, by its own predeclared gates** (frozen 96-hour evaluation window; full record in [`docs/DECISION_RECORD_ERCOT_v1_4.md`](docs/DECISION_RECORD_ERCOT_v1_4.md)):
+The minimum uniform reduction is a property of the recorded peak (85,464 MW) against the assumed capacity, so it is identical in both rows by definition.
+
+**Latest probabilistic candidate (`ercot-delta-quantile-v1.4`) — rejected for production, by its own predeclared gates** (frozen 96-hour evaluation window; machine-readable evidence in [`evidence/ercot_v1_4_validation.json`](evidence/ercot_v1_4_validation.json), full record in [`docs/DECISION_RECORD_ERCOT_v1_4.md`](docs/DECISION_RECORD_ERCOT_v1_4.md)):
 
 | Gate | Requirement | Observed | Result |
 | --- | --- | --- | --- |
-| Pinball skill vs baseline | > 0 at every quantile | +0.76 to +0.84 | Pass |
+| Pinball skill vs frozen seasonal baseline | > 0 at every quantile | +0.76 to +0.84 | Pass |
 | Q50 calibration error | ≤ 0.03 | 0.021 | Pass |
 | Q90 calibration error | ≤ 0.03 | 0.035 | **Fail** |
 | Q95 calibration error | ≤ 0.03 | 0.044 | **Fail** |
 | Q99 calibration error | ≤ 0.03 | 0.032 | **Fail** |
 | Quantile crossings | 0 | 0 | Pass |
 
-The thresholds were fixed before the evaluation window was opened and were not relaxed after the failure. Until a candidate passes every gate, the prediction, scenario, and validated-backtest endpoints return an explicit `503`.
+Ninety-six hourly observations is a small sample for tail quantiles — the [tail sample diagnostic](docs/TAIL_SAMPLE_DIAGNOSTIC.md) documents what this window can and cannot resolve. The gates were applied exactly as predeclared: the thresholds were fixed before the evaluation window was opened and were not relaxed after the failure. Until a candidate passes every gate, the prediction, scenario, and validated-backtest endpoints return an explicit `503`.
 
 ## Try the Historical Lab
 
