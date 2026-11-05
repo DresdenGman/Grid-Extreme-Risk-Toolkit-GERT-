@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions use
 [semantic versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Zenodo software archive for the 1.2.0 release: version DOI
+  10.5281/zenodo.23982227, concept DOI 10.5281/zenodo.23982226. The README
+  badge row now labels the software and dataset DOIs separately, and
+  CITATION.cff records the concept DOI and the 1.2.0 release date.
+
 ## [1.2.0] - 2026-11-05
 
 ### Fixed
