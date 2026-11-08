@@ -4,6 +4,19 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions use
 [semantic versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- ERCOT v1.5 candidate (`ercot-lag-residual-gbt-v1.5-candidate`): per-quantile
+  grid recalibration of residual offsets on the frozen 2026-09-07 → 2026-10-04
+  calibration window, evaluated blind on 2026-10-05 → 2026-11-01 (672 hours).
+  Grid search selected ×1.00 at every quantile; the candidate passed all
+  preregistered gates (pinball skill 0.93–0.94, absolute coverage error at
+  most 0.0182, zero quantile crossings). Evidence in
+  `evidence/ercot_v1_5_validation.json`; decision in
+  `docs/DECISION_RECORD_ERCOT_v1_5.md`.
+
 ## [1.2.0] - 2026-11-05
 
 ### Fixed
