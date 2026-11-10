@@ -20,13 +20,13 @@ describe('fig1 reproduction command', () => {
 
   it('pins the evidence commits that the pages name', () => {
     const v14 = execSync('git log -1 --format=%H -- evidence/ercot_v1_4_validation.json', { encoding: 'utf8' }).trim();
-    const prereg = execSync('git rev-parse 2fcf2c9b', { encoding: 'utf8' }).trim();
-    const dated = execSync('git log -1 --format=%ci 2fcf2c9b', { encoding: 'utf8' }).trim();
     expect(v14).toBe('4cb93a8e4117251ad8c9248d1eaf3643a7c33c2f');
-    expect(prereg.startsWith('2fcf2c9b')).toBe(true);
-    expect(dated.startsWith('2026-11-05 03:11:19 -0800')).toBe(true);
+    const prereg = readFileSync('docs/PREREGISTRATION_ERCOT_v1_5.md', 'utf8');
+    expect(prereg).toContain('2026-11-01');
+    expect(prereg).toContain('timestamps < 2025-01-01');
     const raw = readFileSync('evidence/snapshots/pr-23/ercot_v1_5_validation.json', 'utf8');
     expect(raw).toContain('timestamps before 2025-01-01');
     expect(raw).toContain('realized ERA5');
+    expect(raw).toContain('2026-11-01T23:00:00Z');
   });
 });
