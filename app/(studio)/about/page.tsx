@@ -51,7 +51,7 @@ export default function MethodsPage() {
         <p className="journal-note">{v14.data_provenance}</p>
         <p className="journal-note">{v15.data_provenance}</p>
         <p className="journal-note">
-          v1.5 limitations: {v15.limitations[0]} The preregistration commit 2fcf2c9b is dated 2026-11-05 03:11 PT, after the evaluation window closed on 2026-11-01, so that freeze is retrospective relative to the window. v1.5 records training timestamps before 2025-01-01. The v1.4 evidence file does not record a baseline training window, and the preregistration describes the seasonal baseline as unchanged from v1.4. This site does not treat the two baselines as one fitted setup.
+          v1.5 limitations: {v15.limitations[0]} The preregistration commit 2fcf2c9b is dated 2026-11-05 03:11 PT, after the evaluation window closed on 2026-11-01, so that freeze is retrospective relative to the window. v1.5’s seasonal baseline is fit only on timestamps before 2025-01-01. The v1.4 evidence file does not record its baseline training window, so the v1.5 skill (0.93) and the v1.4 skills (0.76–0.84) are not the same comparison and are not directly comparable.
         </p>
       </section>
 

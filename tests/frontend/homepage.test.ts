@@ -77,9 +77,10 @@ describe('homepage evidence', () => {
     expect(copy.ledger[2].body).toContain('Not in production.');
     expect(copy.footnotes[1].tail).toContain('unmerged PR #23');
     expect(copy.footnotes[1].href).toContain(V15_PR23_SNAPSHOT.commit);
-    expect(spanText(copy.caption)).toContain('different windows');
-    expect(spanText(copy.caption)).not.toContain('same seasonal baseline');
-    expect(spanText(copy.caption)).toContain('does not treat the two baselines as one fitted setup');
+    expect(spanText(copy.caption)).toContain('fit only on timestamps before 2025-01-01');
+    expect(spanText(copy.caption)).toContain('does not record its baseline training window');
+    expect(spanText(copy.caption)).toContain('not directly comparable');
+    expect(spanText(copy.caption)).not.toContain('0.874');
   });
 
   it('cites the version software DOI and the dataset DOI from the repo', () => {

@@ -158,7 +158,7 @@ export function buildCopy(model: EvidenceModel, citation: Citation): HomepageCop
       }.`
     : 'v1.5 is not shown.';
   const skill = model.windowsDiffer
-    ? ' Skill is not compared. The evaluations use different windows. v1.5 records training timestamps before 2025-01-01. The v1.4 evidence file does not record a baseline training window, and the v1.5 preregistration describes that seasonal baseline as unchanged from v1.4, so this page does not treat the two baselines as one fitted setup.'
+    ? ' v1.5’s seasonal baseline is fit only on timestamps before 2025-01-01. The v1.4 evidence file does not record its baseline training window, so the v1.5 skill (0.93) and the v1.4 skills (0.76–0.84) are not the same comparison and are not directly comparable.'
     : '';
   const caption: Span[] = [
     {
