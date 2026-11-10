@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { Poster } from '../../components/home/Poster';
+import { toolHrefs } from '../../lib/homepage/tools';
 import { buildCopy } from '../../lib/homepage/copy';
 import { loadCitation } from '../../lib/homepage/citation';
 import { loadEvidence } from '../../lib/homepage/evidence';
@@ -84,5 +86,28 @@ describe('homepage poster', () => {
     expect(screen.getByText('50,000 MW')).toBeInTheDocument();
     expect(screen.getByText('70,000 MW')).toBeInTheDocument();
     expect(screen.getByText(/Weather forecast/)).toBeInTheDocument();
+  });
+
+  it('links every studio route and opens Tools from the keyboard', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 500 })));
+    const { container } = renderPoster();
+    for (const href of toolHrefs()) {
+      expect(container.querySelector(`a[href="${href}"]`), href).not.toBeNull();
+    }
+    expect(screen.getByText(/not a validated forecast or a representative backtest/)).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    const tools = screen.getByRole('link', { name: 'Tools' });
+    await user.click(tools);
+    expect(tools).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('group', { name: 'Tools' })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(tools).toHaveAttribute('aria-expanded', 'false');
+
+    tools.focus();
+    await user.keyboard('{ArrowDown}');
+    await waitFor(() => {
+      expect(document.activeElement).toHaveAttribute('href', '/monitor');
+    });
   });
 });
