@@ -8,14 +8,32 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Zenodo software archive for the 1.2.0 release: version DOI
+  10.5281/zenodo.23982227, concept DOI 10.5281/zenodo.23982226. The README
+  badge row now labels the software and dataset DOIs separately, and
+  CITATION.cff records the concept DOI and the 1.2.0 release date.
 - ERCOT v1.5 candidate (`ercot-lag-residual-gbt-v1.5-candidate`): per-quantile
-  grid recalibration of residual offsets on the frozen 2026-09-07 → 2026-10-04
-  calibration window, evaluated blind on 2026-10-05 → 2026-11-01 (672 hours).
-  Grid search selected ×1.00 at every quantile; the candidate passed all
-  preregistered gates (pinball skill 0.93–0.94, absolute coverage error at
-  most 0.0182, zero quantile crossings). Evidence in
-  `evidence/ercot_v1_5_validation.json`; decision in
-  `docs/DECISION_RECORD_ERCOT_v1_5.md`.
+  grid recalibration on 2026-09-07 → 2026-10-04, scored on 2026-10-05 →
+  2026-11-01 (672 hours) with realized ERA5 weather. Published point estimates
+  meet the numeric coverage, skill, crossing, and finiteness checks. The
+  candidate is evidence only, not packaged, and the prediction endpoints stay
+  gated. The evidence-bundle and feature-availability gates are not passed.
+  Record: `docs/DECISION_RECORD_ERCOT_v1_5.md`.
+
+### Changed
+
+- GitHub homepage re-skinned: new hero banner and five evidence posters in
+  the Swiss light-poster tradition — dark grounds and one white sheet, a
+  single luminous subject per poster, grotesque type set quietly, red
+  reserved for failure
+  and exceedance. The hero is a calm field of light with a single spike
+  through the capacity line; the summer-2023 load curve, the v1.4 gate
+  verdict, the Historical Lab scenario, the participant feedback and the
+  decision pipeline each get their own poster, and the product screenshots
+  are re-framed on dark mats. Every figure printed on the posters was
+  checked against the repository's evidence bundle before publication;
+  no figures changed, and the README drift-guard test still passes. This
+  superseded a brief Bauhaus treatment before it was ever released.
 
 ## [1.2.0] - 2026-11-05
 
