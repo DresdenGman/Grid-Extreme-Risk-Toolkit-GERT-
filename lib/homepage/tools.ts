@@ -98,9 +98,14 @@ export const toolIndex: ToolGroup[] = [
     entries: [
       {
         href: '/about',
-        name: 'Methodology',
+        name: 'Methods',
         description:
-          'States the method: tail demand against capacity, promotion gates, and a limit that this is decision support rather than grid control.',
+          'Gates and thresholds, how the published Wilson intervals are used, data sources, and the rule that missing hours are excluded rather than imputed.',
+      },
+      {
+        href: '/changelog',
+        name: 'Version',
+        description: 'The software version and the changelog entries already in the repository, with the citation DOIs.',
       },
       {
         href: '/research',

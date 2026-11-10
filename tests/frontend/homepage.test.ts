@@ -78,7 +78,8 @@ describe('homepage evidence', () => {
     expect(copy.footnotes[1].tail).toContain('unmerged PR #23');
     expect(copy.footnotes[1].href).toContain(V15_PR23_SNAPSHOT.commit);
     expect(spanText(copy.caption)).toContain('different windows');
-    expect(spanText(copy.caption)).not.toContain('baselines');
+    expect(spanText(copy.caption)).not.toContain('same seasonal baseline');
+    expect(spanText(copy.caption)).toContain('does not treat the two baselines as one fitted setup');
   });
 
   it('cites the version software DOI and the dataset DOI from the repo', () => {

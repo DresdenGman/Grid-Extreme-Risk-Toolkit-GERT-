@@ -25,7 +25,6 @@ import {
   Zap,
 } from 'lucide-react';
 import { api } from '@/lib/api';
-import { createPresentationPrediction, createPresentationPrior, PRESENTATION_WEATHER } from '@/lib/presentation';
 import { ApiClientError, GridLoadResponse, PredictionOut, Provenance, Region, WeatherFeatures } from '@/lib/types';
 import { Badge, Card } from '@/components/ui';
 import { QuantileChart } from '@/components/Charts';
@@ -47,8 +46,8 @@ function gridSourceLabel(context: GridLoadResponse | null, contextError: string 
 }
 
 export default function MonitorPage() {
-  const [inputs, setInputs] = useState<WeatherFeatures>({ temperature: 32, wind_speed: 15, solar_irradiance: 800 });
-  const [draftInputs, setDraftInputs] = useState<WeatherFeatures>({ temperature: 32, wind_speed: 15, solar_irradiance: 800 });
+  const [inputs, setInputs] = useState<WeatherFeatures | null>(null);
+  const [draftInputs, setDraftInputs] = useState<WeatherFeatures | null>(null);
   const [liveSnapshot, setLiveSnapshot] = useState<WeatherFeatures | null>(null);
   const [gridContext, setGridContext] = useState<GridLoadResponse | null>(null);
   const [contextError, setContextError] = useState<string | null>(null);
@@ -73,10 +72,10 @@ export default function MonitorPage() {
 
   const syncLiveContext = useCallback(async () => {
     if (presentationMode) {
-      setInputs(PRESENTATION_WEATHER);
-      setDraftInputs(PRESENTATION_WEATHER);
-      setLiveSnapshot(PRESENTATION_WEATHER);
-      setContextError(null);
+      setInputs(null);
+      setDraftInputs(null);
+      setLiveSnapshot(null);
+      setContextError('No simulated weather is shown.');
       return;
     }
 
@@ -88,16 +87,32 @@ export default function MonitorPage() {
 
     const failures: string[] = [];
     if (weatherResult.status === 'fulfilled') {
-      setInputs(weatherResult.value.data);
-      setDraftInputs(weatherResult.value.data);
-      setLiveSnapshot(weatherResult.value.data);
+      const weather = weatherResult.value.data as WeatherFeatures & { data_source?: string };
+      if (weather.data_source === 'external_forecast') {
+        setInputs(weather);
+        setDraftInputs(weather);
+        setLiveSnapshot(weather);
+      } else {
+        setInputs(null);
+        setDraftInputs(null);
+        setLiveSnapshot(null);
+        failures.push('weather');
+      }
     } else {
       failures.push('weather');
     }
 
     if (loadResult.status === 'fulfilled') {
-      setGridContext(loadResult.value.data);
-      setLastUpdated(new Date(loadResult.value.data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+      const payload = loadResult.value.data;
+      if (payload.data_source === 'official_live' || payload.capacity_source === 'official_adequacy') {
+        setGridContext(payload);
+        if (payload.data_source === 'official_live') {
+          setLastUpdated(new Date(payload.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        }
+      } else {
+        setGridContext(null);
+        failures.push('load');
+      }
     } else {
       failures.push('load');
     }
@@ -112,16 +127,11 @@ export default function MonitorPage() {
   const fetchPrediction = useCallback(async (featuresOverride?: WeatherFeatures) => {
     const features = featuresOverride ?? inputs;
     setLoading(true);
-    if (presentationMode) {
-      const snapshot = createPresentationPrediction(features);
-      setData((current) => {
-        setPrevData(current ?? createPresentationPrior());
-        return snapshot;
-      });
-      setProvenance('simulated_demo');
-      setLastUpdated('DEMO SNAPSHOT');
-      setShowWhy(true);
-      setError(null);
+    if (presentationMode || !features || !Number.isFinite(features.temperature)) {
+      setData(null);
+      setPrevData(null);
+      setProvenance(null);
+      setError('Prediction UNAVAILABLE. No validated model is in production, and no simulated forecast is shown.');
       setLoading(false);
       return;
     }
@@ -153,7 +163,7 @@ export default function MonitorPage() {
   const capacity = data?.diagnostics.capacity_used ?? gridContext?.capacity_mw ?? null;
   const marginMw = data && capacity !== null ? capacity - data.q99_load_mw : null;
   const riskDelta = data && prevData ? data.risk_score - prevData.risk_score : null;
-  const riskLevel = data?.risk_level ?? 'LOW';
+  const riskLevel = data?.risk_level ?? null;
   const danger = riskLevel === 'HIGH' || riskLevel === 'EXTREME';
   const marginState = marginMw === null ? 'AWAITING MODEL' : marginMw < 0 ? 'CAPACITY BREACH' : marginMw < 2000 ? 'TIGHT MARGIN' : 'BUFFER INTACT';
   const backendReal = data?.diagnostics.backend_type === 'real';
@@ -164,11 +174,12 @@ export default function MonitorPage() {
     await Promise.allSettled([syncLiveContext(), fetchPrediction()]);
   };
 
-  const applyScenario = () => setInputs({ ...draftInputs });
+  const applyScenario = () => {
+    if (draftInputs) setInputs({ ...draftInputs });
+  };
   const resetScenario = () => {
-    const next = liveSnapshot ?? inputs;
-    setDraftInputs(next);
-    setInputs({ ...next });
+    setDraftInputs(liveSnapshot);
+    setInputs(liveSnapshot);
   };
 
   return (
@@ -211,7 +222,7 @@ export default function MonitorPage() {
               <div>
                 <span className="technical-label text-[#6d6b66]">01 / Decision signal</span>
                 <div className="mt-3 flex items-center gap-3">
-                  <Badge level={riskLevel} />
+                  {riskLevel ? <Badge level={riskLevel} /> : <span className="technical-label">UNAVAILABLE</span>}
                   <span className="technical-label text-[#87847e]">Next-hour system risk</span>
                 </div>
               </div>
@@ -230,7 +241,7 @@ export default function MonitorPage() {
                 <div className="flex items-end gap-3">
                   <span className={clsx('font-mono text-[clamp(5.3rem,12vw,10rem)] font-light leading-[0.72] tracking-[-0.09em]', danger ? 'text-[#ff7663]' : 'text-[#141414]')}>
                     <span className={clsx(!data && 'text-[0.42em] tracking-[-0.03em] text-[#a29f98]')}>
-                      {data ? data.risk_score.toFixed(0) : 'N/A'}
+                      {data ? data.risk_score.toFixed(0) : 'UNAVAILABLE'}
                     </span>
                   </span>
                   <span className="mb-1 font-mono text-sm text-[#87847e]">/100</span>
@@ -281,12 +292,12 @@ export default function MonitorPage() {
             </div>
           </div>
           <div className="grid flex-1 grid-cols-2">
-            <MetricCell label="Current system load" value={gridContext ? `${(gridContext.current_load_mw / 1000).toFixed(1)} GW` : '—'} icon={<Radio />} />
-            <MetricCell label="Available capacity" value={capacity !== null ? `${(capacity / 1000).toFixed(1)} GW` : '—'} icon={<Gauge />} />
-            <MetricCell label="Expected / P50" value={data ? `${(data.q50_load_mw / 1000).toFixed(1)} GW` : '—'} icon={<Activity />} />
-            <MetricCell label="Extreme / P99" value={data ? `${(data.q99_load_mw / 1000).toFixed(1)} GW` : '—'} icon={<Zap />} />
-            <MetricCell label="Temperature" value={`${inputs.temperature.toFixed(1)}°C`} icon={<Thermometer />} />
-            <MetricCell label="Wind signal" value={`${inputs.wind_speed.toFixed(1)} m/s`} icon={<Wind />} />
+            <MetricCell label="Current system load" value={officialLoad && gridContext ? `${(gridContext.current_load_mw / 1000).toFixed(1)} GW` : 'UNAVAILABLE'} icon={<Radio />} />
+            <MetricCell label="Available capacity" value={officialCapacity && gridContext ? `${(gridContext.capacity_mw / 1000).toFixed(1)} GW` : 'UNAVAILABLE'} icon={<Gauge />} />
+            <MetricCell label="Expected / P50" value={data ? `${(data.q50_load_mw / 1000).toFixed(1)} GW` : 'UNAVAILABLE'} icon={<Activity />} />
+            <MetricCell label="Extreme / P99" value={data ? `${(data.q99_load_mw / 1000).toFixed(1)} GW` : 'UNAVAILABLE'} icon={<Zap />} />
+            <MetricCell label="Temperature" value={inputs ? `${inputs.temperature.toFixed(1)}°C` : 'UNAVAILABLE'} icon={<Thermometer />} />
+            <MetricCell label="Wind signal" value={inputs ? `${inputs.wind_speed.toFixed(1)} m/s` : 'UNAVAILABLE'} icon={<Wind />} />
           </div>
           <div className="border-t border-black/[0.08] px-6 py-4">
             <div className={clsx('flex items-center gap-2 technical-label', contextError && !gridContext ? 'text-[#b42318]' : 'text-[#4f4d49]')}>
@@ -299,8 +310,8 @@ export default function MonitorPage() {
 
       {showWhy && data && (
         <section className="reveal grid gap-px overflow-hidden border border-[#141414] bg-[#141414] shadow-[5px_5px_0_#ff4d00] md:grid-cols-3">
-          <LogicStep index="A" title="Tail distance" body={`P99 sits ${Math.abs((marginMw ?? 0) / 1000).toFixed(2)} GW ${marginMw !== null && marginMw < 0 ? 'above' : 'below'} capacity.`} />
-          <LogicStep index="B" title="Weather pressure" body={`${inputs.temperature.toFixed(1)}°C and ${inputs.wind_speed.toFixed(1)} m/s shape the next-hour load tail.`} />
+          <LogicStep index="A" title="Tail distance" body={marginMw === null ? 'Tail distance UNAVAILABLE until a validated model returns a P99.' : `P99 sits ${Math.abs(marginMw / 1000).toFixed(2)} GW ${marginMw < 0 ? 'above' : 'below'} capacity.`} />
+          <LogicStep index="B" title="Weather pressure" body={inputs ? `${inputs.temperature.toFixed(1)}°C and ${inputs.wind_speed.toFixed(1)} m/s are the accepted external forecast. They are not a GERT load forecast.` : 'Weather UNAVAILABLE. No forecast is filled in.'} />
           <LogicStep index="C" title="Run-to-run motion" body={riskDelta === null ? 'A prior comparable snapshot is not yet available.' : `Risk moved ${riskDelta > 0 ? 'up' : 'down'} ${Math.abs(riskDelta).toFixed(1)} points.`} />
         </section>
       )}
@@ -335,15 +346,19 @@ export default function MonitorPage() {
           </div>
         </div>
         <div className="grid gap-px bg-black/[0.08] sm:grid-cols-3">
-          <ScenarioControl icon={<Thermometer />} label="Temperature" value={`${draftInputs.temperature.toFixed(1)}°C`} live={liveSnapshot ? `${liveSnapshot.temperature.toFixed(1)}°C live` : 'sync pending'} min={-10} max={45} step={0.1} input={draftInputs.temperature} onChange={(temperature) => setDraftInputs({ ...draftInputs, temperature })} />
-          <ScenarioControl icon={<Wind />} label="Wind speed" value={`${draftInputs.wind_speed.toFixed(1)} m/s`} live={liveSnapshot ? `${liveSnapshot.wind_speed.toFixed(1)} m/s live` : 'sync pending'} min={0} max={40} step={0.1} input={draftInputs.wind_speed} onChange={(wind_speed) => setDraftInputs({ ...draftInputs, wind_speed })} />
-          <ScenarioControl icon={<Sun />} label="Solar input" value={`${draftInputs.solar_irradiance.toFixed(0)} W/m²`} live={liveSnapshot ? `${liveSnapshot.solar_irradiance.toFixed(0)} W/m² live` : 'sync pending'} min={0} max={1200} step={10} input={draftInputs.solar_irradiance} onChange={(solar_irradiance) => setDraftInputs({ ...draftInputs, solar_irradiance })} />
+          {draftInputs ? (
+            <>
+              <ScenarioControl icon={<Thermometer />} label="Temperature" value={`${draftInputs.temperature.toFixed(1)}°C`} live={liveSnapshot ? `${liveSnapshot.temperature.toFixed(1)}°C forecast` : 'UNAVAILABLE'} min={-10} max={45} step={0.1} input={draftInputs.temperature} onChange={(temperature) => setDraftInputs({ ...draftInputs, temperature })} />
+              <ScenarioControl icon={<Wind />} label="Wind speed" value={`${draftInputs.wind_speed.toFixed(1)} m/s`} live={liveSnapshot ? `${liveSnapshot.wind_speed.toFixed(1)} m/s forecast` : 'UNAVAILABLE'} min={0} max={40} step={0.1} input={draftInputs.wind_speed} onChange={(wind_speed) => setDraftInputs({ ...draftInputs, wind_speed })} />
+              <ScenarioControl icon={<Sun />} label="Solar input" value={`${draftInputs.solar_irradiance.toFixed(0)} W/m²`} live={liveSnapshot ? `${liveSnapshot.solar_irradiance.toFixed(0)} W/m² forecast` : 'UNAVAILABLE'} min={0} max={1200} step={10} input={draftInputs.solar_irradiance} onChange={(solar_irradiance) => setDraftInputs({ ...draftInputs, solar_irradiance })} />
+            </>
+          ) : <p className="text-sm">Weather controls UNAVAILABLE until an external forecast arrives. No default is filled in.</p>}
         </div>
       </section>
 
       <section className="grid gap-px overflow-hidden border border-[#141414] bg-[#141414] shadow-[5px_5px_0_#ff4d00] md:grid-cols-4">
-        <EvidenceCell icon={<Database />} title="Load context" value={presentationMode ? 'Simulated peak-day load' : officialLoad ? 'Official ERCOT live' : gridContext ? 'Estimated fallback' : 'Unavailable'} verified={!presentationMode && officialLoad} />
-        <EvidenceCell icon={<ShieldCheck />} title="Capacity basis" value={presentationMode ? 'Simulated adequacy margin' : officialCapacity ? gridContext?.capacity_basis ?? 'ERCOT adequacy' : gridContext?.capacity_basis ?? 'Unavailable'} verified={!presentationMode && officialCapacity} />
+        <EvidenceCell icon={<Database />} title="Load context" value={officialLoad ? 'Official ERCOT' : 'UNAVAILABLE'} verified={officialLoad} />
+        <EvidenceCell icon={<ShieldCheck />} title="Capacity basis" value={officialCapacity ? gridContext?.capacity_basis ?? 'Official ERCOT' : 'UNAVAILABLE'} verified={officialCapacity} />
         <EvidenceCell icon={<Cpu />} title="Model artifact" value={presentationMode ? 'Presentation candidate' : backendReal ? data?.diagnostics.model_version ?? 'Trained' : 'Stub / demo'} verified={!presentationMode && backendReal} />
         <EvidenceCell icon={<Braces />} title="Decision contract" value="P50 → P99 + provenance" verified />
       </section>

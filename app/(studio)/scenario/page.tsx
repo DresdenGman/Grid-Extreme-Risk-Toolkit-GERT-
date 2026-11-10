@@ -24,18 +24,8 @@ export default function ScenarioLab() {
   const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('demo') !== '1') return;
-
-    const request = {
-      region: 'ERCOT_SYSTEM',
-      date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-      weather_features: { temperature: 15, wind_speed: 10, solar_irradiance: 500 },
-    };
-    setLoading(true);
-    api.scenario({ baseline_request: request, perturbations: { temperature: 15, wind_speed: 10 } })
-      .then((scenario) => setResult(scenario.data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    setResult(null);
+    setError('Scenario analysis is gated until a validated model exists. No forecast is shown.');
   }, []);
 
   // Presets
@@ -67,6 +57,11 @@ export default function ScenarioLab() {
           wind_speed: 10 + windChange
         }
       });
+      if (env.source === 'simulated_demo') {
+        setResult(null);
+        setError('No simulated scenario is shown.');
+        return;
+      }
       setResult(env.data);
     } catch (e) {
       console.error(e);
