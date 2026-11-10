@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { readFileSync } from 'fs';
+import { readdirSync, readFileSync } from 'fs';
 import path from 'path';
 import { describe, expect, it } from 'vitest';
 import { buildCopy, spanText } from '../../lib/homepage/copy';
@@ -8,6 +8,7 @@ import { V15_PR23_SNAPSHOT, loadEvidence } from '../../lib/homepage/evidence';
 import { buildFigure } from '../../lib/homepage/figure';
 import { formatPlain } from '../../lib/homepage/format';
 import { UNAVAILABLE, interpretLive } from '../../lib/homepage/live';
+import { toolEntries, toolHrefs } from '../../lib/homepage/tools';
 import { PREDECLARED_CALIBRATION_TOLERANCE } from '../../lib/calibration';
 
 const evidence = loadEvidence();
@@ -108,6 +109,36 @@ describe('homepage figure', () => {
       'v1.4 point, n = 96',
       'v1.5, n = 672, Wilson 95%',
     ]);
+  });
+});
+
+function studioPageRoutes(): string[] {
+  const base = path.join(process.cwd(), 'app/(studio)');
+  const routes: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name === 'page.tsx') {
+        routes.push(`/${path.relative(base, path.dirname(full)).split(path.sep).join('/')}`);
+      }
+    }
+  };
+  walk(base);
+  return routes.sort();
+}
+
+describe('homepage tool index', () => {
+  it('links every studio route, so a new page with no homepage link fails', () => {
+    expect(toolHrefs()).toEqual(studioPageRoutes());
+  });
+
+  it('describes the Historical Lab as a teaching exercise, not a forecast', () => {
+    const history = toolEntries().find((entry) => entry.href === '/history');
+    expect(history?.description).toContain(
+      'deterministic teaching exercise over three deliberately chosen 72-hour windows',
+    );
+    expect(history?.description).toContain('not a validated forecast or a representative backtest');
   });
 });
 

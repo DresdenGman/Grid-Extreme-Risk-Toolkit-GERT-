@@ -4,6 +4,8 @@ import type { FigureView } from '@/lib/homepage/figure';
 import type { Citation } from '@/lib/homepage/types';
 import { CoverageFigure } from './CoverageFigure';
 import { AsOf, Facts, HeroFoot, OperationalProvider } from './Operational';
+import { ToolIndex } from './ToolIndex';
+import { ToolsMenu } from './ToolsMenu';
 import styles from './home.module.css';
 
 function Spans({ spans }: { spans: Span[] }) {
@@ -61,6 +63,7 @@ export function Poster({
               </a>
               <a href="#evidence">Evidence</a>
               <Link href="/history">Data</Link>
+              <ToolsMenu />
             </nav>
             <AsOf />
           </div>
@@ -135,6 +138,7 @@ export function Poster({
             </div>
             <p className={styles.end}>{copy.closer}</p>
           </footer>
+          <ToolIndex />
         </main>
       </div>
     </OperationalProvider>
