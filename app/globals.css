@@ -244,6 +244,38 @@ select:focus-visible {
   box-shadow: none !important;
 }
 
+.journal [class*="rounded"] {
+  border-radius: 0 !important;
+}
+
+.journal [class*="text-[#ff4d00]"],
+.journal [class*="text-[#ff8878]"],
+.journal [class*="text-[#ff6b57]"],
+.journal [class*="text-[#b73700]"] {
+  color: var(--signal) !important;
+}
+
+.journal [class*="bg-[#ff4d00]"],
+.journal [class*="bg-[#ff6b57]"] {
+  background-color: var(--signal) !important;
+  color: var(--paper) !important;
+}
+
+.journal [class*="bg-[#f3c64d]"],
+.journal [class*="bg-[#eee6cf]"],
+.journal [class*="bg-[#ebe3cf]"] {
+  background-color: var(--paper-figure) !important;
+  color: var(--ink) !important;
+}
+
+.journal [class*="accent-[#ff4d00]"] {
+  accent-color: var(--ink);
+}
+
+.journal [class*="decoration-[#ff4d00]"] {
+  text-decoration-color: var(--hairline) !important;
+}
+
 .journal .hairline-panel,
 .journal [class*="border-[#141414]"],
 .journal [class*="border-black"] {
