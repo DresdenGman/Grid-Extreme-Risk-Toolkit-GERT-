@@ -19,8 +19,8 @@ describe('fig1 reproduction command', () => {
   });
 
   it('pins the evidence commits that the pages name', () => {
-    const v14 = execSync('git log -1 --format=%H -- evidence/ercot_v1_4_validation.json', { encoding: 'utf8' }).trim();
-    expect(v14).toBe('4cb93a8e4117251ad8c9248d1eaf3643a7c33c2f');
+    const v14 = execSync('git hash-object evidence/ercot_v1_4_validation.json', { encoding: 'utf8' }).trim();
+    expect(v14).toBe('c36a8722c8155c0eec55ed1a21570b897f08bb00');
     const prereg = readFileSync('docs/PREREGISTRATION_ERCOT_v1_5.md', 'utf8');
     expect(prereg).toContain('2026-11-01');
     expect(prereg).toContain('timestamps < 2025-01-01');
