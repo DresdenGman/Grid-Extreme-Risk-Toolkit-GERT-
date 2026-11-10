@@ -1,163 +1,193 @@
-# Decision Record — ERCOT v1.5 probabilistic candidate: passes all preregistered gates
+# Decision Record — ERCOT v1.5 probabilistic candidate: evidence only, not packaged
 
-**Status:** Passes all preregistered gates (provisional candidate)
+**Status:** evidence only, not packaged, endpoints stay gated
 **Candidate:** `ercot-lag-residual-gbt-v1.5-candidate`
 **Evidence:** [`evidence/ercot_v1_5_validation.json`](../evidence/ercot_v1_5_validation.json)
-**Preregistration:** [`docs/PREREGISTRATION_ERCOT_v1_5.md`](PREREGISTRATION_ERCOT_v1_5.md)
+**Aggregate inputs and SHA-256 manifest:** [`evidence/ercot_v1_5/`](../evidence/ercot_v1_5/manifest.json)
+**Preregistration:** [`docs/PREREGISTRATION_ERCOT_v1_5.md`](PREREGISTRATION_ERCOT_v1_5.md) (retrospective; see below)
 **Promotion contract:** [`docs/PRODUCT_RELEASE_ACCEPTANCE.md`](PRODUCT_RELEASE_ACCEPTANCE.md)
-**Evidence published:** 2026-11-08
+**v1.4 record, unchanged:** [`docs/DECISION_RECORD_ERCOT_v1_4.md`](DECISION_RECORD_ERCOT_v1_4.md)
+**Evidence first published:** 2026-11-08
+**This correction:** 2026-11-10
 
-## Context
-
-The v1.5 candidate is a one-hour-ahead load-change quantile model anchored to
-recent observed ERCOT load. It was evaluated on a frozen, blind 672-hour
-window (2026-10-05 → 2026-11-01, 672 hourly observations). Model and
-calibration parameters were frozen before the evaluation window was touched.
-
-## Hypothesis
-
-v1.4 showed strong pinball skill (0.76–0.84) but systematic under-coverage
-at the upper tail (empirical coverage 0.865 / 0.906 / 0.958 against targets
-0.90 / 0.95 / 0.99). Its calibration applied one fixed shrinkage factor per
-quantile, frozen from a development evaluation — most severely at q99
-(×0.55, the quantile with the largest shortfall). The hypothesis was that
-**per-quantile recalibration on a dedicated, recent calibration window**
-repairs coverage at the tail without giving up the skill, because the
-failure is in the calibration constants, not in the center model.
-
-## The single change
-
-`ercot-lag-residual-gbt-v1.5-candidate` is identical to v1.4 in features,
-target (one-hour-ahead ERCOT load change), center model class and
-hyperparameters, and the frozen seasonal baseline. The single change is
-calibration: for each served quantile (q50, q90, q95, q99), the residual-offset
-multiplier was chosen **on the calibration window only**, by grid search
-over [0.50, 1.50] in steps of 0.01, minimizing
-|empirical coverage − target coverage| on that window, ties resolving to
-the smaller multiplier. After scaling, residual offsets were kept in
-non-decreasing order (isotonic ordering).
-
-## Windows (frozen, UTC)
-
-| Role | Window | Hours |
-| --- | --- | --- |
-| Training | Existing joined table, timestamps < 2025-01-01 (feature rows 2019-01-08 → 2024-12-31) | 52,434 |
-| Calibration | 2026-09-07 00:00 → 2026-10-04 23:00 | 672 |
-| Evaluation (blind) | 2026-10-05 00:00 → 2026-11-01 23:00 | 672 |
-
-No window or gate was moved. No gaps were imputed.
-
-## Data note
-
-Pinned ERA5 had fully published 2026-10-31 and 2026-11-01 (verified
-2026-11-08: all 48 hours, all four zones, all three variables, zero nulls)
-and 2026-11-02, but had not yet published 2026-11-03. Weather for the run
-was therefore downloaded for 2026-10-31 → 2026-11-02. The six load hours
-2026-11-03 00:00–05:00 are unmatched by the inner join and excluded; they
-lie outside every frozen window and do not affect any reported number.
-Joined segment B runs 2026-08-28 05:00 → 2026-11-02 23:00 (1,603 rows);
-both per-segment data-quality audits passed (strictly hourly, no missing
-values, all checks true).
-
-## Chosen multipliers and calibration coverage
-
-Grid search on the calibration window only selected ×1.00 at every quantile
-— the unscaled calibration-window residual quantiles were already the
-closest to their targets, so no rescaling was needed.
-
-| Quantile | Base residual offset (MW) | Chosen multiplier | Calibration coverage before | Calibration coverage after |
-| --- | --- | --- | --- | --- |
-| q50 | 138.70 | ×1.00 | 0.4033 | 0.5000 |
-| q90 | 705.51 | ×1.00 | 0.8899 | 0.8988 |
-| q95 | 886.92 | ×1.00 | 0.9315 | 0.9494 |
-| q99 | 1,182.66 | ×1.00 | 0.8899 | 0.9896 |
-
-"Before" is the v1.4 fixed shrinkage (×0.40 / ×0.90 / ×0.90 / ×0.55)
-applied to the same calibration-window base offsets. "After" is the chosen
-grid multipliers. The recalibration repaired the tail most: q99 calibration
-coverage moved from 0.8899 to 0.9896 (target 0.99), and q50 from 0.4033 to
-0.5000 (target 0.50). The hypothesis is confirmed on the calibration
-window — and, as the blind evaluation below shows, it transferred.
-
-## Promotion gates (predeclared)
-
-Per the model promotion contract, a trained artifact may serve production
-predictions only when **all** of the following pass on an untouched time window:
-
-| Gate | Requirement |
-|---|---|
-| Pinball skill | skill > 0 vs frozen seasonal baseline at P50/P90/P95/P99 |
-| Calibration | absolute empirical-coverage error ≤ 0.03 at every served quantile |
-| Monotonicity | quantile-crossing rate ≤ 0.05 |
-| Finiteness | finite outputs for every evaluation row |
-| Evidence bundle | immutable metadata, evaluation, and backtest bundle |
-| Feature availability | serving features built only from information available at prediction time |
-
-## Observed evidence (blind evaluation, 672 hours)
-
-| Quantile | Target coverage | Empirical coverage | Abs. coverage error | Pinball skill vs baseline | Wilson 95% CI (coverage) | Calibration gate (≤ 0.03) |
-|---|---|---|---|---|---|---|
-| P50 | 0.50 | 0.5089 | 0.0089 | 0.9304 | [0.4712, 0.5466] | ✅ pass |
-| P90 | 0.90 | 0.9182 | 0.0182 | 0.9315 | [0.8950, 0.9366] | ✅ pass |
-| P95 | 0.95 | 0.9568 | 0.0068 | 0.9330 | [0.9387, 0.9698] | ✅ pass |
-| P99 | 0.99 | 0.9881 | 0.0019 | 0.9443 | [0.9767, 0.9940] | ✅ pass |
-
-Additional gates: positive pinball skill at every quantile ✅ · quantile
-crossings = 0 (rate 0.0) ✅ · finite outputs for all 672 evaluation rows ✅ ·
-q50 MAE 321.70 MW · evidence bundle published in `evidence/` ✅ ·
-serving features built only from information available at prediction time ✅.
+This record replaces the 2026-11-08 claim that the candidate passed every
+preregistered gate and was eligible for production packaging. No published
+coverage, pinball loss, skill, MAE, residual offset, multiplier, or crossing
+figure was edited. The v1.4 rejection is not softened.
 
 ## Decision
 
-**Passes all preregistered gates.** The candidate is eligible for production
-packaging under the promotion contract, and the artifact records
-`validation_status: provisional_candidate`. The hypothesis is confirmed on
-the blind window: per-quantile recalibration repaired the v1.4 tail
-under-coverage (q99 blind coverage 0.9881 vs 0.9583 in v1.4; q90 0.9182 vs
-0.8646) while pinball skill rose to 0.93–0.94 at every quantile.
+**Evidence only, not packaged, endpoints stay gated.**
 
-This run publishes the evidence and opens the review pull request. It does
-not place the artifact in `models/production/` and does not merge the pull
-request — packaging and deployment remain a reviewed step.
+The published 672-hour point estimates meet the numeric coverage, pinball-skill,
+crossing, and finiteness checks. That is not a promotion. The evidence-bundle
+gate and the feature-availability gate do not pass. The preregistration was
+committed after the evaluation window had closed. Production prediction,
+scenario-analysis, and validated-backtest endpoints stay gated. They return
+unavailable, not fabricated output.
 
-## Consequences
+`ercot-delta-quantile-v1.4` remains rejected for production. Three of its four
+calibration gates failed. The 0.03 tolerance is the same tolerance, and it was
+not moved.
 
-- The v1.5 candidate is the first ERCOT candidate to pass every frozen
-  gate, on a 672-hour blind window (seven times v1.4's 96 hours).
-- Production prediction, scenario-analysis, and validated-backtest endpoints
-  stay gated until the artifact is packaged and the pull request is reviewed
-  and merged; they return unavailable, not fabricated output, in the
-  meantime.
-- The candidate is retained as research evidence with its full evaluation
-  bundle public either way.
+## Published point estimates (unchanged)
 
-## Limitations
+Blind window 2026-10-05 00:00 UTC through 2026-11-01 23:00 UTC, 672 hours.
+Chosen multiplier ×1.00 at q50, q90, q95, and q99. Figures below are rounded;
+exact values are in the evidence JSON.
 
-- GERT is decision-support research, not an autonomous grid controller.
-- This record documents a model-governance decision, not a deployable
-  forecast.
-- Evaluation uses realized ERA5 weather for the target hour, as in v1.4,
-  so results do not measure weather-forecast error and may be optimistic.
-- With 672 evaluation hours, the expected number of q99 exceedances is
-  ≈ 6.7, so the q99 coverage estimate is coarse (one observation ≈ 0.0015).
-  Wilson 95% intervals are reported as context; the gate uses the point
-  estimate against the same 0.03 tolerance, exactly as preregistered.
-- Numbers above are rounded for readability; exact values live in the linked
-  evidence JSON.
+| Quantile | Target | Empirical coverage | Abs. coverage error | Pinball skill vs pre-2025 baseline | Calibration point estimate (≤ 0.03) |
+| --- | --- | --- | --- | --- | --- |
+| P50 | 0.50 | 0.5089 | 0.0089 | 0.9304 | meets the point-estimate rule |
+| P90 | 0.90 | 0.9182 | 0.0182 | 0.9315 | meets the point-estimate rule |
+| P95 | 0.95 | 0.9568 | 0.0068 | 0.9330 | meets the point-estimate rule |
+| P99 | 0.99 | 0.9881 | 0.0019 | 0.9443 | meets the point-estimate rule |
 
-## Reproduction
+Published crossings: 0 (rate 0.0). Published q50 MAE: 321.70 MW. Published
+claim: finite outputs on all 672 rows. Calibration-window coverage after the
+×1.00 multipliers: q50 0.5000, q90 0.8988, q95 0.9494, q99 0.9896. Base
+residual offsets: 138.70, 705.51, 886.92, and 1,182.66 MW.
+
+Crossings, finiteness, pinball, MAE, offsets, and calibration coverage were
+not recomputed from hourly rows. Those rows were not archived. The absolute
+errors and skills above do match the published coverages and pinball losses.
+
+## Gate table
+
+| Gate | Result |
+| --- | --- |
+| Pinball skill > 0 | Point estimate meets the rule, against the pre-2025 baseline only |
+| Absolute coverage error ≤ 0.03 | Point estimate meets the rule at every served quantile |
+| Quantile-crossing rate ≤ 0.05 | Published rate is 0.0. Not recomputed from rows |
+| Finite outputs | Published claim meets the rule. Not recomputed from rows |
+| Evidence bundle | **Not passed.** The 2026-11-08 file is an aggregate summary. Hourly inputs and the model artifact were not published |
+| Feature availability | **Not passed.** Evaluation weather is realized target-hour ERA5. Production weather is an Open-Meteo forecast |
+
+## Why the earlier "all gates passed" claim was wrong
+
+A review listed six problems. Each was checked against the repository, the
+commit timestamps, and the published JSON. Nothing below changes a measured
+number.
+
+### Evidence bundle was over-claimed. Confirmed.
+
+The promotion contract requires an immutable metadata, evaluation, and
+backtest bundle. The training script writes `metadata.json`, `metrics.json`,
+`evaluation_report.json`, `backtest_sample.json`, and `model.joblib`. None of
+those files is in this repository (`training_runs/` is gitignored). The
+published evidence file did not even list an evidence-bundle gate; the decision
+record marked the gate passed anyway. Hourly actuals, model quantiles, and
+baseline quantiles are also absent, so pinball, coverage, MAE, crossings, and
+the calibration offsets cannot be recomputed from their inputs.
+
+What was added here is the published aggregate bundle, a SHA-256 manifest, and
+`scripts/recompute_ercot_v1_5_evidence.py`. The script recomputes every derived
+number from those aggregates and checks the hashes. It does not, and cannot,
+reconstruct the missing rows. The evidence-bundle gate stays **not passed**.
+
+### Feature availability was over-claimed. Confirmed.
+
+The same decision record marked "serving features built only from information
+available at prediction time" as passed, and also said the evaluation uses
+realized ERA5 weather for the target hour. Those statements disagree. The
+training documentation and `train_quantile_model.py` state that historical
+fits use realized ERA5 while production uses a one-hour weather forecast.
+`data/ercot.py` requests `https://api.open-meteo.com/v1/forecast` and labels
+it `external_forecast`. Realized target-hour weather is not available at the
+prediction origin.
+
+The published scores therefore omit weather-forecast error. They are an
+optimistic upper bound on the skill and coverage that the same model would
+show under the Open-Meteo forecast weather used at serve time. That
+train/serve skew blocks packaging. The feature-availability gate stays
+**not passed**.
+
+### The preregistration is a retrospective freeze. Confirmed for the timestamp. Inspection before the commit was not established.
+
+Commit `2fcf2c9b528c1e309fc9912687466ad69d7899c2` ("docs: preregister ERCOT
+v1.5 candidate") has committer timestamp 2026-11-05 03:11:19 PT
+(2026-11-05T11:11:19Z). The same timestamp is on GitHub. The evaluation window
+is 2026-10-05 00:00 UTC through 2026-11-01 23:00 UTC, so the commit is after
+the window closed. The document's status line says it was frozen before any
+v1.5 training, calibration, or evaluation, and before the window's data was
+downloaded. The timestamp does not support that status. A correction banner
+on the preregistration points here; the original wording underneath is kept.
+
+The results commit `98d4fbf82a78ebfaeca160bb0ac20915c8fc566e` is dated
+2026-11-08T16:01:18Z. The calibration-code commit
+`59e39d59c996b2134115f6475aca5c03542f07db` is dated 2026-11-05T11:23:49Z,
+twelve minutes after the preregistration. Git does not show whether the
+series had been inspected before the preregistration commit. What it shows
+is that the freeze was written after the hours being scored had already
+occurred.
+
+### Q95 has 29 exceedances and Q99 has 8. Confirmed as the unique counts consistent with the published coverages. The Q99 gate's low power is confirmed.
+
+At n = 672, the published six-decimal coverages match exactly one integer
+count each:
+
+| Quantile | Published coverage | Covered hours | Exceedances |
+| --- | --- | --- | --- |
+| Q95 | 0.956845 | 643 | 29 |
+| Q99 | 0.988095 | 664 | 8 |
+
+These counts are inferred from the rounded aggregates. There is no residual
+file to count directly. The Wilson intervals in the JSON match those counts
+to four decimal places.
+
+The Q99 rule fails when the absolute coverage error is greater than 0.03.
+With target 0.99 that is an exceedance count of 27 or more: 27/672 gives
+error 0.030179, and 26/672 gives 0.028690. If true coverage were 0.96
+(exceedance probability 0.04) and hours were independent,
+
+P(fail) = P(Binomial(672, 0.04) ≥ 27) = 0.5178,
+
+which is the review's figure of about 0.52. True coverage 0.96 sits on the
+gate boundary, so a larger n does not move this probability toward 1. The
+point-estimate rule is unchanged. The 0.9881 coverage is not relabeled as a
+failure, and it is also not strong evidence of calibration.
+
+### The 0.93 skill is against a weaker, earlier baseline. The level 2312 is confirmed. The 1276 and 0.874 figures are confirmed as arithmetic on a different window, and 0.874 is not a measured skill for these 672 hours.
+
+The v1.5 command fits the seasonal baseline on timestamps before 2025-01-01
+(`seasonal_baseline` on that training split). The published q50 baseline
+pinball is 2312.438609. The published q50 model pinball is 160.851712. Skill
+1 − 160.851712 / 2312.438609 = 0.930441, matching the JSON.
+
+v1.4 publishes q50 MAE 404.535 MW and q50 skill 0.841492, and does not
+publish baseline pinball. At q50, pinball loss is half of MAE, so the implied
+baseline pinball on the **v1.4** 96-hour window is
+
+(404.535 / 2) / (1 − 0.841492) = 1276.07.
+
+Putting that other-window baseline under the v1.5 model pinball gives
+1 − 160.851712 / 1276.07 = 0.8739, about 0.874. That substitution is not a
+skill measured on the 672-hour window. v1.4's evidence file does not record
+the baseline's training end, so this repository cannot show what a
+v1.4-period baseline would have scored on October 2026. The limitation that
+does stand: the reported 0.93 skill is not comparable to v1.4's 0.76–0.84
+skill. v1.4's skill remains the skill of a rejected candidate.
+
+## What would be required before packaging
+
+Packaging would need a new evaluation, not a relabeling of this one. A draft
+for that evaluation, using archived issued-forecast weather, is in
+[`docs/PREREGISTRATION_ERCOT_FORECAST_WEATHER_DRAFT.md`](PREREGISTRATION_ERCOT_FORECAST_WEATHER_DRAFT.md).
+It is not approved and it has not been run. Until a candidate passes every
+gate, including feature availability and a complete row-level bundle, the
+endpoints stay gated.
+
+## Reproduction of the derived checks
 
 ```bash
-python -m training.ercot.download_historical_weather_period \
-  --start 2026-10-31 --end 2026-11-02 \
-  --output-dir training_data/ercot_weather_era5_2026
-# Join combined load (zone weights from <=2024 rows) with the 2019-2024
-# and 2026 weather directories, split per segment, audit per segment,
-# build features per segment, concatenate to training_runs/ercot_v1/features.csv
-python -m training.ercot.train_quantile_model \
-  --features training_runs/ercot_v1/features.csv \
-  --calibration-mode grid --training-end 2025-01-01 \
-  --calibration-start 2026-09-07 --calibration-end 2026-10-04 \
-  --evaluation-start 2026-10-05 --evaluation-end 2026-11-01 \
-  --model-version ercot-lag-residual-gbt-v1.5-candidate
+python scripts/recompute_ercot_v1_5_evidence.py
 ```
+
+The script checks the manifest hashes and rebuilds every derived number in
+the evidence JSON. It exits non-zero if a published skill or coverage error
+disagrees with the published pinball losses and coverages, or if v1.4 is no
+longer recorded as `rejected_candidate`.
+
+The original training command remains in the evidence JSON. It cannot be
+rerun from this repository: the feature table and the ERCOT credential file
+are not part of the commit, and this correction did not download either.
