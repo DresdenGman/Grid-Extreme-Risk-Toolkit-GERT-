@@ -1,23 +1,26 @@
-import { IBM_Plex_Mono, IBM_Plex_Sans, Source_Serif_4 } from 'next/font/google';
+import localFont from 'next/font/local';
 
-export const plexSans = IBM_Plex_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '700'],
+export const plexSans = localFont({
+  src: '../../assets/fonts/ibm-plex-sans.woff2',
+  weight: '400 700',
   display: 'swap',
   variable: '--font-plex-sans',
 });
 
-export const plexMono = IBM_Plex_Mono({
-  subsets: ['latin'],
-  weight: ['400', '600'],
+export const plexMono = localFont({
+  src: [
+    { path: '../../assets/fonts/ibm-plex-mono-400.woff2', weight: '400', style: 'normal' },
+    { path: '../../assets/fonts/ibm-plex-mono-600.woff2', weight: '600', style: 'normal' },
+  ],
   display: 'swap',
   variable: '--font-plex-mono',
 });
 
-export const sourceSerif = Source_Serif_4({
-  subsets: ['latin'],
-  weight: ['400'],
-  style: ['normal', 'italic'],
+export const sourceSerif = localFont({
+  src: [
+    { path: '../../assets/fonts/source-serif-4-400.woff2', weight: '400', style: 'normal' },
+    { path: '../../assets/fonts/source-serif-4-400-italic.woff2', weight: '400', style: 'italic' },
+  ],
   display: 'swap',
   variable: '--font-source-serif',
 });
