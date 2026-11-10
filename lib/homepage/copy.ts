@@ -51,7 +51,9 @@ function footnoteFor(candidate: CandidateView, citation: Citation, n: number): F
       lead: '',
       linked: candidate.source.path,
       href: fileHref(citation, candidate.source.path, 'main'),
-      tail: `, candidate ${candidate.candidateId}, published ${candidate.publishedLabel}. Validation status: ${candidate.status}.`,
+      tail: `, candidate ${candidate.candidateId}, published ${candidate.publishedLabel}. Validation status: ${candidate.status}.${
+        candidate.source.path.endsWith('ercot_v1_4_validation.json') ? ' Commit 4cb93a8e.' : ''
+      }`,
     };
   }
   const short = candidate.source.commit.slice(0, 7);
@@ -60,7 +62,7 @@ function footnoteFor(candidate: CandidateView, citation: Citation, n: number): F
     lead: 'Snapshot of ',
     linked: candidate.source.upstreamPath,
     href: fileHref(citation, candidate.source.upstreamPath, candidate.source.commit),
-    tail: ` at commit ${short} on unmerged PR #${candidate.source.pr} (${candidate.source.branch}), candidate ${candidate.candidateId}, published ${candidate.publishedLabel}. Validation status: ${candidate.status}.`,
+      tail: ` at commit ${short} on unmerged PR #${candidate.source.pr} (${candidate.source.branch}), candidate ${candidate.candidateId}, published ${candidate.publishedLabel}. Validation status: ${candidate.status}. Preregistration commit 2fcf2c9b is dated 2026-11-05 03:11 PT, after the evaluation window closed on 2026-11-01, so that freeze is retrospective relative to the window. Training timestamps recorded in the file are before 2025-01-01.`,
   };
 }
 
@@ -155,7 +157,9 @@ export function buildCopy(model: EvidenceModel, citation: Citation): HomepageCop
           : 'has no complete Wilson interval in its evidence JSON'
       }.`
     : 'v1.5 is not shown.';
-  const skill = model.windowsDiffer ? ' Skill is not compared: the two evaluations use different windows.' : '';
+  const skill = model.windowsDiffer
+    ? ' Skill is not compared. The evaluations use different windows. v1.5 records training timestamps before 2025-01-01. The v1.4 evidence file does not record a baseline training window, and the v1.5 preregistration describes that seasonal baseline as unchanged from v1.4, so this page does not treat the two baselines as one fitted setup.'
+    : '';
   const caption: Span[] = [
     {
       kind: 'text',

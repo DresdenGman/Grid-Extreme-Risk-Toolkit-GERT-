@@ -15,6 +15,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Studio pages use the paper journal shell. Methods, version, review, and
+  the Historical Lab state what they are. Fig. 1 can be reprinted with
+  `node scripts/fig1.mjs`.
 - The homepage contents list links every existing route. The Historical
   Lab entry describes a deterministic exercise over three 72-hour windows.
 - The website homepage is the decision poster. It reads v1.4 from

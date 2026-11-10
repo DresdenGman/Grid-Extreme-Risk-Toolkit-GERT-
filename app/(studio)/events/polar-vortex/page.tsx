@@ -33,15 +33,19 @@ export default function EventReplay() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1000); // ms per step
   const [severityFilter, setSeverityFilter] = useState<'ALL' | 'INFO' | 'WARNING' | 'CRITICAL'>('ALL');
+  const [unavailable, setUnavailable] = useState(false);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Load Event Data
     api.fetchEventPlayback('polar-vortex').then((env) => {
+      if (env.source === 'simulated_demo') {
+        setUnavailable(true);
+        return;
+      }
       setData(env.data);
-      if (env.source === 'simulated_demo') setCurrentHour(env.data.total_hours - 1);
-    }).catch(console.error);
+    }).catch(() => setUnavailable(true));
   }, []);
 
   // Playback Logic
@@ -69,7 +73,8 @@ export default function EventReplay() {
     setCurrentHour(0);
   };
 
-  if (!data) return <LoadingState label="Loading historical event data..." variant="full" />;
+  if (unavailable) return <p className="journal-lede">Event replay UNAVAILABLE. No reconstruction is filled in.</p>;
+  if (!data) return <LoadingState label="Loading the labeled reconstruction…" variant="full" />;
 
   const currentStep = data.steps[currentHour];
   

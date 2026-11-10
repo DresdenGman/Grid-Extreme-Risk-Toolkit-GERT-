@@ -5,7 +5,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { toolIndex } from '@/lib/homepage/tools';
 import styles from './home.module.css';
 
-export function ToolsMenu() {
+export function ToolsMenu({ tone = 'rust', indexHref = '#tools' }: { tone?: 'rust' | 'ink'; indexHref?: string }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLAnchorElement>(null);
@@ -71,10 +71,10 @@ export function ToolsMenu() {
   }
 
   return (
-    <div className={styles.tools} ref={rootRef}>
+    <div className={tone === 'ink' ? `${styles.tools} ${styles.ink}` : styles.tools} ref={rootRef}>
       <a
         ref={buttonRef}
-        href="#tools"
+        href={indexHref}
         className={open ? styles.toolsOpen : undefined}
         aria-expanded={open}
         aria-controls={menuId}
@@ -109,7 +109,7 @@ export function ToolsMenu() {
             </div>
           ))}
           <div className={styles.menuGroup}>
-            <a href="#tools" data-tool-link="" onClick={() => setOpen(false)}>
+            <a href={indexHref} data-tool-link="" onClick={() => setOpen(false)}>
               Full index
             </a>
           </div>
