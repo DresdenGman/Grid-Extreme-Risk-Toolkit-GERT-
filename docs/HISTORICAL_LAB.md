@@ -55,6 +55,38 @@ bundled source, every hourly calculation, and every summary metric. It fails on
 a checksum mismatch, changed observation, invalid assumption, or wrong result.
 Its Python calculations are independent of the browser's TypeScript code.
 
+### What the checker compares, and what a failure means
+
+The checker recomputes the report from the bundled dataset and the report's
+own stated assumptions (capacity and uniform reduction), then compares every
+field: the schema and version fields, all 72 hourly rows (recorded load,
+adjusted load, assumed capacity, and both gaps), and every summary metric.
+Numbers must agree to a relative tolerance of 1e-10 (absolute 1e-6); there is
+no rounding allowance, because both sides compute from the same source values
+at full precision.
+
+A stress hour is an hour with a strictly positive gap against the assumed
+capacity — not an hour above some percentage of the peak. An hour at 94% of
+peak demand can be below the assumed capacity, and then it is not a stress
+hour; an hour exactly at capacity has a gap of zero. Timestamps are hourly
+interval starts in America/Chicago.
+
+When a report does not verify, the checker prints every mismatching field
+with the expected and submitted values instead of stopping at the first
+error, followed by the likely causes it can detect:
+
+- **Assumptions** — the report's own capacity and reduction are echoed back,
+  because the check recomputes from them; if they are not the settings you
+  intended, the report was produced with different inputs than you expected.
+- **Rows shifted by one hour** — the submitted rows match the expected rows
+  displaced by one position, the signature of a timezone or interval-start
+  mix-up.
+- **Rounding** — differences above the tolerance but small enough to come
+  from carrying values at lower precision than the source data (0.001 MW).
+- **Wrong values** — the first mismatching row is printed with its formula
+  inputs (recorded load, adjusted load, capacity, both gaps) so the
+  arithmetic can be checked by hand.
+
 ## Mathematics and interpretation
 
 For recorded load L(t), constant assumed capacity C, and uniform reduction r:

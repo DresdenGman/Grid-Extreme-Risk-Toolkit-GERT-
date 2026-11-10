@@ -104,3 +104,18 @@ And, on the main weakness:
 Tracked in [`ROADMAP.md`](../ROADMAP.md). The two concrete items this survey
 puts on the list: explain the checker's accept/reject reasoning in the lab
 itself, and add a short worked example before the data activity starts.
+
+## Addendum (2026-11-05)
+
+The checker-explainability item above has been addressed. The report checker
+(`scripts/verify_historical_report.py`) no longer stops at the first bare
+mismatch: it lists every mismatching field with the expected and submitted
+values and names the likely cause it can detect — the report's own
+assumptions, rows shifted by one hour, rounding, or a wrong value shown with
+its formula inputs. The lab page now carries a worked example computed live
+from the bundled summer-2023 data and a plain-language statement of how the
+check works: a stress hour is a strictly positive gap against the assumed
+capacity, equality with capacity is a zero gap, timestamps are interval
+starts in America/Chicago, and every hourly row and metric is compared.
+Whether participants find the checker clearer as a result has not been
+measured.

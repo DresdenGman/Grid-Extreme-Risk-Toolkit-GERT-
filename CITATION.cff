@@ -11,8 +11,9 @@ authors:
     given-names: Dresden
 repository-code: "https://github.com/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-"
 url: "https://gert-d.vercel.app"
-version: "1.1.0"
-date-released: "2026-09-13"
+version: "1.2.0"
+date-released: "2026-11-05"
+doi: "10.5281/zenodo.23982226"
 license: MIT
 keywords:
   - power systems
