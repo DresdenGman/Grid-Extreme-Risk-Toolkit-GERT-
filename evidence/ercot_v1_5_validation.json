@@ -1,1 +1,259 @@
-{"all_gates_passed":true,"calibration":{"base_residual_offsets_mw":{"q50":138.704963,"q90":705.51378,"q95":886.919353,"q99":1182.658076},"calibration_coverage_after":{"note":"chosen grid multipliers applied, on the calibration window only","q50":0.5,"q90":0.89881,"q95":0.949405,"q99":0.989583},"calibration_coverage_before":{"note":"v1.4 fixed shrinkage factors (q50 x0.40, q90 x0.90, q95 x0.90, q99 x0.55) applied to the same calibration-window base offsets","q50":0.403274,"q90":0.889881,"q95":0.931548,"q99":0.889881},"grid":"multiplier in [0.50, 1.50] step 0.01, minimizing |empirical coverage - target coverage| on the calibration window only; ties resolve to the smaller multiplier","mode":"grid","multipliers":{"q50":1.0,"q90":1.0,"q95":1.0,"q99":1.0}},"calibration_observations":672,"calibration_window_end":"2026-10-04T23:00:00Z","calibration_window_start":"2026-09-07T00:00:00Z","candidate_id":"ercot-lag-residual-gbt-v1.5-candidate","data_provenance":"Official ERCOT system-load archives (NP6-346-CD) joined with pinned Open-Meteo ERA5 weather (four zones, fixed weights from 2019-2024 load). Load segment A: 2019-01-01 to 2024-12-31 (52,602 joined rows). Load segment B: 2026-08-28 to 2026-11-02 23:00 (1,603 joined rows). Pinned ERA5 had not yet published 2026-11-03 at run time, so the six load hours 2026-11-03 00:00-05:00 are unmatched and excluded by the inner join; they lie outside every frozen window and do not affect any reported number. Model and calibration parameters were frozen before the evaluation window was touched.","evaluation_window_end":"2026-11-01T23:00:00Z","evaluation_window_start":"2026-10-05T00:00:00Z","gates":[{"gate":"Q50 calibration error","observed":0.008929,"passed":true,"requirement":"absolute error <= 0.03"},{"gate":"Q90 calibration error","observed":0.018155,"passed":true,"requirement":"absolute error <= 0.03"},{"gate":"Q95 calibration error","observed":0.006845,"passed":true,"requirement":"absolute error <= 0.03"},{"gate":"Q99 calibration error","observed":0.001905,"passed":true,"requirement":"absolute error <= 0.03"},{"gate":"Positive pinball skill","observed":0.930441,"passed":true,"requirement":"skill > 0 at every quantile"},{"gate":"Quantile monotonicity","observed":0.0,"passed":true,"requirement":"crossing rate <= 0.05"},{"gate":"Finite predictions","observed":"all 672 evaluation rows finite","passed":true,"requirement":"finite outputs for every evaluation row"}],"limitations":["Evaluation uses realized ERA5 weather for the target hour, as in v1.4, so results do not measure weather-forecast error and may be optimistic.","With 672 evaluation hours, the expected number of q99 exceedances is about 6.7, so the q99 coverage estimate is coarse (one observation is about 0.0015); Wilson 95% intervals are reported as context and the gate still uses the point estimate.","The candidate is a provisional candidate; this run publishes the evidence and opens the review pull request. It does not place the artifact in models/production/ or merge the pull request.","GERT is decision-support research and must not be used for autonomous grid control."],"observations":672,"preregistration":"docs/PREREGISTRATION_ERCOT_v1_5.md","published_at":"2026-11-08T00:00:00Z","q50_mae_mw":321.7034248158182,"quantile_crossing_rate":0.0,"quantile_crossings":0,"quantile_metrics":[{"absolute_coverage_error":0.008929,"baseline_pinball_loss":2312.438609,"coverage_wilson_95_ci":[0.4712,0.5466],"empirical_coverage":0.508929,"pinball_loss":160.851712,"pinball_skill_vs_baseline":0.930441,"quantile":"q50","target_coverage":0.5},{"absolute_coverage_error":0.018155,"baseline_pinball_loss":1120.3762,"coverage_wilson_95_ci":[0.895,0.9366],"empirical_coverage":0.918155,"pinball_loss":76.691465,"pinball_skill_vs_baseline":0.931548,"quantile":"q90","target_coverage":0.9},{"absolute_coverage_error":0.006845,"baseline_pinball_loss":686.257936,"coverage_wilson_95_ci":[0.9387,0.9698],"empirical_coverage":0.956845,"pinball_loss":45.982329,"pinball_skill_vs_baseline":0.932996,"quantile":"q95","target_coverage":0.95},{"absolute_coverage_error":0.001905,"baseline_pinball_loss":198.961765,"coverage_wilson_95_ci":[0.9767,0.994],"empirical_coverage":0.988095,"pinball_loss":11.09114,"pinball_skill_vs_baseline":0.944255,"quantile":"q99","target_coverage":0.99}],"reproduction":"python -m training.ercot.download_historical_weather_period --start 2026-10-31 --end 2026-11-02 --output-dir training_data/ercot_weather_era5_2026; join combined load with the two weather directories (zone weights from <=2024 rows); audit per segment; build features per segment and concatenate to training_runs/ercot_v1/features.csv; python -m training.ercot.train_quantile_model --features training_runs/ercot_v1/features.csv --calibration-mode grid --training-end 2025-01-01 --calibration-start 2026-09-07 --calibration-end 2026-10-04 --evaluation-start 2026-10-05 --evaluation-end 2026-11-01 --model-version ercot-lag-residual-gbt-v1.5-candidate","summary":"The preregistered per-quantile grid recalibration passed every frozen gate on the blind 672-hour evaluation window: pinball skill 0.93-0.94 at every quantile, absolute coverage error at most 0.0182, and zero quantile crossings. The candidate is eligible for production packaging under the promotion contract; the artifact itself is not placed in models/production/ by this run.","training_window":"timestamps before 2025-01-01 (feature rows 2019-01-08 through 2024-12-31)","validation_status":"provisional_candidate"}
+{
+  "schema": "gert-ercot-v1.5-evidence-v2",
+  "candidate_id": "ercot-lag-residual-gbt-v1.5-candidate",
+  "validation_status": "evidence_only_not_packaged",
+  "decision": "evidence only, not packaged, endpoints stay gated",
+  "packaging_authorized": false,
+  "all_gates_passed": false,
+  "summary": "Published 672-hour point estimates meet the numeric coverage, skill, crossing, and finiteness checks (maximum absolute coverage error 0.018155, pinball skill 0.930441 to 0.944255). The evidence-bundle and feature-availability gates are not passed. The candidate is evidence only: it is not packaged, and the prediction endpoints stay gated. The v1.4 rejection is unchanged.",
+  "published_at": "2026-11-08T00:00:00Z",
+  "preregistration": "docs/PREREGISTRATION_ERCOT_v1_5.md",
+  "preregistration_commit": "2fcf2c9b528c1e309fc9912687466ad69d7899c2",
+  "source_results_commit": "98d4fbf82a78ebfaeca160bb0ac20915c8fc566e",
+  "training_window": "timestamps before 2025-01-01 (feature rows 2019-01-08 through 2024-12-31)",
+  "calibration_window_start": "2026-09-07T00:00:00Z",
+  "calibration_window_end": "2026-10-04T23:00:00Z",
+  "evaluation_window_start": "2026-10-05T00:00:00Z",
+  "evaluation_window_end": "2026-11-01T23:00:00Z",
+  "observations": 672,
+  "calibration_observations": 672,
+  "q50_mae_mw": 321.7034248158182,
+  "quantile_crossings": 0,
+  "quantile_crossing_rate": 0.0,
+  "calibration": {
+    "base_residual_offsets_mw": {
+      "q50": 138.704963,
+      "q90": 705.51378,
+      "q95": 886.919353,
+      "q99": 1182.658076
+    },
+    "calibration_coverage_after": {
+      "note": "chosen grid multipliers applied, on the calibration window only",
+      "q50": 0.5,
+      "q90": 0.89881,
+      "q95": 0.949405,
+      "q99": 0.989583
+    },
+    "calibration_coverage_before": {
+      "note": "v1.4 fixed shrinkage factors (q50 x0.40, q90 x0.90, q95 x0.90, q99 x0.55) applied to the same calibration-window base offsets",
+      "q50": 0.403274,
+      "q90": 0.889881,
+      "q95": 0.931548,
+      "q99": 0.889881
+    },
+    "grid": "multiplier in [0.50, 1.50] step 0.01, minimizing |empirical coverage - target coverage| on the calibration window only; ties resolve to the smaller multiplier",
+    "mode": "grid",
+    "multipliers": {
+      "q50": 1.0,
+      "q90": 1.0,
+      "q95": 1.0,
+      "q99": 1.0
+    }
+  },
+  "quantile_metrics": [
+    {
+      "absolute_coverage_error": 0.008929,
+      "baseline_pinball_loss": 2312.438609,
+      "coverage_wilson_95_ci": [
+        0.4712,
+        0.5466
+      ],
+      "empirical_coverage": 0.508929,
+      "pinball_loss": 160.851712,
+      "pinball_skill_vs_baseline": 0.930441,
+      "quantile": "q50",
+      "target_coverage": 0.5
+    },
+    {
+      "absolute_coverage_error": 0.018155,
+      "baseline_pinball_loss": 1120.3762,
+      "coverage_wilson_95_ci": [
+        0.895,
+        0.9366
+      ],
+      "empirical_coverage": 0.918155,
+      "pinball_loss": 76.691465,
+      "pinball_skill_vs_baseline": 0.931548,
+      "quantile": "q90",
+      "target_coverage": 0.9
+    },
+    {
+      "absolute_coverage_error": 0.006845,
+      "baseline_pinball_loss": 686.257936,
+      "coverage_wilson_95_ci": [
+        0.9387,
+        0.9698
+      ],
+      "empirical_coverage": 0.956845,
+      "pinball_loss": 45.982329,
+      "pinball_skill_vs_baseline": 0.932996,
+      "quantile": "q95",
+      "target_coverage": 0.95
+    },
+    {
+      "absolute_coverage_error": 0.001905,
+      "baseline_pinball_loss": 198.961765,
+      "coverage_wilson_95_ci": [
+        0.9767,
+        0.994
+      ],
+      "empirical_coverage": 0.988095,
+      "pinball_loss": 11.09114,
+      "pinball_skill_vs_baseline": 0.944255,
+      "quantile": "q99",
+      "target_coverage": 0.99
+    }
+  ],
+  "gates": [
+    {
+      "gate": "Q50 calibration error",
+      "observed": 0.008929,
+      "passed": true,
+      "requirement": "absolute error <= 0.03"
+    },
+    {
+      "gate": "Q90 calibration error",
+      "observed": 0.018155,
+      "passed": true,
+      "requirement": "absolute error <= 0.03"
+    },
+    {
+      "gate": "Q95 calibration error",
+      "observed": 0.006845,
+      "passed": true,
+      "requirement": "absolute error <= 0.03"
+    },
+    {
+      "gate": "Q99 calibration error",
+      "observed": 0.001905,
+      "passed": true,
+      "requirement": "absolute error <= 0.03"
+    },
+    {
+      "gate": "Positive pinball skill",
+      "observed": 0.930441,
+      "passed": true,
+      "requirement": "skill > 0 at every quantile"
+    },
+    {
+      "gate": "Quantile monotonicity",
+      "observed": 0.0,
+      "passed": true,
+      "requirement": "crossing rate <= 0.05"
+    },
+    {
+      "gate": "Finite predictions",
+      "observed": "all 672 evaluation rows finite",
+      "passed": true,
+      "requirement": "finite outputs for every evaluation row"
+    },
+    {
+      "gate": "Evidence bundle",
+      "observed": "published aggregate summary only; hourly inputs and the model artifact were not archived",
+      "passed": false,
+      "requirement": "immutable metadata, evaluation, and backtest bundle sufficient to recompute every gate result from its inputs"
+    },
+    {
+      "gate": "Feature availability",
+      "observed": "evaluation used realized ERA5 weather for the target hour; production requests an Open-Meteo forecast",
+      "passed": false,
+      "requirement": "serving features built only from information available at prediction time"
+    }
+  ],
+  "data_provenance": "Official ERCOT system-load archives (NP6-346-CD) joined with pinned Open-Meteo ERA5 weather (four zones, fixed weights from 2019-2024 load). Load segment A: 2019-01-01 to 2024-12-31 (52,602 joined rows). Load segment B: 2026-08-28 to 2026-11-02 23:00 (1,603 joined rows). Pinned ERA5 had not yet published 2026-11-03 at run time, so the six load hours 2026-11-03 00:00-05:00 are unmatched and excluded by the inner join; they lie outside every frozen window and do not affect any reported number. Model and calibration parameters were frozen before the evaluation window was touched.",
+  "evaluation_weather": "realized_era5_target_hour",
+  "production_weather": "open_meteo_forecast",
+  "reproduction": "python -m training.ercot.download_historical_weather_period --start 2026-10-31 --end 2026-11-02 --output-dir training_data/ercot_weather_era5_2026; join combined load with the two weather directories (zone weights from <=2024 rows); audit per segment; build features per segment and concatenate to training_runs/ercot_v1/features.csv; python -m training.ercot.train_quantile_model --features training_runs/ercot_v1/features.csv --calibration-mode grid --training-end 2025-01-01 --calibration-start 2026-09-07 --calibration-end 2026-10-04 --evaluation-start 2026-10-05 --evaluation-end 2026-11-01 --model-version ercot-lag-residual-gbt-v1.5-candidate",
+  "recomputed_from_published_aggregates": {
+    "authority": "Derived from the published aggregates in evidence/ercot_v1_5/measurements.json. Not recomputed from hourly rows.",
+    "quantiles": {
+      "q50": {
+        "covered_count_inferred": 342,
+        "exceedances_inferred": 330,
+        "absolute_coverage_error": 0.008928999999999965,
+        "pinball_skill_vs_baseline": 0.9304406562950619,
+        "wilson_95_ci": [
+          0.4711877625263267,
+          0.5465678809657717
+        ],
+        "published_wilson_95_ci_matches_four_decimals": true,
+        "point_estimate_calibration_gate_passed": true,
+        "point_estimate_skill_gate_passed": true
+      },
+      "q90": {
+        "covered_count_inferred": 617,
+        "exceedances_inferred": 55,
+        "absolute_coverage_error": 0.018155000000000032,
+        "pinball_skill_vs_baseline": 0.9315484700585392,
+        "wilson_95_ci": [
+          0.8949746285878056,
+          0.936581341625473
+        ],
+        "published_wilson_95_ci_matches_four_decimals": true,
+        "point_estimate_calibration_gate_passed": true,
+        "point_estimate_skill_gate_passed": true
+      },
+      "q95": {
+        "covered_count_inferred": 643,
+        "exceedances_inferred": 29,
+        "absolute_coverage_error": 0.00684499999999999,
+        "pinball_skill_vs_baseline": 0.9329955595588187,
+        "wilson_95_ci": [
+          0.9387099648372489,
+          0.9697871271751234
+        ],
+        "published_wilson_95_ci_matches_four_decimals": true,
+        "point_estimate_calibration_gate_passed": true,
+        "point_estimate_skill_gate_passed": true
+      },
+      "q99": {
+        "covered_count_inferred": 664,
+        "exceedances_inferred": 8,
+        "absolute_coverage_error": 0.0019050000000000455,
+        "pinball_skill_vs_baseline": 0.9442549175214645,
+        "wilson_95_ci": [
+          0.9766862523499724,
+          0.9939555918847447
+        ],
+        "published_wilson_95_ci_matches_four_decimals": true,
+        "point_estimate_calibration_gate_passed": true,
+        "point_estimate_skill_gate_passed": true
+      }
+    },
+    "q99_exceedances_that_fail_the_gate": 27,
+    "q99_probability_of_fail_given_true_coverage_0_96": 0.5177764004528295,
+    "q99_probability_of_fail_given_true_coverage_0_95": 0.8988517504618235,
+    "q99_probability_of_fail_given_true_coverage_0_99": 2.3467085426516273e-09,
+    "power_model": "IID binomial. Hourly errors are dependent, so this is a sample-size illustration and not a grid-operations sample size. True coverage 0.96 sits on the 0.03 gate boundary, so this probability stays near one half as n grows.",
+    "v1_4_q50_implied_baseline_on_v1_4_window": {
+      "q50_mae_mw": 404.535,
+      "q50_skill": 0.841492,
+      "implied_model_pinball": 202.2675,
+      "implied_baseline_pinball": 1276.0712393065337
+    },
+    "cross_window_q50_skill_illustration": {
+      "value": 0.873947702098973,
+      "meaning": "1 - (v1.5 q50 pinball / v1.4-window implied baseline pinball). The two pinballs are from different hours. This is not a measured skill on the 672-hour window."
+    }
+  },
+  "not_recomputed_from_rows": [
+    "empirical coverage",
+    "pinball loss",
+    "baseline pinball loss",
+    "q50 MAE",
+    "quantile crossings",
+    "finiteness",
+    "calibration residual offsets",
+    "calibration-window coverage",
+    "chosen multipliers"
+  ],
+  "limitations": [
+    "Evaluation uses realized ERA5 weather for the target hour. Production weather is an Open-Meteo forecast. The published scores omit weather-forecast error and are an optimistic upper bound on forecast-weather performance. That train/serve skew fails feature availability and blocks packaging.",
+    "The evidence bundle published with the result was an aggregate JSON. Hourly inputs, baseline predictions, and the model artifact were not archived, so the evidence-bundle gate is not passed. Derived identities below are checked; the primary measurements are transcribed.",
+    "The preregistration commit 2fcf2c9b528c1e309fc9912687466ad69d7899c2 is dated 2026-11-05 03:11:19 PT, after the evaluation window closed. It is a retrospective freeze. Git does not show whether the series was inspected before that commit; the results commit is 2026-11-08.",
+    "At n=672 the published coverages imply 29 Q95 exceedances and 8 Q99 exceedances. Under an IID binomial model, P(Q99 gate fails | true coverage 0.96) is about 0.52. The point-estimate gate is unchanged.",
+    "The reported skill uses a seasonal baseline fit only on timestamps before 2025-01-01. v1.4's published q50 MAE and skill imply a baseline pinball near 1276 on the v1.4 window, versus 2312.438609 here. Those windows differ, so 0.93 and v1.4's 0.76-0.84 are not the same comparison.",
+    "The v1.4 candidate remains rejected. No failed v1.4 gate is relabeled as a pass, and the 0.03 threshold is not moved.",
+    "GERT is decision-support research and must not be used for autonomous grid control."
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "schema": "gert-ercot-v1.5-evidence-manifest-v1",
+  "files": [
+    {
+      "path": "evidence/ercot_v1_5/measurements.json",
+      "sha256": "2a0efb3fb474b69d4ed7ce5d8296f4b3e389c2227465ad9d62ec00272c8cc058"
+    },
+    {
+      "path": "evidence/ercot_v1_5_validation.json",
+      "sha256": "7e098e874ffda49514990b58d40dbce262787086e129ea87a68c30f0e9d84b97"
+    },
+    {
+      "path": "evidence/ercot_v1_4_validation.json",
+      "sha256": "921b316b7b39567ddb14518c651ba817d09f81bdee9736e37f455ac36e103201"
+    },
+    {
+      "path": "scripts/recompute_ercot_v1_5_evidence.py",
+      "sha256": "8254b53fb9c9bf527600adab935e95f1d7dccd0d4d40c7d550321880ae9e1262"
+    }
+  ],
+  "missing_inputs": [
+    {
+      "path": "evidence/ercot_v1_5/evaluation_rows.csv",
+      "why": "Hourly evaluation actuals, model quantiles, and baseline quantiles were not published, so pinball, coverage, MAE, crossings, and finiteness cannot be recomputed from rows."
+    },
+    {
+      "path": "evidence/ercot_v1_5/calibration_rows.csv",
+      "why": "Hourly calibration actuals and center predictions were not published, so residual offsets and calibration-window coverage cannot be recomputed from rows."
+    },
+    {
+      "path": "training_runs/ercot_v1/artifact/",
+      "why": "metadata.json, metrics.json, evaluation_report.json, backtest_sample.json, and model.joblib are gitignored and were not added to this bundle."
+    }
+  ],
+  "row_level_archive_present": false,
+  "note": "Hashes cover the published aggregates, the recomputed evidence document, the untouched v1.4 evidence file, and this script. The missing-input list is what a complete bundle would still need before the evidence-bundle gate could be reconsidered."
+}

@@ -1,5 +1,15 @@
 # Preregistration — ERCOT v1.5 candidate
 
+**Correction, 2026-11-10.** The commit that added this file
+(`2fcf2c9b528c1e309fc9912687466ad69d7899c2`) has committer timestamp
+2026-11-05 03:11:19 PT (2026-11-05T11:11:19Z), which is after the
+evaluation window below closed at 2026-11-01 23:00 UTC. The status line
+that follows is the historical claim. The timestamp does not support it.
+This file is a retrospective freeze. The decision is in
+[the v1.5 decision record](DECISION_RECORD_ERCOT_v1_5.md): evidence only,
+not packaged, endpoints stay gated. The v1.4 rejection is unchanged. The
+text below this correction is the original document.
+
 **Status:** Frozen before any v1.5 training, calibration, or evaluation.
 This document is committed to the repository before the data for the
 calibration and evaluation windows is downloaded. Any amendment must be

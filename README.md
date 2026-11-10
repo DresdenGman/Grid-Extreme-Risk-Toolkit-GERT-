@@ -45,7 +45,9 @@ Every model candidate is judged against gates that are written down **before** i
 | Q99 calibration error | ≤ 0.03 | 0.032 | **Fail** |
 | Quantile crossings | 0 | 0 | Pass |
 
-Ninety-six hourly observations is a small sample for tail quantiles — the [tail sample diagnostic](docs/TAIL_SAMPLE_DIAGNOSTIC.md) documents what this window can and cannot resolve. The gates were applied exactly as predeclared: the thresholds were fixed before the evaluation window was opened and were not relaxed after the failure. Until a candidate passes every gate, the prediction, scenario, and validated-backtest endpoints return an explicit `503`. The next candidate (v1.5, per-quantile recalibration) is already [preregistered](docs/PREREGISTRATION_ERCOT_v1_5.md) under the same rules.
+Ninety-six hourly observations is a small sample for tail quantiles — the [tail sample diagnostic](docs/TAIL_SAMPLE_DIAGNOSTIC.md) documents what this window can and cannot resolve. The gates were applied exactly as predeclared: the thresholds were fixed before the evaluation window was opened and were not relaxed after the failure. Until a candidate passes every gate, the prediction, scenario, and validated-backtest endpoints return an explicit `503`.
+
+A later candidate, `ercot-lag-residual-gbt-v1.5-candidate`, is evidence only. It is not packaged, and those endpoints stay gated. See the [v1.5 decision record](docs/DECISION_RECORD_ERCOT_v1_5.md). The v1.4 rejection stands. The v1.5 preregistration was committed after its evaluation window closed; it is not a prospective freeze.
 
 ## Historical Lab — the part anyone can run today
 
