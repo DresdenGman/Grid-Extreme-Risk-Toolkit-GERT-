@@ -1,53 +1,49 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import Sidebar from "@/components/Sidebar";
-import Navbar from "@/components/Navbar";
-import { ToastProvider } from "@/components/ToastProvider";
-import PresentationNotice from "@/components/PresentationNotice";
-import React from "react";
+import type { Metadata } from 'next';
+import './globals.css';
+import React from 'react';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://gert-d.vercel.app";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://gert-d.vercel.app';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "GERT — Grid Extreme Risk Intelligence",
-  description: "Explore historical ERCOT load, compare capacity assumptions, and reproduce grid-risk calculations with downloadable evidence.",
-  applicationName: "GERT",
+  title: 'GERT — Grid Extreme Risk Intelligence',
+  description: 'Explore historical ERCOT load, compare capacity assumptions, and reproduce grid-risk calculations with downloadable evidence.',
+  applicationName: 'GERT',
   keywords: [
-    "power grid risk",
-    "ERCOT",
-    "probabilistic forecasting",
-    "extreme weather",
-    "applied mathematics",
-    "quantile modeling",
+    'power grid risk',
+    'ERCOT',
+    'probabilistic forecasting',
+    'extreme weather',
+    'applied mathematics',
+    'quantile modeling',
   ],
-  authors: [{ name: "Dresden Goehner" }],
+  authors: [{ name: 'Dresden Goehner' }],
   openGraph: {
-    title: "GERT — Grid Extreme Risk Intelligence",
-    description: "Applied-mathematics decision intelligence for power-system tail risk, capacity stress and extreme events.",
-    images: [{ url: "/og.png", width: 1731, height: 909, alt: "GERT — Grid Extreme Risk Intelligence" }],
+    title: 'GERT — Grid Extreme Risk Intelligence',
+    description: 'Applied-mathematics decision intelligence for power-system tail risk, capacity stress and extreme events.',
+    images: [{ url: '/og.png', width: 1731, height: 909, alt: 'GERT — Grid Extreme Risk Intelligence' }],
   },
   twitter: {
-    card: "summary_large_image",
-    title: "GERT — Grid Extreme Risk Intelligence",
-    description: "Applied-mathematics decision intelligence for power-system tail risk, capacity stress and extreme events.",
-    images: ["/og.png"],
+    card: 'summary_large_image',
+    title: 'GERT — Grid Extreme Risk Intelligence',
+    description: 'Applied-mathematics decision intelligence for power-system tail risk, capacity stress and extreme events.',
+    images: ['/og.png'],
   },
 };
 
 const softwareApplicationJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: "GERT — Grid Extreme Risk Toolkit",
-  applicationCategory: "ScientificApplication",
-  operatingSystem: "Web",
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'GERT — Grid Extreme Risk Toolkit',
+  applicationCategory: 'ScientificApplication',
+  operatingSystem: 'Web',
   url: siteUrl,
-  codeRepository: "https://github.com/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-",
+  codeRepository: 'https://github.com/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-',
   description:
-    "Evidence-first decision support for ERCOT power-grid tail risk, probabilistic load research, scenario stress testing and model-governance controls.",
+    'Evidence-first decision support for ERCOT power-grid tail risk, probabilistic load research, scenario stress testing and model-governance controls.',
   author: {
-    "@type": "Person",
-    name: "Dresden Goehner",
+    '@type': 'Person',
+    name: 'Dresden Goehner',
   },
 };
 
@@ -58,23 +54,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="brs-frame flex h-screen overflow-hidden border-[8px] border-[#141414] selection:bg-[#ff4d00] selection:text-white">
+      <body>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationJsonLd) }}
         />
-        <ToastProvider>
-          <Sidebar />
-          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-            <Navbar />
-            <main className="relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
-              <div className="mx-auto max-w-[1720px] px-4 py-5 sm:px-6 sm:py-7 xl:px-10 xl:py-9">
-              <PresentationNotice />
-              {children}
-              </div>
-            </main>
-          </div>
-        </ToastProvider>
+        {children}
       </body>
     </html>
   );

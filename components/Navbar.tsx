@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { clsx } from 'clsx';
 
 const navItems = [
-  { name: 'Historical Lab', href: '/' },
+  { name: 'Historical Lab', href: '/history' },
   { name: 'Grid Notes', href: '/briefs/winter-load' },
   { name: 'Live Monitor', href: '/monitor' },
   { name: 'Scenario', href: '/scenario' },

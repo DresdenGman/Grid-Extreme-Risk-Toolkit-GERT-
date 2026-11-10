@@ -15,6 +15,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- The website homepage is the decision poster. It reads v1.4 from
+  `evidence/ercot_v1_4_validation.json` and v1.5 from the unmerged PR #23
+  snapshot until that file is on main. Weather, system load, and capacity
+  render only when the API returns an external forecast or official ERCOT
+  values; estimated fallbacks stay UNAVAILABLE. The Historical Lab remains
+  at `/history`.
 - GitHub homepage re-skinned: new hero banner and five evidence posters in
   the Swiss light-poster tradition — dark grounds and one white sheet, a
   single luminous subject per poster, grotesque type set quietly, red
