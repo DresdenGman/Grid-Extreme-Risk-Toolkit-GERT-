@@ -12,6 +12,21 @@ All notable changes to this project are documented here. The format follows
   10.5281/zenodo.23982227, concept DOI 10.5281/zenodo.23982226. The README
   badge row now labels the software and dataset DOIs separately, and
   CITATION.cff records the concept DOI and the 1.2.0 release date.
+- ERCOT v1.5 candidate (`ercot-lag-residual-gbt-v1.5-candidate`): per-quantile
+  grid recalibration on 2026-09-07 → 2026-10-04, scored on 2026-10-05 →
+  2026-11-01 (672 hours) with realized ERA5 weather. Published point estimates
+  meet the numeric coverage, skill, crossing, and finiteness checks. The
+  candidate is evidence only, not packaged, and the prediction endpoints stay
+  gated. The evidence-bundle and feature-availability gates are not passed.
+  Record: `docs/DECISION_RECORD_ERCOT_v1_5.md`. Derived numbers are
+  recomputed by `scripts/recompute_ercot_v1_5_evidence.py` from
+  `evidence/ercot_v1_5/`; the hourly rows were not archived.
+- Draft forecast-weather preregistration, not approved and not run:
+  `docs/PREREGISTRATION_ERCOT_FORECAST_WEATHER_DRAFT.md`.
+- Regeneration of the v1.5 hourly bundle was attempted on 2026-11-11 and
+  stopped: ERCOT NP6-346-CD returned HTTP 401 without a subscription key.
+  No credential was opened and no published metric was changed. The
+  evidence-bundle gate stays not passed.
 
 ### Changed
 

@@ -23,6 +23,10 @@ from training.ercot.features import SERVED_FEATURE_COLUMNS
 QUANTILES = (0.5, 0.9, 0.95, 0.99)
 QUANTILE_KEYS = {0.5: "q50", 0.9: "q90", 0.95: "q95", 0.99: "q99"}
 CALIBRATION_SHRINKAGE = {"q50": 0.40, "q90": 0.90, "q95": 0.90, "q99": 0.55}
+CALIBRATION_MODES = ("fixed", "grid")
+GRID_MULTIPLIER_MIN = 0.50
+GRID_MULTIPLIER_MAX = 1.50
+GRID_MULTIPLIER_STEP = 0.01
 INPUT_PATH = Path("training_runs/ercot_v1/features.csv")
 ARTIFACT_DIR = Path("training_runs/ercot_v1/artifact")
 
@@ -106,6 +110,119 @@ def residual_offsets(
         QUANTILE_KEYS[quantile]: float(ordered[index])
         for index, quantile in enumerate(QUANTILES)
     }
+
+
+def split_calibration_evaluation_windows(
+    frame: pd.DataFrame,
+    training_end: str,
+    calibration_start: str,
+    calibration_end: str,
+    evaluation_start: str,
+    evaluation_end: str,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Split a frame into training, calibration, and closed UTC evaluation windows.
+
+    Training keeps timestamps strictly before ``training_end``; the calibration
+    and evaluation windows are closed UTC ranges [start 00:00, end 23:00].
+    """
+    timestamps = pd.to_datetime(frame["timestamp_utc"], utc=True)
+    training_limit = pd.to_datetime(training_end, utc=True)
+
+    def closed_window(start: str, end: str) -> tuple[pd.Timestamp, pd.Timestamp]:
+        window_start = pd.to_datetime(start, utc=True)
+        window_end = pd.to_datetime(end, utc=True) + pd.Timedelta(days=1) - pd.Timedelta(hours=1)
+        if window_start > window_end:
+            raise ValueError("window start must not be after window end")
+        return window_start, window_end
+
+    calibration_first, calibration_last = closed_window(calibration_start, calibration_end)
+    evaluation_first, evaluation_last = closed_window(evaluation_start, evaluation_end)
+    if calibration_last >= evaluation_first:
+        raise ValueError("calibration window must end before the evaluation window starts")
+    training = frame.loc[timestamps < training_limit].copy()
+    calibration = frame.loc[(timestamps >= calibration_first) & (timestamps <= calibration_last)].copy()
+    evaluation = frame.loc[(timestamps >= evaluation_first) & (timestamps <= evaluation_last)].copy()
+    if training.empty or calibration.empty or evaluation.empty:
+        raise ValueError("Expected non-empty training, calibration, and evaluation windows")
+    return training, calibration, evaluation
+
+
+def grid_multipliers() -> list[float]:
+    steps = int(round((GRID_MULTIPLIER_MAX - GRID_MULTIPLIER_MIN) / GRID_MULTIPLIER_STEP))
+    return [round(GRID_MULTIPLIER_MIN + GRID_MULTIPLIER_STEP * step, 2) for step in range(steps + 1)]
+
+
+def choose_multiplier(
+    actual: np.ndarray,
+    center_predictions: np.ndarray,
+    base_offset: float,
+    target_coverage: float,
+) -> tuple[float, float]:
+    """Pick the grid multiplier whose calibration coverage is closest to target.
+
+    The grid is scanned in ascending order and a candidate only replaces the
+    incumbent on a strict improvement, so ties resolve to the smaller
+    multiplier, as preregistered.
+    """
+    best_multiplier: float | None = None
+    best_coverage: float | None = None
+    best_error: float | None = None
+    for multiplier in grid_multipliers():
+        coverage = float(np.mean(actual <= center_predictions + multiplier * base_offset))
+        error = abs(coverage - target_coverage)
+        if best_error is None or error < best_error - 1e-12:
+            best_multiplier, best_coverage, best_error = multiplier, coverage, error
+    if best_multiplier is None or best_coverage is None:
+        raise ValueError("Multiplier grid search evaluated no candidates")
+    return best_multiplier, best_coverage
+
+
+def grid_calibrated_offsets(
+    training: pd.DataFrame,
+    calibration: pd.DataFrame,
+    feature_names: list[str],
+) -> tuple[dict[str, float], dict[str, object]]:
+    """Recalibrate residual offsets per quantile on the calibration window only.
+
+    Base offsets are the empirical residual quantiles on the calibration
+    window (center fitted on the training data, exactly as in the fixed
+    path); each offset is then scaled by the multiplier chosen by
+    :func:`choose_multiplier`, and the scaled offsets are kept in
+    non-decreasing order.
+    """
+    center = fit_center_estimator(training, feature_names)
+    center_predictions = center.predict(
+        calibration[feature_names].to_numpy(dtype=float)
+    ) + calibration["lag_load_1h"].to_numpy(dtype=float)
+    actual = calibration["actual_load_mw"].to_numpy(dtype=float)
+    residuals = actual - center_predictions
+    base_offsets = {
+        QUANTILE_KEYS[quantile]: float(np.quantile(residuals, quantile)) for quantile in QUANTILES
+    }
+    multipliers: dict[str, float] = {}
+    calibration_coverage: dict[str, float] = {}
+    for quantile in QUANTILES:
+        key = QUANTILE_KEYS[quantile]
+        multiplier, coverage = choose_multiplier(actual, center_predictions, base_offsets[key], quantile)
+        multipliers[key] = multiplier
+        calibration_coverage[key] = coverage
+    scaled = [base_offsets[QUANTILE_KEYS[q]] * multipliers[QUANTILE_KEYS[q]] for q in QUANTILES]
+    ordered = np.sort(np.array(scaled))
+    offsets = {QUANTILE_KEYS[quantile]: float(ordered[index]) for index, quantile in enumerate(QUANTILES)}
+    details: dict[str, object] = {
+        "mode": "grid",
+        "grid": {
+            "min": GRID_MULTIPLIER_MIN,
+            "max": GRID_MULTIPLIER_MAX,
+            "step": GRID_MULTIPLIER_STEP,
+            "objective": "minimize |empirical coverage - target coverage| on the calibration window",
+            "tie_break": "smaller multiplier",
+        },
+        "multipliers": multipliers,
+        "base_residual_offsets_mw": base_offsets,
+        "calibration_empirical_coverage": calibration_coverage,
+    }
+    return offsets, details
 
 
 def monotonic_predictions(predictions: dict[str, np.ndarray]) -> tuple[dict[str, np.ndarray], float]:
@@ -223,28 +340,51 @@ def train(
     model_version: str = "ercot-lag-residual-gbt-v1.3.0-candidate",
     evaluation_start: str | None = None,
     evaluation_end: str | None = None,
+    calibration_mode: str = "fixed",
+    calibration_start: str | None = None,
+    calibration_end: str | None = None,
+    training_end: str | None = None,
 ) -> dict[str, object]:
+    if calibration_mode not in CALIBRATION_MODES:
+        raise ValueError(f"calibration_mode must be one of {CALIBRATION_MODES}")
     frame = pd.read_csv(features_path)
     required = {"timestamp_utc", "actual_load_mw", *SERVED_FEATURE_COLUMNS}
     missing = required - set(frame.columns)
     if missing:
         raise ValueError(f"Feature table missing columns: {sorted(missing)}")
-    training, evaluation = split_evaluation_window(
-        frame, evaluation_year, evaluation_start, evaluation_end
-    )
     feature_names = list(SERVED_FEATURE_COLUMNS)
-    y_eval = evaluation["actual_load_mw"].to_numpy(dtype=float)
-
-    evaluation_first = pd.to_datetime(evaluation["timestamp_utc"], utc=True).min()
-    calibration_start = evaluation_first - pd.DateOffset(years=1)
-    training_timestamps = pd.to_datetime(training["timestamp_utc"], utc=True)
-    development = training.loc[training_timestamps < calibration_start].copy()
-    calibration = training.loc[training_timestamps >= calibration_start].copy()
-    if development.empty or calibration.empty:
-        raise ValueError(
-            "A recent calibration window and earlier development data are required"
+    calibration_details: dict[str, object]
+    if calibration_mode == "grid":
+        if not (training_end and calibration_start and calibration_end and evaluation_start and evaluation_end):
+            raise ValueError(
+                "grid calibration requires training_end, calibration_start, calibration_end, "
+                "evaluation_start, and evaluation_end"
+            )
+        training, calibration, evaluation = split_calibration_evaluation_windows(
+            frame,
+            training_end,
+            calibration_start,
+            calibration_end,
+            evaluation_start,
+            evaluation_end,
         )
-    offsets = residual_offsets(development, calibration, feature_names)
+        offsets, calibration_details = grid_calibrated_offsets(training, calibration, feature_names)
+    else:
+        training, evaluation = split_evaluation_window(
+            frame, evaluation_year, evaluation_start, evaluation_end
+        )
+        evaluation_first = pd.to_datetime(evaluation["timestamp_utc"], utc=True).min()
+        internal_calibration_start = evaluation_first - pd.DateOffset(years=1)
+        training_timestamps = pd.to_datetime(training["timestamp_utc"], utc=True)
+        development = training.loc[training_timestamps < internal_calibration_start].copy()
+        calibration = training.loc[training_timestamps >= internal_calibration_start].copy()
+        if development.empty or calibration.empty:
+            raise ValueError(
+                "A recent calibration window and earlier development data are required"
+            )
+        offsets = residual_offsets(development, calibration, feature_names)
+        calibration_details = {"mode": "fixed", "shrinkage": CALIBRATION_SHRINKAGE}
+    y_eval = evaluation["actual_load_mw"].to_numpy(dtype=float)
 
     center_estimator = fit_center_estimator(training, feature_names)
     center_predictions = center_estimator.predict(
@@ -334,7 +474,9 @@ def train(
             "form": "lag-1 anchored load increments plus ordered residual quantiles",
             "period_start": min(calibration_local_dates).isoformat(),
             "period_end": max(calibration_local_dates).isoformat(),
-            "shrinkage": CALIBRATION_SHRINKAGE,
+            "window_start_utc": pd.to_datetime(calibration["timestamp_utc"], utc=True).min().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "window_end_utc": pd.to_datetime(calibration["timestamp_utc"], utc=True).max().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            **calibration_details,
             "residual_offsets_mw": offsets,
         },
     }
@@ -348,6 +490,15 @@ def train(
         "wis": None,
         "quantile_crossing_rate": crossing_rate,
     }
+    if calibration_mode == "grid":
+        calibration_limitation = (
+            "Calibration multipliers were selected on the preregistered calibration window only; "
+            "the evaluation window was not inspected before calibration was frozen."
+        )
+    else:
+        calibration_limitation = (
+            "Calibration shrinkage was frozen on the development evaluation before the final blind holdout."
+        )
     report = {
         "candidate_passed_all_gates": all(gates.values()),
         "gates": gates,
@@ -356,12 +507,14 @@ def train(
         "q50_mae_mw": float(mean_absolute_error(y_eval, predictions["q50"])),
         "baseline": baseline_metrics,
         "model": model_metrics,
+        "calibration": calibration_details,
+        "calibration_sample_count": int(len(calibration)),
         "known_limitations": [
             "Historical training uses ERA5 realized target-hour weather; production uses a one-hour weather forecast.",
             "Operational load features require 168 contiguous official ERCOT observations.",
             "The conditional center is anchored to the latest official load and predicts a one-hour increment.",
             "WIS is unavailable because the served artifact contains upper quantiles only.",
-            "Calibration shrinkage was frozen on the development evaluation before the final blind holdout.",
+            calibration_limitation,
         ],
     }
     peak_index = int(np.argmax(y_eval))
@@ -397,6 +550,15 @@ def main() -> None:
         "--model-version",
         default="ercot-lag-residual-gbt-v1.3.0-candidate",
     )
+    parser.add_argument(
+        "--calibration-mode",
+        choices=CALIBRATION_MODES,
+        default="fixed",
+        help="fixed reproduces the v1.4 shrinkage path; grid runs the preregistered per-quantile recalibration",
+    )
+    parser.add_argument("--training-end", help="Grid mode: training keeps UTC timestamps before this date (YYYY-MM-DD)")
+    parser.add_argument("--calibration-start", help="Grid mode: UTC calibration window start date (YYYY-MM-DD)")
+    parser.add_argument("--calibration-end", help="Grid mode: UTC calibration window end date (YYYY-MM-DD)")
     args = parser.parse_args()
     report = train(
         args.features,
@@ -405,6 +567,10 @@ def main() -> None:
         model_version=args.model_version,
         evaluation_start=args.evaluation_start,
         evaluation_end=args.evaluation_end,
+        calibration_mode=args.calibration_mode,
+        calibration_start=args.calibration_start,
+        calibration_end=args.calibration_end,
+        training_end=args.training_end,
     )
     print(json.dumps(report, indent=2, sort_keys=True))
 
