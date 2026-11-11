@@ -143,6 +143,13 @@ def test_manifest_lists_the_missing_row_archive() -> None:
     manifest = json.loads((ROOT / "evidence" / "ercot_v1_5" / "manifest.json").read_text())
 
     assert manifest["row_level_archive_present"] is False
+    attempt = manifest["regeneration_attempt"]
+    assert attempt["status"] == "blocked"
+    assert attempt["attempted_at"] == "2026-11-11T05:21:37Z"
+    assert attempt["credentials_opened"] is False
+    assert attempt["published_metrics_overwritten"] is False
+    assert attempt["load_source"]["unauthenticated_http_status"] == 401
+    assert attempt["weather_source"]["downloaded_for_training"] is False
     missing = {item["path"] for item in manifest["missing_inputs"]}
     assert "evidence/ercot_v1_5/evaluation_rows.csv" in missing
     assert "evidence/ercot_v1_5/calibration_rows.csv" in missing
@@ -177,6 +184,10 @@ def test_decision_record_and_draft_state_the_required_limits() -> None:
     assert "1276.07" in record
     assert "0.8739" in record
     assert "not a skill measured on the 672-hour window" in record
+    assert "HTTP 401" in record
+    assert "NP6-346-CD" in record
+    assert "native-load" in record
+    assert "evidence-bundle gate stays not passed" in record.lower()
     assert "remains rejected" in record
     assert "Passes all preregistered gates" not in record
 

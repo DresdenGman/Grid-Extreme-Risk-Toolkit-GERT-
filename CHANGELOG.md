@@ -23,6 +23,10 @@ All notable changes to this project are documented here. The format follows
   `evidence/ercot_v1_5/`; the hourly rows were not archived.
 - Draft forecast-weather preregistration, not approved and not run:
   `docs/PREREGISTRATION_ERCOT_FORECAST_WEATHER_DRAFT.md`.
+- Regeneration of the v1.5 hourly bundle was attempted on 2026-11-11 and
+  stopped: ERCOT NP6-346-CD returned HTTP 401 without a subscription key.
+  No credential was opened and no published metric was changed. The
+  evidence-bundle gate stays not passed.
 
 ### Changed
 
