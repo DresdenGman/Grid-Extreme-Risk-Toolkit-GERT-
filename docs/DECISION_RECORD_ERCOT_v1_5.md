@@ -189,5 +189,51 @@ disagrees with the published pinball losses and coverages, or if v1.4 is no
 longer recorded as `rejected_candidate`.
 
 The original training command remains in the evidence JSON. It cannot be
-rerun from this repository: the feature table and the ERCOT credential file
-are not part of the commit, and this correction did not download either.
+rerun from this repository until the load archives below are supplied. No
+credential file was opened, and no published metric was overwritten.
+
+## Regeneration attempt (2026-11-11)
+
+The hourly predictions, hourly actuals, and model artifact were not
+regenerated. The frozen training code is unchanged between the results
+commit `98d4fbf82a78ebfaeca160bb0ac20915c8fc566e` and this branch. The
+frozen command, the 2025-01-01 training cutoff, seed 42, the ×1.00
+multipliers, the 672-hour window, and the no-imputation rule were not
+changed. NumPy 1.26.4 and scikit-learn 1.9.0 remain the pinned runtime.
+
+The load source that command requires is ERCOT report NP6-346-CD,
+"Actual System Load by Forecast Zone":
+
+- Archive: `https://api.ercot.com/api/public-reports/archive/np6-346-cd`
+- Table: `https://api.ercot.com/api/public-reports/np6-346-cd/act_sys_load_by_fzn`
+
+On 2026-11-11T05:21:37Z an unauthenticated request to both URLs returned
+HTTP 401, "Access denied due to missing subscription key."
+`training_data/.ercot_credentials` was not present and was not created.
+The environment did not contain `ERCOT_API_USERNAME`, `ERCOT_API_PASSWORD`,
+or `ERCOT_API_SUBSCRIPTION_KEY`. None of those values were read or printed.
+
+What is needed, and nothing else was substituted:
+
+- Those three ERCOT Public API values, supplied outside this repository.
+- NP6-346-CD operating days 2019-01-01 through 2024-12-31, and 2026-08-28
+  through 2026-11-03. The archive downloader selects by post date, which
+  lags the operating day by one day.
+- After that load is on disk, the public ERA5 download and the frozen
+  training command can be run. Open-Meteo
+  `https://archive-api.open-meteo.com/v1/archive` (`models=era5`) answered
+  HTTP 200 to a one-location probe at the same time. That probe was not
+  saved as a training input, because the join cannot be built without the
+  load series.
+
+The public native-load files at
+`https://www.ercot.com/gridinfo/load/load_hist` were not used.
+`docs/HISTORICAL_LAB.md` states that native load is not the forecast-zone
+series this candidate was built on, and the zone weights need the
+NP6-346-CD columns NORTH, SOUTH, WEST, and HOUSTON.
+
+The evidence-bundle gate stays not passed. The feature-availability gate
+stays not passed because the published evaluation used realized ERA5.
+The status stays evidence only, and the endpoints stay gated. This attempt
+is recorded in `evidence/ercot_v1_5/manifest.json` under
+`regeneration_attempt`.

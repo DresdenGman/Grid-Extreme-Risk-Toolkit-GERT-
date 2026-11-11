@@ -394,6 +394,13 @@ def build_evidence(measurements: dict, v14: dict) -> dict:
             "The reported skill uses a seasonal baseline fit only on timestamps before 2025-01-01. v1.4's published q50 MAE and skill imply a baseline pinball near 1276 on the v1.4 window, versus 2312.438609 here. Those windows differ, so 0.93 and v1.4's 0.76-0.84 are not the same comparison.",
             "The v1.4 candidate remains rejected. No failed v1.4 gate is relabeled as a pass, and the 0.03 threshold is not moved.",
             "GERT is decision-support research and must not be used for autonomous grid control.",
+            (
+                "A regeneration of the hourly rows and model artifact was attempted on "
+                "2026-11-11 and stopped. ERCOT NP6-346-CD, the frozen load source, "
+                "returned HTTP 401 without a subscription key. No credential was opened "
+                "and the public native-load archives were not substituted. The "
+                "evidence-bundle gate stays not passed."
+            ),
         ],
     }
 
@@ -407,6 +414,58 @@ def build_manifest() -> dict:
         ],
         "missing_inputs": list(MISSING_ROW_INPUTS),
         "row_level_archive_present": False,
+        "regeneration_attempt": {
+            "attempted_at": "2026-11-11T05:21:37Z",
+            "status": "blocked",
+            "bundle_gate": "not_passed",
+            "feature_availability_gate": "not_passed",
+            "published_metrics_overwritten": False,
+            "credentials_opened": False,
+            "frozen_results_commit": "98d4fbf82a78ebfaeca160bb0ac20915c8fc566e",
+            "training_code_diff_since_results_commit": "empty",
+            "pinned_runtime": {"numpy": "1.26.4", "scikit-learn": "1.9.0", "random_state": 42},
+            "frozen_command": (
+                "python -m training.ercot.train_quantile_model "
+                "--features training_runs/ercot_v1/features.csv "
+                "--calibration-mode grid --training-end 2025-01-01 "
+                "--calibration-start 2026-09-07 --calibration-end 2026-10-04 "
+                "--evaluation-start 2026-10-05 --evaluation-end 2026-11-01 "
+                "--model-version ercot-lag-residual-gbt-v1.5-candidate"
+            ),
+            "load_source": {
+                "product": "ERCOT NP6-346-CD Actual System Load by Forecast Zone",
+                "archive_url": "https://api.ercot.com/api/public-reports/archive/np6-346-cd",
+                "table_url": "https://api.ercot.com/api/public-reports/np6-346-cd/act_sys_load_by_fzn",
+                "unauthenticated_http_status": 401,
+                "unauthenticated_message": "Access denied due to missing subscription key.",
+                "required_environment": [
+                    "ERCOT_API_USERNAME",
+                    "ERCOT_API_PASSWORD",
+                    "ERCOT_API_SUBSCRIPTION_KEY",
+                ],
+                "operating_days_required": [
+                    "2019-01-01 through 2024-12-31",
+                    "2026-08-28 through 2026-11-03",
+                ],
+            },
+            "not_substituted": {
+                "source": "ERCOT public native-load archives",
+                "url": "https://www.ercot.com/gridinfo/load/load_hist",
+                "reason": (
+                    "docs/HISTORICAL_LAB.md states native load is not the same series "
+                    "as the forecast-zone load used by the probabilistic candidate. "
+                    "Zone weights require the NP6-346-CD NORTH, SOUTH, WEST, and HOUSTON columns."
+                ),
+            },
+            "weather_source": {
+                "url": "https://archive-api.open-meteo.com/v1/archive",
+                "model": "era5",
+                "probe_http_status": 200,
+                "probe_at": "2026-11-11T05:21:37Z",
+                "downloaded_for_training": False,
+                "reason_not_downloaded": "The feature table cannot be built without the NP6-346-CD load series.",
+            },
+        },
         "note": (
             "Hashes cover the published aggregates, the recomputed evidence document, "
             "the untouched v1.4 evidence file, and this script. The missing-input list "
