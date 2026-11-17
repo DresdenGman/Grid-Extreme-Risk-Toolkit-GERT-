@@ -4,15 +4,23 @@ import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
 import { ToastProvider } from "@/components/ToastProvider";
 import PresentationNotice from "@/components/PresentationNotice";
+import { Citations } from "@/components/Citations";
+import { PRODUCT_NAME } from "@/lib/citations";
 import React from "react";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://gert-d.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "GERT — Grid Extreme Risk Intelligence",
+  title: PRODUCT_NAME,
   description: "Explore historical ERCOT load, compare capacity assumptions, and reproduce grid-risk calculations with downloadable evidence.",
-  applicationName: "GERT",
+  applicationName: PRODUCT_NAME,
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+  },
   keywords: [
     "power grid risk",
     "ERCOT",
@@ -23,14 +31,14 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Dresden Goehner" }],
   openGraph: {
-    title: "GERT — Grid Extreme Risk Intelligence",
-    description: "Applied-mathematics decision intelligence for power-system tail risk, capacity stress and extreme events.",
-    images: [{ url: "/og.png", width: 1731, height: 909, alt: "GERT — Grid Extreme Risk Intelligence" }],
+    title: PRODUCT_NAME,
+    description: "Evidence-first decision support for power-system tail risk, capacity stress and extreme events.",
+    images: [{ url: "/og.png", width: 1731, height: 909, alt: PRODUCT_NAME }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "GERT — Grid Extreme Risk Intelligence",
-    description: "Applied-mathematics decision intelligence for power-system tail risk, capacity stress and extreme events.",
+    title: PRODUCT_NAME,
+    description: "Evidence-first decision support for power-system tail risk, capacity stress and extreme events.",
     images: ["/og.png"],
   },
 };
@@ -38,7 +46,7 @@ export const metadata: Metadata = {
 const softwareApplicationJsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  name: "GERT — Grid Extreme Risk Toolkit",
+  name: PRODUCT_NAME,
   applicationCategory: "ScientificApplication",
   operatingSystem: "Web",
   url: siteUrl,
@@ -71,6 +79,7 @@ export default function RootLayout({
               <div className="mx-auto max-w-[1720px] px-4 py-5 sm:px-6 sm:py-7 xl:px-10 xl:py-9">
               <PresentationNotice />
               {children}
+              <Citations />
               </div>
             </main>
           </div>

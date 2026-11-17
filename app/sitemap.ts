@@ -3,6 +3,7 @@ import type { MetadataRoute } from 'next';
 const routes = [
   '',
   '/history',
+  '/briefs',
   '/briefs/winter-load',
   '/briefs/same-meter',
   '/monitor',
@@ -17,11 +18,11 @@ const routes = [
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://gert-d.vercel.app';
-  const lastModified = new Date('2026-09-13T00:00:00.000Z');
+  const lastModified = new Date('2026-11-17T00:00:00.000Z');
 
   return routes.map((route) => ({
     url: `${siteUrl}${route}`,
-    lastModified: ['/briefs/same-meter', '/briefs/winter-load', '/review', '/community'].includes(route) ? new Date('2026-09-25T00:00:00.000Z') : lastModified,
+    lastModified,
     changeFrequency: route === '' ? 'daily' : 'monthly',
     priority: route === '' ? 1 : route === '/benchmark' || route === '/research' ? 0.9 : 0.8,
   }));

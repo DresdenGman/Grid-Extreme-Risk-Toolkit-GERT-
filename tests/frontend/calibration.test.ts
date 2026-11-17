@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   evaluateCalibrationTolerance,
+  formatPinballSkill,
   PREDECLARED_CALIBRATION_TOLERANCE,
 } from '../../lib/calibration';
 import evidence from '../../evidence/ercot_v1_4_validation.json';
@@ -22,6 +23,13 @@ describe('calibration evidence rehearsal', () => {
 
     expect(result.failedQuantiles).toEqual([]);
     expect(result.allPassed).toBe(true);
+  });
+
+  it('writes the minimum pinball skill as +0.76', () => {
+    const minimum = Math.min(...metrics.map((metric) => metric.pinball_skill_vs_baseline));
+    expect(formatPinballSkill(minimum)).toBe('+0.76');
+    expect(formatPinballSkill(0.841492)).toBe('+0.84');
+    expect(formatPinballSkill(minimum)).not.toContain('%');
   });
 
   it('rejects invalid tolerances rather than producing a misleading decision', () => {

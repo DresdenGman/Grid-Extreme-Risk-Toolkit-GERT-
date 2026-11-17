@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
-import { ScenarioResponse, RiskLevel } from '@/lib/types';
+import { scenarioGateExplanation } from '@/lib/citations';
+import { ApiClientError, ScenarioResponse, RiskLevel } from '@/lib/types';
 import { Card, Badge } from '@/components/ui';
 import { ArrowRight, AlertTriangle, CloudSnow, Sun, CloudRain } from 'lucide-react';
 
@@ -22,20 +23,29 @@ export default function ScenarioLab() {
   const [result, setResult] = useState<ScenarioResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('demo') !== '1') return;
+  const [presentationMode, setPresentationMode] = useState(false);
+  const [scenarioGated, setScenarioGated] = useState(false);
 
-    const request = {
-      region: 'ERCOT_SYSTEM',
-      date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-      weather_features: { temperature: 15, wind_speed: 10, solar_irradiance: 500 },
-    };
-    setLoading(true);
-    api.scenario({ baseline_request: request, perturbations: { temperature: 15, wind_speed: 10 } })
-      .then((scenario) => setResult(scenario.data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
+  useEffect(() => {
+    const demo = new URLSearchParams(window.location.search).get('demo') === '1';
+    setPresentationMode(demo);
+    if (demo) {
+      const request = {
+        region: 'ERCOT_SYSTEM',
+        date: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        weather_features: { temperature: 15, wind_speed: 10, solar_irradiance: 500 },
+      };
+      setLoading(true);
+      api.scenario({ baseline_request: request, perturbations: { temperature: 15, wind_speed: 10 } })
+        .then((scenario) => setResult(scenario.data))
+        .catch(console.error)
+        .finally(() => setLoading(false));
+      return;
+    }
+
+    api.status()
+      .then((status) => setScenarioGated(status.data.capabilities.scenario_analysis === false))
+      .catch(() => setScenarioGated(false));
   }, []);
 
   // Presets
@@ -53,6 +63,12 @@ export default function ScenarioLab() {
   };
 
   const runSimulation = async () => {
+    if (!presentationMode && scenarioGated) {
+      setResult(null);
+      setError(null);
+      document.getElementById('scenario-gate')?.focus();
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -70,6 +86,10 @@ export default function ScenarioLab() {
       setResult(env.data);
     } catch (e) {
       console.error(e);
+      if (e instanceof ApiClientError && e.status === 503) {
+        setError(scenarioGateExplanation);
+        return;
+      }
       setError(e instanceof Error ? e.message : 'Scenario analysis is currently unavailable.');
     } finally {
       setLoading(false);
@@ -84,11 +104,11 @@ export default function ScenarioLab() {
         <p className="mt-4 max-w-2xl text-sm leading-6 text-[#4f4e4a]">Perturb physical drivers, preserve the baseline and expose the resulting tail-risk delta.</p>
       </header>
 
-      {error && (
-        <div className="border border-[#b42318] bg-[#f5dfdc] px-5 py-4 text-sm text-[#7d1a13]" role="alert">
-          <strong>Scenario unavailable.</strong> {error}
-          <Link href="/benchmark#evidence-rehearsal" className="ml-2 font-semibold underline underline-offset-4">
-            Run the evidence rehearsal instead.
+      {error && !(scenarioGated && error === scenarioGateExplanation) && (
+        <div className="border border-[#b42318] bg-[#f5dfdc] px-5 py-4 text-sm leading-6 text-[#7d1a13]" role="alert">
+          <p><strong>Scenario unavailable.</strong> {error}</p>
+          <Link href="/history" className="mt-2 inline-block font-semibold underline underline-offset-4">
+            Open the Historical Lab
           </Link>
         </div>
       )}
@@ -156,6 +176,14 @@ export default function ScenarioLab() {
         >
           {loading ? 'Running Simulation...' : 'Run Analysis'}
         </button>
+        {!presentationMode && scenarioGated && (
+          <div id="scenario-gate" tabIndex={-1} className="mt-4 border border-[#141414] bg-[#f3c64d] px-4 py-4 text-sm leading-6 text-[#141414] focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[#141414]" role="status">
+            <p><strong>Run Analysis is disabled.</strong> {scenarioGateExplanation}</p>
+            <Link href="/history" className="mt-2 inline-block font-semibold underline underline-offset-4">
+              Open the Historical Lab
+            </Link>
+          </div>
+        )}
       </Card>
 
       {result && (

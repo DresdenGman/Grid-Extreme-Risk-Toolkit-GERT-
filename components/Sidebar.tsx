@@ -62,7 +62,7 @@ export default function Sidebar() {
             </div>
             <div>
               <span className="display-serif block text-xl text-[#141414]">GERT</span>
-              <span className="technical-label text-[8px] text-[#6d6b66]">Grid extreme risk toolkit</span>
+              <span className="technical-label text-[8px] text-[#6d6b66]">Grid Extreme Risk Toolkit</span>
             </div>
           </div>
           <div className="technical-label max-w-[226px] truncate text-[8px] text-[#6d6b66]">

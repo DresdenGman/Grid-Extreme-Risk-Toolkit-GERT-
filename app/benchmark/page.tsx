@@ -4,8 +4,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
 import {
   evaluateCalibrationTolerance,
+  formatPinballSkill,
   PREDECLARED_CALIBRATION_TOLERANCE,
 } from '@/lib/calibration';
+import { SisterBenchmark } from '@/components/SisterBenchmark';
 import { BacktestResponse, ModelEvidence, ProductStatus } from '@/lib/types';
 import { Card, SkeletonCard } from '@/components/ui';
 import {
@@ -145,7 +147,7 @@ export default function BenchmarkPage() {
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Frozen holdout" value={`${evidence.observations} h`} note="Aug 21–24, 2026" icon={Database} />
         <MetricCard label="Median error" value={`${Math.round(evidence.q50_mae_mw)} MW`} note="Q50 mean absolute error" icon={Gauge} />
-        <MetricCard label="Minimum skill" value={`+${percent(minSkill)}`} note="vs. month-hour baseline" icon={ArrowUpRight} />
+        <MetricCard label="Minimum skill" value={formatPinballSkill(minSkill)} note="pinball skill vs. month-hour baseline" icon={ArrowUpRight} />
         <MetricCard label="Calibration" value={`${passedCalibrationGates}/4`} note="quantiles within ±3 pp" icon={ShieldAlert} alert={!evidence.all_gates_passed} />
       </section>
 
@@ -170,7 +172,7 @@ export default function BenchmarkPage() {
                 <dl className="mt-5 space-y-2 border-t border-black/10 pt-4 text-xs">
                   <div className="flex justify-between"><dt className="text-[#6d6b66]">Target</dt><dd className="font-mono">{percent(metric.target_coverage, 0)}</dd></div>
                   <div className="flex justify-between"><dt className="text-[#6d6b66]">Absolute error</dt><dd className={`font-mono ${passed ? 'text-[#2f6b4f]' : 'text-[#b42318]'}`}>{percent(metric.absolute_coverage_error, 2)}</dd></div>
-                  <div className="flex justify-between"><dt className="text-[#6d6b66]">Pinball skill</dt><dd className="font-mono text-[#2f6b4f]">+{percent(metric.pinball_skill_vs_baseline)}</dd></div>
+                  <div className="flex justify-between"><dt className="text-[#6d6b66]">Pinball skill</dt><dd className="font-mono text-[#2f6b4f]">{formatPinballSkill(metric.pinball_skill_vs_baseline)}</dd></div>
                 </dl>
               </div>
             );
@@ -312,6 +314,8 @@ export default function BenchmarkPage() {
           </div>
         </div>
       </section>
+
+      <SisterBenchmark />
 
       {backtest ? (
         <Card>
