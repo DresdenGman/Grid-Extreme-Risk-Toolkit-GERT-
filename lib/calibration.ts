@@ -2,6 +2,15 @@ import { QuantileValidationMetric } from './types';
 
 export const PREDECLARED_CALIBRATION_TOLERANCE = 0.03;
 
+/** Pinball skill on its ratio scale, for example +0.76. */
+export function formatPinballSkill(skill: number): string {
+  if (!Number.isFinite(skill)) {
+    throw new RangeError('Pinball skill must be a finite number.');
+  }
+  const rounded = skill.toFixed(2);
+  return skill > 0 ? `+${rounded}` : rounded;
+}
+
 export interface CalibrationDecision {
   tolerance: number;
   passedQuantiles: QuantileValidationMetric['quantile'][];

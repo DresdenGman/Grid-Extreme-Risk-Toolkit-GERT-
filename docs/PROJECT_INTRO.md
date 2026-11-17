@@ -15,7 +15,7 @@
 
 ## 🎯 What is this project?
 
-**GERT (Grid Extreme Risk Toolkit)** is a **power grid extreme risk prediction system**.
+**Grid Extreme Risk Toolkit (GERT)** is a **power grid extreme risk prediction system**.
 
 ### Understanding with a real-life example:
 
