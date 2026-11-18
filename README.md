@@ -11,6 +11,8 @@
 
 **Probabilistic grid-risk decision support with tail-risk analysis, calibration gates, and explicit data/model provenance.**
 
+**Run it in your browser:** [Open in GitHub Codespaces](https://codespaces.new/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-) — nothing to install; the environment sets itself up, recomputes one Historical Lab case as a smoke check, and the app starts on its own.
+
 | 216 hours | Gate rejected | 0 independent retests | Two DOIs |
 | --- | --- | --- | --- |
 | recorded ERCOT hours in the public Historical Lab — every number in the lab tables below can be recomputed from them | `ercot-delta-quantile-v1.4` scored pinball skill **+0.76 to +0.84** and was **rejected** for missing its calibration gates | Community ledger, updated September 25, 2026: 4 organizer-forwarded reports, 2 hands-on core completions, 1 script-assisted walkthrough, 2 feedback-linked changes. Those reports do not establish adoption or learning effectiveness | Software concept DOI [10.5281/zenodo.23982226](https://doi.org/10.5281/zenodo.23982226) (v1.2.0, published 2026-11-05). Dataset DOI [10.5281/zenodo.22975251](https://doi.org/10.5281/zenodo.22975251) (v1, published 2026-09-26) |
