@@ -237,3 +237,32 @@ stays not passed because the published evaluation used realized ERA5.
 The status stays evidence only, and the endpoints stay gated. This attempt
 is recorded in `evidence/ercot_v1_5/manifest.json` under
 `regeneration_attempt`.
+
+## Regeneration from the frozen configuration (2026-11-17)
+
+The hourly rows and the model artifact were regenerated on 2026-11-17 with
+the frozen command, unchanged code (`git diff 98d4fbf..9dba638 -- training`
+is empty), pinned runtime, authenticated NP6-346-CD archives, and Open-Meteo
+ERA5. These files were not archived at evaluation time. They are in
+`evidence/ercot_v1_5/regeneration_2026_11_17/`. The published numbers in
+`measurements.json` are not replaced.
+
+Data matched the published shape: 52,602 and 1,603 joined rows, and 52,434
+training rows. Twelve unmatched boundary hours lie outside every window.
+Nothing was imputed.
+
+30 of 55 published values reproduced. Every calibration-window value
+reproduced, including base offsets, the ×1.00 multipliers, and coverage
+before and after. No evaluation-window score reproduced. For example, the
+regenerated q50 MAE is 311.05 MW against the published 321.70 MW. The
+seasonal-baseline pinball also differs (q50 2323.22 against 2312.44). That
+baseline depends only on training load and evaluation-window actual load,
+so the load the original run used for 2026-10-05 to 2026-11-01 is not what
+NP6-346-CD returns today. The cause cannot be identified, because the
+original rows were not archived.
+
+The evidence-bundle gate stays not passed. The feature-availability gate
+stays not passed. The regenerated run's own numeric gates pass, but that
+is a different measurement. It is not a promotion and does not replace the
+published result. This is recorded in `evidence/ercot_v1_5/manifest.json`
+under `regeneration_2026_11_17`.

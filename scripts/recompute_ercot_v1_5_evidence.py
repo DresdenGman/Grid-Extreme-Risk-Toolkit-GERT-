@@ -44,6 +44,19 @@ HASHED_PATHS = (
     "evidence/ercot_v1_5_validation.json",
     "evidence/ercot_v1_4_validation.json",
     "scripts/recompute_ercot_v1_5_evidence.py",
+    "evidence/ercot_v1_5/regeneration_2026_11_17/evaluation_rows.csv",
+    "evidence/ercot_v1_5/regeneration_2026_11_17/calibration_rows.csv",
+    "evidence/ercot_v1_5/regeneration_2026_11_17/comparison.json",
+    "evidence/ercot_v1_5/regeneration_2026_11_17/comparison.md",
+    "evidence/ercot_v1_5/regeneration_2026_11_17/NOTES.md",
+    "evidence/ercot_v1_5/regeneration_2026_11_17/data_manifest.json",
+    "evidence/ercot_v1_5/regeneration_2026_11_17/data_quality_segA.json",
+    "evidence/ercot_v1_5/regeneration_2026_11_17/data_quality_segB.json",
+    "evidence/ercot_v1_5/regeneration_2026_11_17/artifact/model.joblib",
+    "evidence/ercot_v1_5/regeneration_2026_11_17/artifact/metadata.json",
+    "evidence/ercot_v1_5/regeneration_2026_11_17/artifact/metrics.json",
+    "evidence/ercot_v1_5/regeneration_2026_11_17/artifact/evaluation_report.json",
+    "evidence/ercot_v1_5/regeneration_2026_11_17/artifact/backtest_sample.json",
 )
 MISSING_ROW_INPUTS = (
     {
@@ -401,6 +414,14 @@ def build_evidence(measurements: dict, v14: dict) -> dict:
                 "and the public native-load archives were not substituted. The "
                 "evidence-bundle gate stays not passed."
             ),
+            (
+                "On 2026-11-17 the hourly rows and model artifact were regenerated from the frozen "
+                "configuration with authenticated NP6-346-CD and ERA5 (not archived at evaluation time). "
+                "All calibration-window values reproduced; no evaluation-window score reproduced "
+                "(for example q50 MAE 311.05 MW versus the published 321.70 MW). The published numbers "
+                "are not replaced. The evidence-bundle gate stays not passed. See "
+                "evidence/ercot_v1_5/regeneration_2026_11_17/."
+            ),
         ],
     }
 
@@ -465,6 +486,34 @@ def build_manifest() -> dict:
                 "downloaded_for_training": False,
                 "reason_not_downloaded": "The feature table cannot be built without the NP6-346-CD load series.",
             },
+        },
+        "regeneration_2026_11_17": {
+            "regenerated_at": "2026-11-17",
+            "status": "completed_published_evaluation_metrics_not_reproduced",
+            "archived_at_evaluation_time": False,
+            "bundle_gate": "not_passed",
+            "feature_availability_gate": "not_passed",
+            "published_metrics_overwritten": False,
+            "git_sha": "9dba63898bd29e98faacdc6c22df6560b9f9bf74",
+            "training_code_diff_since_results_commit": "empty",
+            "runtime": {"python": "3.12.16", "numpy": "1.26.4", "pandas": "2.3.3", "scikit-learn": "1.9.0", "random_state": 42},
+            "frozen_command_unchanged": True,
+            "directory": "evidence/ercot_v1_5/regeneration_2026_11_17",
+            "joined_rows": {"segment_a": 52602, "segment_b": 1603},
+            "training_rows": 52434,
+            "excluded_unmatched_hours_utc": ["2025-01-01T00:00Z..05:00Z", "2026-11-03T00:00Z..05:00Z"],
+            "imputed_hours": 0,
+            "tolerance": "|diff| <= 5.1e-7 for published floats (six-decimal check in inferred_covered_count); Wilson CI equal at 4 dp; counts and strings exact",
+            "published_values_compared": 55,
+            "published_values_reproduced": 30,
+            "reproduced": "all calibration-window values, window bounds, counts, crossings, finiteness",
+            "not_reproduced": "all evaluation-window coverage, pinball, baseline pinball, skill, Wilson CI, q50 MAE",
+            "finding": (
+                "Calibration offsets match to < 5e-7 MW, so training data and the fitted center match the original run. "
+                "The seasonal baseline pinball also differs, and it depends only on training load and evaluation-window "
+                "actual load, so the original run's 2026-10-05..2026-11-01 load differs from what NP6-346-CD returns now. "
+                "The cause cannot be identified because the original rows were not archived."
+            ),
         },
         "note": (
             "Hashes cover the published aggregates, the recomputed evidence document, "

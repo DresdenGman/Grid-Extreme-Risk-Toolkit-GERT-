@@ -1,0 +1,107 @@
+{
+  "artifact_schema_version": "1.3",
+  "calibration": {
+    "base_residual_offsets_mw": {
+      "q50": 138.70496265426846,
+      "q90": 705.513780419118,
+      "q95": 886.9193528676162,
+      "q99": 1182.6580762904696
+    },
+    "calibration_empirical_coverage": {
+      "q50": 0.5,
+      "q90": 0.8988095238095238,
+      "q95": 0.9494047619047619,
+      "q99": 0.9895833333333334
+    },
+    "form": "lag-1 anchored load increments plus ordered residual quantiles",
+    "grid": {
+      "max": 1.5,
+      "min": 0.5,
+      "objective": "minimize |empirical coverage - target coverage| on the calibration window",
+      "step": 0.01,
+      "tie_break": "smaller multiplier"
+    },
+    "mode": "grid",
+    "multipliers": {
+      "q50": 1.0,
+      "q90": 1.0,
+      "q95": 1.0,
+      "q99": 1.0
+    },
+    "period_end": "2026-10-04",
+    "period_start": "2026-09-06",
+    "residual_offsets_mw": {
+      "q50": 138.70496265426846,
+      "q90": 705.513780419118,
+      "q95": 886.9193528676162,
+      "q99": 1182.6580762904696
+    },
+    "window_end_utc": "2026-10-04T23:00:00Z",
+    "window_start_utc": "2026-09-07T00:00:00Z"
+  },
+  "created_at": "2026-11-18T02:53:22.770106Z",
+  "feature_names": [
+    "temperature",
+    "wind_speed",
+    "solar_irradiance",
+    "hour",
+    "day_of_week",
+    "month",
+    "is_weekend",
+    "year",
+    "lag_load_1h",
+    "lag_load_24h",
+    "lag_load_168h",
+    "rolling_load_mean_24h",
+    "rolling_load_std_24h",
+    "rolling_load_mean_168h",
+    "rolling_load_std_168h"
+  ],
+  "feature_units": {
+    "day_of_week": "integer_0_monday",
+    "hour": "local_hour",
+    "is_weekend": "binary",
+    "lag_load_168h": "MW",
+    "lag_load_1h": "MW",
+    "lag_load_24h": "MW",
+    "month": "integer_1_january",
+    "rolling_load_mean_168h": "MW",
+    "rolling_load_mean_24h": "MW",
+    "rolling_load_std_168h": "MW",
+    "rolling_load_std_24h": "MW",
+    "solar_irradiance": "W/m2",
+    "temperature": "degC",
+    "wind_speed": "m/s",
+    "year": "ercot_local_year"
+  },
+  "forecast_contract": {
+    "forecast_origin": "request_time",
+    "target_horizon_hours": 1,
+    "target_variable": "grid_load_mw"
+  },
+  "model_name": "gert_ercot_system_quantile",
+  "model_type": "sklearn_quantile_bundle",
+  "model_version": "ercot-lag-residual-gbt-v1.5-candidate",
+  "quantiles": [
+    0.5,
+    0.9,
+    0.95,
+    0.99
+  ],
+  "runtime": {
+    "python_version": "3.12.16",
+    "scikit_learn_version": "1.9.0"
+  },
+  "supported_regions": [
+    "ERCOT_SYSTEM"
+  ],
+  "training_data": {
+    "provenance": "Official ERCOT hourly system load joined to fixed-weight four-zone ERA5 weather; 2026-10-04 through 2026-11-01 held out",
+    "source": "ERCOT NP6-346-CD + Open-Meteo ERA5"
+  },
+  "training_period": {
+    "end": "2024-12-31",
+    "start": "2019-01-08"
+  },
+  "validation_status": "provisional_candidate"
+}

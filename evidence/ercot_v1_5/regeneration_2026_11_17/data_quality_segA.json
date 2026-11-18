@@ -1,0 +1,45 @@
+{
+  "checks": {
+    "finite_numeric_values": true,
+    "no_duplicate_timestamps": true,
+    "no_missing_values": true,
+    "nonnegative_solar": true,
+    "nonnegative_wind": true,
+    "positive_load": true,
+    "strictly_hourly": true,
+    "temperature_physical_range": true,
+    "zonal_sum_matches_total_within_1_mw": true
+  },
+  "first_timestamp_utc": "2019-01-01T06:00:00+00:00",
+  "joined_rows": 52602,
+  "last_timestamp_utc": "2024-12-31T23:00:00+00:00",
+  "load_rows": 52608,
+  "max_abs_total_minus_zone_sum_mw": 0.020000000011350494,
+  "passed": true,
+  "ranges": {
+    "actual_load_mw": {
+      "max": 85558.98,
+      "min": 27444.75
+    },
+    "solar_irradiance_wm2": {
+      "max": 1018.432457738809,
+      "min": 0.0
+    },
+    "temperature_c": {
+      "max": 40.90040908223852,
+      "min": -13.219178498228894
+    },
+    "wind_speed_ms": {
+      "max": 10.17257826831083,
+      "min": 0.6273886072681932
+    }
+  },
+  "year_counts_ercot_local": {
+    "2019": 8760,
+    "2020": 8784,
+    "2021": 8760,
+    "2022": 8760,
+    "2023": 8760,
+    "2024": 8778
+  }
+}

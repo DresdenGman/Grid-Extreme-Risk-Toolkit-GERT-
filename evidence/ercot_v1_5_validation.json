@@ -255,6 +255,7 @@
     "The reported skill uses a seasonal baseline fit only on timestamps before 2025-01-01. v1.4's published q50 MAE and skill imply a baseline pinball near 1276 on the v1.4 window, versus 2312.438609 here. Those windows differ, so 0.93 and v1.4's 0.76-0.84 are not the same comparison.",
     "The v1.4 candidate remains rejected. No failed v1.4 gate is relabeled as a pass, and the 0.03 threshold is not moved.",
     "GERT is decision-support research and must not be used for autonomous grid control.",
-    "A regeneration of the hourly rows and model artifact was attempted on 2026-11-11 and stopped. ERCOT NP6-346-CD, the frozen load source, returned HTTP 401 without a subscription key. No credential was opened and the public native-load archives were not substituted. The evidence-bundle gate stays not passed."
+    "A regeneration of the hourly rows and model artifact was attempted on 2026-11-11 and stopped. ERCOT NP6-346-CD, the frozen load source, returned HTTP 401 without a subscription key. No credential was opened and the public native-load archives were not substituted. The evidence-bundle gate stays not passed.",
+    "On 2026-11-17 the hourly rows and model artifact were regenerated from the frozen configuration with authenticated NP6-346-CD and ERA5 (not archived at evaluation time). All calibration-window values reproduced; no evaluation-window score reproduced (for example q50 MAE 311.05 MW versus the published 321.70 MW). The published numbers are not replaced. The evidence-bundle gate stays not passed. See evidence/ercot_v1_5/regeneration_2026_11_17/."
   ]
 }

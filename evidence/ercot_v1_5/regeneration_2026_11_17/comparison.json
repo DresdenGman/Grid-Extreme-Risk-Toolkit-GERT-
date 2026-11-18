@@ -1,0 +1,436 @@
+{
+  "tolerance": {
+    "float": 5.1e-07,
+    "float_source": "scripts/recompute_ercot_v1_5_evidence.py inferred_covered_count (six-decimal uniqueness, 5.1e-7)",
+    "wilson_ci": "round(regenerated, 4) == published (script line ~233)",
+    "integers_and_strings": "exact"
+  },
+  "rows_consistent_with_trainer_report": {
+    "q50": true,
+    "q90": true,
+    "q95": true,
+    "q99": true,
+    "q50_mae": true,
+    "repo_metrics_from_evaluation_rows": true
+  },
+  "trainer_gates": {
+    "coverage_error_at_most_0_03_all_quantiles": true,
+    "finite_predictions": true,
+    "positive_pinball_skill_all_quantiles": true,
+    "quantile_crossing_rate_at_most_0_05": true
+  },
+  "all_published_metrics_reproduced": false,
+  "n_metrics": 55,
+  "n_match": 30,
+  "metrics": [
+    {
+      "metric": "observations",
+      "published": 672,
+      "regenerated": 672,
+      "abs_diff": 0,
+      "match": true
+    },
+    {
+      "metric": "calibration_observations",
+      "published": 672,
+      "regenerated": 672,
+      "abs_diff": 0,
+      "match": true
+    },
+    {
+      "metric": "calibration_window_start",
+      "published": "2026-09-07T00:00:00Z",
+      "regenerated": "2026-09-07T00:00:00Z",
+      "abs_diff": null,
+      "match": true
+    },
+    {
+      "metric": "calibration_window_end",
+      "published": "2026-10-04T23:00:00Z",
+      "regenerated": "2026-10-04T23:00:00Z",
+      "abs_diff": null,
+      "match": true
+    },
+    {
+      "metric": "evaluation_window_start",
+      "published": "2026-10-05T00:00:00Z",
+      "regenerated": "2026-10-05T00:00:00Z",
+      "abs_diff": null,
+      "match": true
+    },
+    {
+      "metric": "evaluation_window_end",
+      "published": "2026-11-01T23:00:00Z",
+      "regenerated": "2026-11-01T23:00:00Z",
+      "abs_diff": null,
+      "match": true
+    },
+    {
+      "metric": "q50_mae_mw",
+      "published": 321.7034248158182,
+      "regenerated": 311.05177400736363,
+      "abs_diff": 10.651650808454576,
+      "match": false
+    },
+    {
+      "metric": "quantile_crossings",
+      "published": 0,
+      "regenerated": 0,
+      "abs_diff": 0,
+      "match": true
+    },
+    {
+      "metric": "quantile_crossing_rate",
+      "published": 0.0,
+      "regenerated": 0.0,
+      "abs_diff": 0.0,
+      "match": true
+    },
+    {
+      "metric": "finite_predictions_observed",
+      "published": "all 672 evaluation rows finite",
+      "regenerated": "all 672 evaluation rows finite",
+      "abs_diff": null,
+      "match": true
+    },
+    {
+      "metric": "calibration.mode",
+      "published": "grid",
+      "regenerated": "grid",
+      "abs_diff": null,
+      "match": true
+    },
+    {
+      "metric": "calibration.base_residual_offsets_mw.q50",
+      "published": 138.704963,
+      "regenerated": 138.70496265426846,
+      "abs_diff": 3.457315358446067e-07,
+      "match": true
+    },
+    {
+      "metric": "calibration.multipliers.q50",
+      "published": 1.0,
+      "regenerated": 1.0,
+      "abs_diff": 0.0,
+      "match": true
+    },
+    {
+      "metric": "calibration.calibration_coverage_after.q50",
+      "published": 0.5,
+      "regenerated": 0.5,
+      "abs_diff": 0.0,
+      "match": true
+    },
+    {
+      "metric": "calibration.calibration_coverage_before.q50",
+      "published": 0.403274,
+      "regenerated": 0.40327380952380953,
+      "abs_diff": 1.9047619048695452e-07,
+      "match": true
+    },
+    {
+      "metric": "calibration.base_residual_offsets_mw.q90",
+      "published": 705.51378,
+      "regenerated": 705.513780419118,
+      "abs_diff": 4.191180096313474e-07,
+      "match": true
+    },
+    {
+      "metric": "calibration.multipliers.q90",
+      "published": 1.0,
+      "regenerated": 1.0,
+      "abs_diff": 0.0,
+      "match": true
+    },
+    {
+      "metric": "calibration.calibration_coverage_after.q90",
+      "published": 0.89881,
+      "regenerated": 0.8988095238095238,
+      "abs_diff": 4.7619047616187515e-07,
+      "match": true
+    },
+    {
+      "metric": "calibration.calibration_coverage_before.q90",
+      "published": 0.889881,
+      "regenerated": 0.8898809523809523,
+      "abs_diff": 4.761904770500536e-08,
+      "match": true
+    },
+    {
+      "metric": "calibration.base_residual_offsets_mw.q95",
+      "published": 886.919353,
+      "regenerated": 886.9193528676162,
+      "abs_diff": 1.32383775053313e-07,
+      "match": true
+    },
+    {
+      "metric": "calibration.multipliers.q95",
+      "published": 1.0,
+      "regenerated": 1.0,
+      "abs_diff": 0.0,
+      "match": true
+    },
+    {
+      "metric": "calibration.calibration_coverage_after.q95",
+      "published": 0.949405,
+      "regenerated": 0.9494047619047619,
+      "abs_diff": 2.3809523819195988e-07,
+      "match": true
+    },
+    {
+      "metric": "calibration.calibration_coverage_before.q95",
+      "published": 0.931548,
+      "regenerated": 0.9315476190476191,
+      "abs_diff": 3.8095238097390904e-07,
+      "match": true
+    },
+    {
+      "metric": "calibration.base_residual_offsets_mw.q99",
+      "published": 1182.658076,
+      "regenerated": 1182.6580762904696,
+      "abs_diff": 2.904696430050535e-07,
+      "match": true
+    },
+    {
+      "metric": "calibration.multipliers.q99",
+      "published": 1.0,
+      "regenerated": 1.0,
+      "abs_diff": 0.0,
+      "match": true
+    },
+    {
+      "metric": "calibration.calibration_coverage_after.q99",
+      "published": 0.989583,
+      "regenerated": 0.9895833333333334,
+      "abs_diff": 3.33333333379926e-07,
+      "match": true
+    },
+    {
+      "metric": "calibration.calibration_coverage_before.q99",
+      "published": 0.889881,
+      "regenerated": 0.8898809523809523,
+      "abs_diff": 4.761904770500536e-08,
+      "match": true
+    },
+    {
+      "metric": "q50.empirical_coverage",
+      "published": 0.508929,
+      "regenerated": 0.5148809523809523,
+      "abs_diff": 0.005951952380952363,
+      "match": false
+    },
+    {
+      "metric": "q50.absolute_coverage_error",
+      "published": 0.008929,
+      "regenerated": 0.014880952380952328,
+      "abs_diff": 0.005951952380952329,
+      "match": false
+    },
+    {
+      "metric": "q50.pinball_loss",
+      "published": 160.851712,
+      "regenerated": 155.52588700368182,
+      "abs_diff": 5.325824996318175,
+      "match": false
+    },
+    {
+      "metric": "q50.baseline_pinball_loss",
+      "published": 2312.438609,
+      "regenerated": 2323.2200410367327,
+      "abs_diff": 10.781432036732895,
+      "match": false
+    },
+    {
+      "metric": "q50.pinball_skill_vs_baseline",
+      "published": 0.930441,
+      "regenerated": 0.9330558947252028,
+      "abs_diff": 0.002614894725202821,
+      "match": false
+    },
+    {
+      "metric": "q50.coverage_wilson_95_ci",
+      "published": [
+        0.4712,
+        0.5466
+      ],
+      "regenerated": [
+        0.47711693762521235,
+        0.552475801528285
+      ],
+      "abs_diff": 0.005916937625212337,
+      "match": false
+    },
+    {
+      "metric": "q50.target_coverage",
+      "published": 0.5,
+      "regenerated": 0.5,
+      "abs_diff": 0.0,
+      "match": true
+    },
+    {
+      "metric": "q90.empirical_coverage",
+      "published": 0.918155,
+      "regenerated": 0.9255952380952381,
+      "abs_diff": 0.007440238095238083,
+      "match": false
+    },
+    {
+      "metric": "q90.absolute_coverage_error",
+      "published": 0.018155,
+      "regenerated": 0.025595238095238115,
+      "abs_diff": 0.007440238095238114,
+      "match": false
+    },
+    {
+      "metric": "q90.pinball_loss",
+      "published": 76.691465,
+      "regenerated": 74.84429492639649,
+      "abs_diff": 1.8471700736035075,
+      "match": false
+    },
+    {
+      "metric": "q90.baseline_pinball_loss",
+      "published": 1120.3762,
+      "regenerated": 1120.2994891465476,
+      "abs_diff": 0.07671085345236861,
+      "match": false
+    },
+    {
+      "metric": "q90.pinball_skill_vs_baseline",
+      "published": 0.931548,
+      "regenerated": 0.9331926010397332,
+      "abs_diff": 0.0016446010397331845,
+      "match": false
+    },
+    {
+      "metric": "q90.coverage_wilson_95_ci",
+      "published": [
+        0.895,
+        0.9366
+      ],
+      "regenerated": [
+        0.9032438068907053,
+        0.9431085328993224
+      ],
+      "abs_diff": 0.008243806890705252,
+      "match": false
+    },
+    {
+      "metric": "q90.target_coverage",
+      "published": 0.9,
+      "regenerated": 0.9,
+      "abs_diff": 0.0,
+      "match": true
+    },
+    {
+      "metric": "q95.empirical_coverage",
+      "published": 0.956845,
+      "regenerated": 0.9627976190476191,
+      "abs_diff": 0.005952619047619123,
+      "match": false
+    },
+    {
+      "metric": "q95.absolute_coverage_error",
+      "published": 0.006845,
+      "regenerated": 0.012797619047619113,
+      "abs_diff": 0.005952619047619113,
+      "match": false
+    },
+    {
+      "metric": "q95.pinball_loss",
+      "published": 45.982329,
+      "regenerated": 45.12898260191143,
+      "abs_diff": 0.8533463980885685,
+      "match": false
+    },
+    {
+      "metric": "q95.baseline_pinball_loss",
+      "published": 686.257936,
+      "regenerated": 686.2195808352833,
+      "abs_diff": 0.03835516471667688,
+      "match": false
+    },
+    {
+      "metric": "q95.pinball_skill_vs_baseline",
+      "published": 0.932996,
+      "regenerated": 0.9342353615923065,
+      "abs_diff": 0.0012393615923064205,
+      "match": false
+    },
+    {
+      "metric": "q95.coverage_wilson_95_ci",
+      "published": [
+        0.9387,
+        0.9698
+      ],
+      "regenerated": [
+        0.9456581321533808,
+        0.9746760555203906
+      ],
+      "abs_diff": 0.006958132153380814,
+      "match": false
+    },
+    {
+      "metric": "q95.target_coverage",
+      "published": 0.95,
+      "regenerated": 0.95,
+      "abs_diff": 0.0,
+      "match": true
+    },
+    {
+      "metric": "q99.empirical_coverage",
+      "published": 0.988095,
+      "regenerated": 0.9895833333333334,
+      "abs_diff": 0.0014883333333334248,
+      "match": false
+    },
+    {
+      "metric": "q99.absolute_coverage_error",
+      "published": 0.001905,
+      "regenerated": 0.0004166666666666208,
+      "abs_diff": 0.0014883333333333792,
+      "match": false
+    },
+    {
+      "metric": "q99.pinball_loss",
+      "published": 11.09114,
+      "regenerated": 11.050975924114878,
+      "abs_diff": 0.040164075885121164,
+      "match": false
+    },
+    {
+      "metric": "q99.baseline_pinball_loss",
+      "published": 198.961765,
+      "regenerated": 198.95409367255402,
+      "abs_diff": 0.007671327445990528,
+      "match": false
+    },
+    {
+      "metric": "q99.pinball_skill_vs_baseline",
+      "published": 0.944255,
+      "regenerated": 0.944454644183884,
+      "abs_diff": 0.00019964418388407346,
+      "match": false
+    },
+    {
+      "metric": "q99.coverage_wilson_95_ci",
+      "published": [
+        0.9767,
+        0.994
+      ],
+      "regenerated": [
+        0.978655926124358,
+        0.9949451920257087
+      ],
+      "abs_diff": 0.0019559261243580206,
+      "match": false
+    },
+    {
+      "metric": "q99.target_coverage",
+      "published": 0.99,
+      "regenerated": 0.99,
+      "abs_diff": 0.0,
+      "match": true
+    }
+  ]
+}
