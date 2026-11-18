@@ -7,6 +7,7 @@
 [![Software DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23982226.svg)](https://doi.org/10.5281/zenodo.23982226)
 [![Dataset DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22975251.svg)](https://doi.org/10.5281/zenodo.22975251)
 [![Live site](https://img.shields.io/badge/live-gert--d.vercel.app-orange)](https://gert-d.vercel.app)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-)
 
 **Probabilistic grid-risk decision support with tail-risk analysis, calibration gates, and explicit data/model provenance.**
 
@@ -20,6 +21,7 @@ The counted public record is the [Community evidence](https://gert-d.vercel.app/
 
 | If you want to… | Go here | Time |
 | --- | --- | --- |
+| Run the full app (web + API) in your browser, nothing to install | [Open in GitHub Codespaces](https://codespaces.new/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-) — setup is automatic; the app starts on its own, and setup ends by recomputing one Historical Lab case as a smoke check | a few min to build |
 | Reproduce the Historical Lab calculations yourself | [Colab reproduction notebook](docs/notebooks/README.md) or [reproduction guide](docs/HISTORICAL_LAB.md) | ~15 min |
 | Review the evidence, including why the latest model candidate was rejected | [Evidence page](https://gert-d.vercel.app/review) and the [v1.4 decision record](docs/DECISION_RECORD_ERCOT_v1_4.md) | ~10 min |
 | Run GERT with a class or group | [20-minute workshop plan](docs/WORKSHOP.md) | 20 min |
