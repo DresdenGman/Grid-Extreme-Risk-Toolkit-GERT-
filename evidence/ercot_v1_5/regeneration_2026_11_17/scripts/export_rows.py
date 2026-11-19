@@ -4,15 +4,26 @@ Reuses the repository's own split, baseline, and monotonic functions and the
 model.joblib written by the frozen train_quantile_model command. It does not
 fit anything new except confirming the saved center is reproduced.
 """
-import csv, json, sys
+import csv, json, os, sys
 from pathlib import Path
 import joblib, numpy as np, pandas as pd
 
-sys.path.insert(0, "/workspace/gert-v15")
+HERE = Path(__file__).resolve().parent
+REPO = Path(os.environ["GERT_REPO"]) if os.environ.get("GERT_REPO") else HERE.parents[3]
+sys.path.insert(0, str(REPO))
 from training.ercot import train_quantile_model as t
 from training.ercot.features import SERVED_FEATURE_COLUMNS
 
-FEATURES = Path(sys.argv[1]); ARTIFACT = Path(sys.argv[2]); OUT = Path(sys.argv[3])
+def _path(index: int, env: str, default: Path) -> Path:
+    if len(sys.argv) > index:
+        return Path(sys.argv[index])
+    if os.environ.get(env):
+        return Path(os.environ[env])
+    return default
+
+FEATURES = _path(1, "GERT_FEATURES", REPO / "training_runs/ercot_v1/features.csv")
+ARTIFACT = _path(2, "GERT_ARTIFACT", REPO / "training_runs/ercot_v1/artifact")
+OUT = _path(3, "GERT_REGEN_OUT", HERE.parent)
 frame = pd.read_csv(FEATURES)
 training, calibration, evaluation = t.split_calibration_evaluation_windows(
     frame, "2025-01-01", "2026-09-07", "2026-10-04", "2026-10-05", "2026-11-01")

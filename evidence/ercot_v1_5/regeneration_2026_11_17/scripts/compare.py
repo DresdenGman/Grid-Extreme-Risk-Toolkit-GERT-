@@ -1,12 +1,14 @@
 """Recompute every published v1.5 metric from regenerated hourly rows and compare."""
-import csv, json, math, sys
+import csv, json, math, os, sys
 from pathlib import Path
 import numpy as np
 
-sys.path.insert(0, "/workspace/gert-v15/scripts")
+HERE = Path(__file__).resolve().parent
+REPO = Path(os.environ["GERT_REPO"]) if os.environ.get("GERT_REPO") else HERE.parents[3]
+sys.path.insert(0, str(REPO / "scripts"))
 import recompute_ercot_v1_5_evidence as r  # repository's own Wilson/z
 
-D = Path(sys.argv[1]); REPO = Path("/workspace/gert-v15")
+D = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(os.environ.get("GERT_REGEN_OUT", HERE.parent))
 pub = json.loads((REPO / "evidence/ercot_v1_5/measurements.json").read_text())
 rep = json.loads((D / "artifact/evaluation_report.json").read_text())
 meta = json.loads((D / "artifact/metadata.json").read_text())

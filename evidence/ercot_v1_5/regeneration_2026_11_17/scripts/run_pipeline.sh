@@ -1,8 +1,15 @@
 #!/bin/bash
 set -euxo pipefail
-cd /workspace/gert-v15
-. /workspace/gert-venv/bin/activate
-st(){ echo "- $(date +%T) PST: $*" >> /workspace/gert-v15-regen/STATUS.md; }
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+REPO="${GERT_REPO:-$ROOT}"
+OUT="${GERT_REGEN_OUT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+cd "$REPO"
+if [ -n "${GERT_VENV:-}" ]; then
+  # shellcheck disable=SC1090
+  . "$GERT_VENV/bin/activate"
+fi
+st(){ echo "- $(date +%T) PST: $*" >> "$OUT/STATUS.md"; }
 st "pipeline started at git $(git rev-parse HEAD)"
 TD=training_data
 python -m training.ercot.extract_historical_load --raw-dir $TD/ercot_np6_346_raw_segA --supplemental-dir $TD/none --start 2019-01-01 --end 2024-12-31 --output $TD/ercot_load_segA.csv
@@ -36,14 +43,13 @@ st "done: python -m training.ercot.build_feature_table"
 st "done: { cat training_runs/ercot_v1/features_segA.csv; tail -n +2 training_runs/ercot_v1/features"
 python -m training.ercot.train_quantile_model --features training_runs/ercot_v1/features.csv --calibration-mode grid --training-end 2025-01-01 --calibration-start 2026-09-07 --calibration-end 2026-10-04 --evaluation-start 2026-10-05 --evaluation-end 2026-11-01 --model-version ercot-lag-residual-gbt-v1.5-candidate > training_runs/ercot_v1/train_stdout.json
 st "done: python -m training.ercot.train_quantile_model"
-OUT=/workspace/gert-v15-regen
 rm -rf $OUT/artifact && cp -r training_runs/ercot_v1/artifact $OUT/artifact
 st "done: rm -rf $OUT/artifact && cp -r training_runs/ercot_v1/artifact $OUT/artifact"
 cp training_runs/ercot_v1/data_manifest.json training_runs/ercot_v1/data_quality_seg*.json $OUT/
 st "done: cp training_runs/ercot_v1/data_manifest.json training_runs/ercot_v1/data_quality_seg*.json"
-python $OUT/export_rows.py training_runs/ercot_v1/features.csv training_runs/ercot_v1/artifact $OUT
-st "done: python $OUT/export_rows.py training_runs/ercot_v1/features.csv training_runs/ercot_v1/arti"
-python $OUT/compare.py $OUT
-st "done: python $OUT/compare.py $OUT"
+python "$SCRIPT_DIR/export_rows.py" training_runs/ercot_v1/features.csv training_runs/ercot_v1/artifact "$OUT"
+st "done: python export_rows.py training_runs/ercot_v1/features.csv training_runs/ercot_v1/artifact"
+python "$SCRIPT_DIR/compare.py" "$OUT"
+st "done: python compare.py"
 st "PIPELINE_DONE"
 echo PIPELINE_DONE
