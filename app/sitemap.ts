@@ -14,6 +14,7 @@ const routes = [
   '/events/polar-vortex',
   '/about',
   '/research',
+  '/changelog',
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

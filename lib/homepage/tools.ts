@@ -61,6 +61,12 @@ export const toolIndex: ToolGroup[] = [
     label: 'Research and briefs',
     entries: [
       {
+        href: '/briefs',
+        name: 'Grid notes',
+        description:
+          'Two short readings: 72 recorded ERCOT hours from February 2021, and an invented same-meter counterexample. Neither adds a forecast.',
+      },
+      {
         href: '/briefs/winter-load',
         name: 'Grid Notes',
         description:

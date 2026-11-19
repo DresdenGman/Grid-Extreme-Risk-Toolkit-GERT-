@@ -154,7 +154,11 @@ export default function BenchmarkPage() {
       <section className="hairline-panel overflow-hidden rounded-[28px]">
         <div className="border-b border-black/10 p-6 sm:p-8">
           <span className="technical-label text-[#6d6b66]">Frozen-window quantile evidence</span>
-          <h2 className="display-serif mt-3 text-3xl tracking-tight">Skill is strong. Calibration is not yet stable enough.</h2>
+          <h2 className="display-serif mt-3 text-3xl tracking-tight">
+            {evidence.validation_status === 'rejected_candidate'
+              ? 'Rejected. Pinball skill is positive, and the calibration gates failed.'
+              : evidence.validation_status.replaceAll('_', ' ')}
+          </h2>
         </div>
         <div className="grid md:grid-cols-2 xl:grid-cols-4">
           {evidence.quantile_metrics.map((metric) => {

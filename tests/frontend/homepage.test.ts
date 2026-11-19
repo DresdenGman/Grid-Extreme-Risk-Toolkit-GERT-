@@ -37,8 +37,11 @@ describe('homepage evidence', () => {
     expect(evidence.v14.failedLabels).toEqual(['Q90', 'Q95', 'Q99']);
     expect(evidence.v14.passedLabels).toEqual(['Q50']);
     expect(evidence.v14.points.every((point) => point.wilson === null)).toBe(true);
-    expect(evidence.v15?.status).toBe('provisional_candidate');
-    expect(evidence.v15?.allGatesPassed).toBe(true);
+    expect(evidence.v15?.status).toBe('evidence_only_not_packaged');
+    expect(evidence.v15?.allGatesPassed).toBe(false);
+    expect(evidence.v15?.bundleGatePassed).toBe(false);
+    expect(evidence.v15?.featureGatePassed).toBe(false);
+    expect(evidence.v15?.packagingAuthorized).toBe(false);
     expect(evidence.v15?.failedLabels).toEqual([]);
     expect(evidence.v15?.wilsonComplete).toBe(true);
   });
@@ -66,15 +69,17 @@ describe('homepage evidence', () => {
   it('keeps v1.5 provisional and unmerged in the page copy', () => {
     const text = spanText(copy.dek);
     expect(copy.subhead).toBe('No validated production model.');
-    expect(copy.verdicts.map((item) => item.value)).toEqual(['None.', 'Rejected.', 'Provisional.']);
-    expect(copy.aside).toBe('PR #23, unmerged. Realized ERA5, not in production.');
-    expect(text).toContain('passed the gates recorded in its evidence JSON and remains provisional');
-    expect(text).toContain('unmerged');
+    expect(copy.verdicts.map((item) => item.value)).toEqual(['None.', 'Rejected.', 'Evidence only.']);
+    expect(copy.aside).toBe('PR #23, unmerged. Not packaged.');
+    expect(text).toContain('v1.5 is evidence only and is not packaged. Its evidence-bundle and feature-availability gates have not passed.');
+    expect(text).not.toContain('passed the gates recorded');
+    expect(text).not.toContain('eligible for production');
+    expect(text).toContain('optimistic upper bound');
     expect(text).not.toContain('validated_production');
     expect(copy.ledger[1].body).toContain('0.035417 / 0.04375 / 0.031667');
     expect(copy.ledger[1].body).toContain('Q50 held at 0.020833');
     expect(copy.ledger[2].body).toContain('0.008929 / 0.018155 / 0.006845 / 0.001905');
-    expect(copy.ledger[2].body).toContain('Not in production.');
+    expect(copy.ledger[2].body).toContain('v1.5 is evidence only and is not packaged.');
     expect(copy.footnotes[1].tail).toContain('unmerged PR #23');
     expect(copy.footnotes[1].href).toContain(V15_PR23_SNAPSHOT.commit);
     expect(spanText(copy.caption)).toContain('fit only on timestamps before 2025-01-01');

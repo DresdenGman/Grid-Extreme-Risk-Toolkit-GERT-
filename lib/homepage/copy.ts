@@ -34,10 +34,20 @@ export interface HomepageCopy {
   closer: string;
 }
 
+export const V15_EVIDENCE_ONLY =
+  'v1.5 is evidence only and is not packaged. Its evidence-bundle and feature-availability gates have not passed.';
+
 export function verdictFor(status: string): Verdict {
   if (status === 'rejected_candidate') return { title: 'Rejected', tone: 'rejected' };
+  if (status === 'evidence_only_not_packaged') return { title: 'Evidence only', tone: 'plain' };
   if (status === 'provisional_candidate') return { title: 'Provisional', tone: 'provisional' };
   return { title: status, tone: 'plain' };
+}
+
+function evidenceOnly(candidate: CandidateView) {
+  return candidate.bundleGatePassed === false
+    && candidate.featureGatePassed === false
+    && candidate.packagingAuthorized === false;
 }
 
 function fileHref(citation: Citation, ref: string, commit: string) {
@@ -88,8 +98,8 @@ function v15Ledger(candidate: CandidateView) {
     .map((point) => formatPlain(point.absoluteError))
     .join(' / ')} on ${candidate.observations} hours.`;
   if (candidate.source.kind === 'pr23-snapshot') body += ` PR #${candidate.source.pr} unmerged.`;
-  if (candidate.realizedEra5) body += ' Realized ERA5 weather.';
-  if (candidate.status !== 'validated_production') body += ' Not in production.';
+  if (evidenceOnly(candidate)) body += ` ${V15_EVIDENCE_ONLY}`;
+  else if (candidate.status !== 'validated_production') body += ' Not in production.';
   return body;
 }
 
@@ -97,13 +107,7 @@ function v15Dek(candidate: CandidateView | null) {
   if (!candidate) {
     return 'v1.5 evidence is not on main and no snapshot is available, so no v1.5 result is shown.';
   }
-  const pr =
-    candidate.source.kind === 'pr23-snapshot'
-      ? `PR #${candidate.source.pr} is unmerged and not in production`
-      : 'it is recorded on main and not in production';
-  if (candidate.allGatesPassed && candidate.status === 'provisional_candidate') {
-    return `${candidate.version} passed the gates recorded in its evidence JSON and remains provisional: ${pr}.`;
-  }
+  if (evidenceOnly(candidate)) return V15_EVIDENCE_ONLY;
   if (candidate.status === 'provisional_candidate') {
     return `${candidate.version} remains provisional and is not in production.`;
   }
@@ -115,11 +119,8 @@ function v15Dek(candidate: CandidateView | null) {
 
 function eraSentence(model: EvidenceModel) {
   const v15 = model.v15;
-  if (!v15?.realizedEra5 || !v15.sameWeatherAsV14 || !model.v14.mentionsEra5) return '';
-  if (v15.optimisticRealizedWeather) {
-    return ' Both evaluations used realized ERA5 weather — an upper bound, not a production weather forecast.';
-  }
-  return ' Both evaluations used realized ERA5 weather, not a production weather forecast.';
+  if (!v15?.realizedEra5 || !v15.optimisticRealizedWeather) return '';
+  return ' The published v1.5 scores use realized ERA5 weather and are an optimistic upper bound, not a production weather forecast.';
 }
 
 function aside(candidate: CandidateView | null) {
@@ -127,7 +128,8 @@ function aside(candidate: CandidateView | null) {
   const parts: string[] = [];
   if (candidate.source.kind === 'pr23-snapshot') parts.push(`PR #${candidate.source.pr}, unmerged.`);
   else parts.push('Recorded on main.');
-  if (candidate.realizedEra5 && candidate.status !== 'validated_production') {
+  if (candidate.packagingAuthorized === false) parts.push('Not packaged.');
+  else if (candidate.realizedEra5 && candidate.status !== 'validated_production') {
     parts.push('Realized ERA5, not in production.');
   } else if (candidate.realizedEra5) {
     parts.push('Realized ERA5 weather.');

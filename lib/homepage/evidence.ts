@@ -21,8 +21,8 @@ export const V15_PR23_SNAPSHOT = {
   upstreamPath: 'evidence/ercot_v1_5_validation.json',
   pr: 23,
   branch: 'feat/ercot-v1-5',
-  commit: '98d4fbf82a78ebfaeca160bb0ac20915c8fc566e',
-  blobSha1: '25f2dfadd717487be2db600c1478d1fa2f64cf86',
+  commit: '41095ba0e5c88c1750296b23a0b5bf6fedeb4010',
+  blobSha1: '53e3561aed744fee2c44d369d2b39b4cfbd4afc5',
 } as const;
 
 const V14_PATH = 'evidence/ercot_v1_4_validation.json';
@@ -151,6 +151,17 @@ function parseCandidate(raw: unknown, file: string, source: CandidateSource) {
   if (everyPassed !== allGatesPassed) {
     throw new Error(`${file} all_gates_passed does not match the gate list`);
   }
+  const namedGate = (pattern: RegExp) => {
+    const found = gates.filter((gate) => isRecord(gate) && typeof gate.gate === 'string' && pattern.test(gate.gate));
+    if (found.length === 0) return null;
+    if (found.length !== 1 || !isRecord(found[0]) || typeof found[0].passed !== 'boolean') {
+      throw new Error(`${file} has an unreadable gate for ${pattern}`);
+    }
+    return found[0].passed;
+  };
+  const packagingAuthorized = Object.prototype.hasOwnProperty.call(raw, 'packaging_authorized')
+    ? requiredBoolean(raw, 'packaging_authorized', file)
+    : null;
 
   const points: QuantilePoint[] = QUANTILE_ORDER.map((quantile) => {
     const rows = quantileMetrics.filter((metric): metric is Record<string, unknown> => isRecord(metric) && metric.quantile === quantile);
@@ -205,6 +216,9 @@ function parseCandidate(raw: unknown, file: string, source: CandidateSource) {
     failedLabels: points.filter((point) => point.pastGate).map((point) => point.label),
     passedLabels: points.filter((point) => !point.pastGate).map((point) => point.label),
     allGatesPassed,
+    bundleGatePassed: namedGate(/evidence bundle/i),
+    featureGatePassed: namedGate(/feature availability/i),
+    packagingAuthorized,
     mentionsEra5: /ERA5/i.test(text),
     realizedEra5: /realized ERA5/i.test(text),
     sameWeatherAsV14: /as in v1\.4/i.test(text),

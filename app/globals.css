@@ -278,8 +278,31 @@ select:focus-visible {
 
 .journal .hairline-panel,
 .journal [class*="border-[#141414]"],
-.journal [class*="border-black"] {
+.journal [class*="border-black"],
+.journal [class*="border-white"] {
   border-color: var(--hairline) !important;
+}
+
+.journal [class*="text-[#87847e]"],
+.journal [class*="text-[#6d6b66]"],
+.journal [class*="text-[#514e48]"],
+.journal [class*="text-[#4f4e4a]"] {
+  color: var(--muted) !important;
+}
+
+.skip-link {
+  position: absolute;
+  left: 12px;
+  top: 8px;
+  transform: translateY(-150%);
+  background: #f6f4ef;
+  color: #1c1b18;
+  padding: 8px 12px;
+  z-index: 20;
+}
+
+.skip-link:focus {
+  transform: none;
 }
 
 .journal-lede {

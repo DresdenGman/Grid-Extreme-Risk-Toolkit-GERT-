@@ -4,6 +4,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import About from '../../app/(studio)/about/page';
 import Benchmark from '../../app/(studio)/benchmark/page';
+import Briefs from '../../app/(studio)/briefs/page';
 import Changelog from '../../app/(studio)/changelog/page';
 import Community from '../../app/(studio)/community/page';
 import Dashboard from '../../app/(studio)/dashboard/page';
@@ -35,6 +36,7 @@ function studioRoutes(): string[] {
 const rendered: Array<[string, () => React.ReactNode]> = [
   ['/about', () => <About />],
   ['/benchmark', () => <Benchmark />],
+  ['/briefs', () => <Briefs />],
   ['/briefs/same-meter', () => <SameMeter />],
   ['/briefs/winter-load', () => <Winter />],
   ['/changelog', () => <Changelog />],

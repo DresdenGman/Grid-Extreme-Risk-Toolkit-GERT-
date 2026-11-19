@@ -37,12 +37,13 @@ describe('homepage poster', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'GERT' })).toBeInTheDocument();
     expect(screen.getByText('No validated production model.')).toBeInTheDocument();
     expect(screen.getByText('Rejected.')).toBeInTheDocument();
-    expect(screen.getByText('Provisional.')).toBeInTheDocument();
+    expect(screen.getByText('Evidence only.')).toBeInTheDocument();
     expect(screen.getByText('0.03')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Rejected' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Provisional' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Evidence only' })).toBeInTheDocument();
     expect(screen.getByText(/Q90, Q95, and Q99 missed it/)).toBeInTheDocument();
-    expect(screen.getByText('PR #23, unmerged. Realized ERA5, not in production.')).toBeInTheDocument();
+    expect(screen.getByText('PR #23, unmerged. Not packaged.')).toBeInTheDocument();
+    expect(screen.getAllByText(/v1.5 is evidence only and is not packaged/).length).toBeGreaterThan(0);
     expect(screen.getAllByText('UNAVAILABLE')).toHaveLength(3);
     expect(screen.getByText(/As of UNAVAILABLE/)).toBeInTheDocument();
     expect(screen.queryByText(/32°/)).not.toBeInTheDocument();

@@ -38,6 +38,9 @@ export interface CandidateView {
   failedLabels: string[];
   passedLabels: string[];
   allGatesPassed: boolean;
+  bundleGatePassed: boolean | null;
+  featureGatePassed: boolean | null;
+  packagingAuthorized: boolean | null;
   mentionsEra5: boolean;
   realizedEra5: boolean;
   sameWeatherAsV14: boolean;

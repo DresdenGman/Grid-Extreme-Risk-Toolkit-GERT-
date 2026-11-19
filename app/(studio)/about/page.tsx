@@ -32,14 +32,21 @@ export default function MethodsPage() {
           ))}
         </ul>
         <p className="journal-note">
-          v1.5 ({v15.candidate_id}) records {v15.validation_status.replaceAll('_', ' ')}. Its evidence file says every listed gate passed. It is not in production. PR #23 is unmerged. Commit of the evidence snapshot: 98d4fbf.
+          v1.5 ({v15.candidate_id}) records {v15.validation_status.replaceAll('_', ' ')}. v1.5 is evidence only and is not packaged. Its evidence-bundle and feature-availability gates have not passed. PR #23 is unmerged. Commit of the evidence snapshot: 41095ba.
         </p>
+        <ul className="mt-4 space-y-2 text-sm">
+          {v15.gates.map((gate) => (
+            <li key={gate.gate} className="border-b border-[var(--hairline)] pb-2">
+              <span className="font-medium">{gate.gate}.</span> {gate.passed ? 'Passed' : 'Not passed'}.
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section>
         <h2 className="text-3xl">Wilson intervals, and what is not published</h2>
         <p className="journal-note">
-          The v1.5 file stores a Wilson 95% interval on empirical coverage at each quantile, under the field coverage_wilson_95_ci. Fig. 1 plots those published endpoints after subtracting the nominal level. The file says the gate still uses the point estimate. v1.4’s file has no interval, so Fig. 1 shows v1.4 as a point.
+          The v1.5 file stores a Wilson 95% interval on empirical coverage at each quantile, under the field coverage_wilson_95_ci. Fig. 1 plots those published endpoints after subtracting the nominal level. The file says the point-estimate gate is unchanged. v1.4’s file has no interval, so Fig. 1 shows v1.4 as a point.
         </p>
         <p className="journal-note">
           A Clopper-Pearson interval is the exact central binomial interval. It is not in either evidence file, so this site does not print Clopper-Pearson bounds.
