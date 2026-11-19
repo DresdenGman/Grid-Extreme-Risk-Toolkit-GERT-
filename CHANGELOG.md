@@ -28,6 +28,12 @@ All notable changes to this project are documented here. The format follows
   No credential was opened and no published metric was changed. The
   evidence-bundle gate stays not passed.
 
+### Fixed
+
+- Frontend `next` 16.4.6. `npm audit --audit-level=high` reports no high
+  findings. The picomatch advisory GHSA-fc5q-39xc-vjpf was withdrawn on
+  2026-11-18; the lockfile already resolved picomatch 4.0.7.
+
 ### Changed
 
 - GitHub homepage re-skinned: new hero banner and five evidence posters in
