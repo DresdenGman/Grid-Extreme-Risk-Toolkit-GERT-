@@ -11,7 +11,7 @@ not done.
 
 | Area | Standard | Status |
 | --- | --- | --- |
-| Scientific method | Preregistered validation gates; pass/fail decided by numbers fixed in advance; failures published | Met for process — the v1.4 candidate was rejected by its own gate and the record is public ([decision record](docs/DECISION_RECORD_ERCOT_v1_4.md)). No candidate has passed yet |
+| Scientific method | Preregistered validation gates; pass/fail decided by numbers fixed in advance; failures published | Met for process — the v1.4 candidate was rejected by its own gate and the record is public ([decision record](docs/DECISION_RECORD_ERCOT_v1_4.md)). The v1.5 scores are evidence only and do not package a model ([decision record](docs/DECISION_RECORD_ERCOT_v1_5.md)). No candidate has passed yet |
 | Integrity & security | Every public claim traceable to a checked artifact; dependency audit green | Met as of v1.2 (see [CHANGELOG](CHANGELOG.md)); a drift-guard test fails CI if the README evidence tables diverge from the evidence files |
 | Product | A stranger can reproduce the core calculation unaided in ~15 minutes; the hosted demo is honest about what is gated | Mostly met — reproduction path and labeled demo mode are in place; live inference stays gated (HTTP 503) until a candidate passes |
 | Teaching impact | Real sessions with counted participants and published feedback, including the weak points | Public ledger: 4 organizer-forwarded reports, 2 hands-on core completions, 0 independent retests (Community evidence page, updated September 25, 2026). Those reports do not establish adoption or learning effectiveness. [docs/FEEDBACK.md](docs/FEEDBACK.md) is an organizer-reported, unverified survey summary |
@@ -28,12 +28,12 @@ not done.
 
 ## Next
 
-- **Publish the v1.5 record (pull request #23, under review).** The v1.5
-  preregistration was committed on 2026-11-05, after its evaluation window
-  closed on 2026-11-01, so it is a retrospective freeze. The scores used
-  realized ERA5 weather and are an upper bound. The evidence-bundle and
-  feature-availability gates are not passed. The candidate is not packaged,
-  and the inference endpoints stay gated. No threshold changes after the fact.
+- **Forecast-weather evaluation of the frozen v1.5 multipliers.** A draft
+  preregistration is in
+  [docs/PREREGISTRATION_ERCOT_FORECAST_WEATHER_DRAFT.md](docs/PREREGISTRATION_ERCOT_FORECAST_WEATHER_DRAFT.md).
+  It is not approved and the evaluation has not been run. The realized-ERA5
+  v1.5 result stays evidence only. v1.4 stays rejected. No threshold changes
+  after the fact.
 - Follow through on the tail-sample diagnostic: the q99 band is the known
   weak point (small effective tail sample), so candidate design starts there.
 

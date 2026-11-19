@@ -1,0 +1,169 @@
+{
+  "schema": "gert-ercot-v1.5-evidence-manifest-v1",
+  "files": [
+    {
+      "path": "evidence/ercot_v1_5/measurements.json",
+      "sha256": "2a0efb3fb474b69d4ed7ce5d8296f4b3e389c2227465ad9d62ec00272c8cc058"
+    },
+    {
+      "path": "evidence/ercot_v1_5_validation.json",
+      "sha256": "69543f5c5f0eb9c047499c1e5e2264d3753065939d47659457a1a3e5fbf77dcd"
+    },
+    {
+      "path": "evidence/ercot_v1_4_validation.json",
+      "sha256": "921b316b7b39567ddb14518c651ba817d09f81bdee9736e37f455ac36e103201"
+    },
+    {
+      "path": "scripts/recompute_ercot_v1_5_evidence.py",
+      "sha256": "fbc6ed08ff7e4bc2cfa23f3c3abd97e741b0cd6cb18f70df50a290f5c22b47a7"
+    },
+    {
+      "path": "evidence/ercot_v1_5/regeneration_2026_11_17/evaluation_rows.csv",
+      "sha256": "a9e3ea4c2c6d0effe5102fae243ad517770e93be0e9dff7420c042869dff2e05"
+    },
+    {
+      "path": "evidence/ercot_v1_5/regeneration_2026_11_17/calibration_rows.csv",
+      "sha256": "31bb0ad744b2813ef95e041c4cdce59c5efc7fd48a1368c0e1374c407fc4d936"
+    },
+    {
+      "path": "evidence/ercot_v1_5/regeneration_2026_11_17/comparison.json",
+      "sha256": "29ab8ca8455e81bb5d16d546d60e24ab8db7f59602756f7e2b075956fa8c58f8"
+    },
+    {
+      "path": "evidence/ercot_v1_5/regeneration_2026_11_17/comparison.md",
+      "sha256": "24c3ab26ada3dd514d8e9ebc1d14e4db8a0936613f07bb5345e1d1fe17d6c69c"
+    },
+    {
+      "path": "evidence/ercot_v1_5/regeneration_2026_11_17/NOTES.md",
+      "sha256": "2f4c46bb8a4bf91bd37fffaef92bade61e060d107bdda6d2a0fd49851724cd84"
+    },
+    {
+      "path": "evidence/ercot_v1_5/regeneration_2026_11_17/data_manifest.json",
+      "sha256": "c5d695000535151ad43f4c0dc86157cd1799ded6f7a71c67dacf527df9bc5663"
+    },
+    {
+      "path": "evidence/ercot_v1_5/regeneration_2026_11_17/data_quality_segA.json",
+      "sha256": "665a9ce0bfa956f94d7f0ef211248c8c2091e7bd63fb4186031ebc5919971670"
+    },
+    {
+      "path": "evidence/ercot_v1_5/regeneration_2026_11_17/data_quality_segB.json",
+      "sha256": "e1975ff9fe52cb2701a84bc4b42203e0d034b0582d5302957253e4ce84bee962"
+    },
+    {
+      "path": "evidence/ercot_v1_5/regeneration_2026_11_17/artifact/model.joblib",
+      "sha256": "bea240b11170b0bd1458480c837c9494004ecdc804cf5888659ad192f818e77a"
+    },
+    {
+      "path": "evidence/ercot_v1_5/regeneration_2026_11_17/artifact/metadata.json",
+      "sha256": "ffa011a319fcf5277533f4788e33bc76f4e5d7f4244a91a16fa09d300cc37591"
+    },
+    {
+      "path": "evidence/ercot_v1_5/regeneration_2026_11_17/artifact/metrics.json",
+      "sha256": "86edd06b47bb61d181efae244471edfab97edf0fd81e4c4e9b3ba4a28c041509"
+    },
+    {
+      "path": "evidence/ercot_v1_5/regeneration_2026_11_17/artifact/evaluation_report.json",
+      "sha256": "125c35ee809d6b21720e5d697cdbdd702403f157b6e77129bd8481bb97733f7e"
+    },
+    {
+      "path": "evidence/ercot_v1_5/regeneration_2026_11_17/artifact/backtest_sample.json",
+      "sha256": "c2da8407757e7f90d6027171e3e34a3188bfc55794b64f975d041a026fb037b1"
+    }
+  ],
+  "missing_inputs": [
+    {
+      "path": "evidence/ercot_v1_5/evaluation_rows.csv",
+      "why": "Hourly evaluation actuals, model quantiles, and baseline quantiles were not published, so pinball, coverage, MAE, crossings, and finiteness cannot be recomputed from rows."
+    },
+    {
+      "path": "evidence/ercot_v1_5/calibration_rows.csv",
+      "why": "Hourly calibration actuals and center predictions were not published, so residual offsets and calibration-window coverage cannot be recomputed from rows."
+    },
+    {
+      "path": "training_runs/ercot_v1/artifact/",
+      "why": "metadata.json, metrics.json, evaluation_report.json, backtest_sample.json, and model.joblib are gitignored and were not added to this bundle."
+    }
+  ],
+  "row_level_archive_present": false,
+  "regeneration_attempt": {
+    "attempted_at": "2026-11-11T05:21:37Z",
+    "status": "blocked",
+    "bundle_gate": "not_passed",
+    "feature_availability_gate": "not_passed",
+    "published_metrics_overwritten": false,
+    "credentials_opened": false,
+    "frozen_results_commit": "98d4fbf82a78ebfaeca160bb0ac20915c8fc566e",
+    "training_code_diff_since_results_commit": "empty",
+    "pinned_runtime": {
+      "numpy": "1.26.4",
+      "scikit-learn": "1.9.0",
+      "random_state": 42
+    },
+    "frozen_command": "python -m training.ercot.train_quantile_model --features training_runs/ercot_v1/features.csv --calibration-mode grid --training-end 2025-01-01 --calibration-start 2026-09-07 --calibration-end 2026-10-04 --evaluation-start 2026-10-05 --evaluation-end 2026-11-01 --model-version ercot-lag-residual-gbt-v1.5-candidate",
+    "load_source": {
+      "product": "ERCOT NP6-346-CD Actual System Load by Forecast Zone",
+      "archive_url": "https://api.ercot.com/api/public-reports/archive/np6-346-cd",
+      "table_url": "https://api.ercot.com/api/public-reports/np6-346-cd/act_sys_load_by_fzn",
+      "unauthenticated_http_status": 401,
+      "unauthenticated_message": "Access denied due to missing subscription key.",
+      "required_environment": [
+        "ERCOT_API_USERNAME",
+        "ERCOT_API_PASSWORD",
+        "ERCOT_API_SUBSCRIPTION_KEY"
+      ],
+      "operating_days_required": [
+        "2019-01-01 through 2024-12-31",
+        "2026-08-28 through 2026-11-03"
+      ]
+    },
+    "not_substituted": {
+      "source": "ERCOT public native-load archives",
+      "url": "https://www.ercot.com/gridinfo/load/load_hist",
+      "reason": "docs/HISTORICAL_LAB.md states native load is not the same series as the forecast-zone load used by the probabilistic candidate. Zone weights require the NP6-346-CD NORTH, SOUTH, WEST, and HOUSTON columns."
+    },
+    "weather_source": {
+      "url": "https://archive-api.open-meteo.com/v1/archive",
+      "model": "era5",
+      "probe_http_status": 200,
+      "probe_at": "2026-11-11T05:21:37Z",
+      "downloaded_for_training": false,
+      "reason_not_downloaded": "The feature table cannot be built without the NP6-346-CD load series."
+    }
+  },
+  "regeneration_2026_11_17": {
+    "regenerated_at": "2026-11-17",
+    "status": "completed_published_evaluation_metrics_not_reproduced",
+    "archived_at_evaluation_time": false,
+    "bundle_gate": "not_passed",
+    "feature_availability_gate": "not_passed",
+    "published_metrics_overwritten": false,
+    "git_sha": "9dba63898bd29e98faacdc6c22df6560b9f9bf74",
+    "training_code_diff_since_results_commit": "empty",
+    "runtime": {
+      "python": "3.12.16",
+      "numpy": "1.26.4",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.9.0",
+      "random_state": 42
+    },
+    "frozen_command_unchanged": true,
+    "directory": "evidence/ercot_v1_5/regeneration_2026_11_17",
+    "joined_rows": {
+      "segment_a": 52602,
+      "segment_b": 1603
+    },
+    "training_rows": 52434,
+    "excluded_unmatched_hours_utc": [
+      "2025-01-01T00:00Z..05:00Z",
+      "2026-11-03T00:00Z..05:00Z"
+    ],
+    "imputed_hours": 0,
+    "tolerance": "|diff| <= 5.1e-7 for published floats (six-decimal check in inferred_covered_count); Wilson CI equal at 4 dp; counts and strings exact",
+    "published_values_compared": 55,
+    "published_values_reproduced": 30,
+    "reproduced": "all calibration-window values, window bounds, counts, crossings, finiteness",
+    "not_reproduced": "all evaluation-window coverage, pinball, baseline pinball, skill, Wilson CI, q50 MAE",
+    "finding": "Calibration offsets match to < 5e-7 MW, so training data and the fitted center match the original run. The seasonal baseline pinball also differs, and it depends only on training load and evaluation-window actual load, so the original run's 2026-10-05..2026-11-01 load differs from what NP6-346-CD returns now. The cause cannot be identified because the original rows were not archived."
+  },
+  "note": "Hashes cover the published aggregates, the recomputed evidence document, the untouched v1.4 evidence file, and this script. The missing-input list is what a complete bundle would still need before the evidence-bundle gate could be reconsidered."
+}

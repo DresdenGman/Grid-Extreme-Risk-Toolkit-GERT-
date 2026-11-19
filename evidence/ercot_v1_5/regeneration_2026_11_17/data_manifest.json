@@ -1,0 +1,36 @@
+{
+  "joined_rows": 54205,
+  "load_rows": 54217,
+  "load_source": "ERCOT NP6-346-CD official archives and tabular recovery",
+  "unmatched_boundary_rows": 12,
+  "weather_locations": [
+    {
+      "latitude": 32.7767,
+      "longitude": -96.797,
+      "zone": "NORTH"
+    },
+    {
+      "latitude": 29.4241,
+      "longitude": -98.4936,
+      "zone": "SOUTH"
+    },
+    {
+      "latitude": 31.9973,
+      "longitude": -102.0779,
+      "zone": "WEST"
+    },
+    {
+      "latitude": 29.7604,
+      "longitude": -95.3698,
+      "zone": "HOUSTON"
+    }
+  ],
+  "weather_source": "Open-Meteo Historical Weather API, ERA5",
+  "weather_weights": {
+    "HOUSTON": 0.2618792954178068,
+    "NORTH": 0.3448663984031006,
+    "SOUTH": 0.26127382930701115,
+    "WEST": 0.1319804768720815
+  },
+  "weather_weights_training_period": "2019-01-01/2024-12-31"
+}
