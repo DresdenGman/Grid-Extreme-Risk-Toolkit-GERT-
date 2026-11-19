@@ -20,6 +20,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Studio pages use the paper journal shell. Methods, version, review, and
+  the Historical Lab state what they are. Fig. 1 can be reprinted with
+  `node scripts/fig1.mjs`.
+- The homepage contents list links every existing route. The Historical
+  Lab entry describes a deterministic exercise over three 72-hour windows.
+- The website homepage is the decision poster. It reads v1.4 from
+  `evidence/ercot_v1_4_validation.json` and v1.5 from the unmerged PR #23
+  snapshot until that file is on main. Weather, system load, and capacity
+  render only when the API returns an external forecast or official ERCOT
+  values; estimated fallbacks stay UNAVAILABLE. The Historical Lab remains
+  at `/history`.
 - README and the live tool aligned with the evidence that can be checked
   (#25). The README leads with the Historical Lab, the rejected v1.4 gate,
   and the community ledger. Survey totals stay labeled organizer-reported

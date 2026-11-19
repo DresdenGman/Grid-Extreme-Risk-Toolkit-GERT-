@@ -41,3 +41,7 @@ export const TEST_RUN = {
   backend: 142,
   frontend: 51,
 } as const;
+
+/** Approved footer line. 796e768 is a later main merge, not the v1.2.0 archive. */
+export const CI_ARCHIVE_NOTE =
+  'Tests: 141 backend and 50 frontend passed in CI on 2026-11-05 on main commit 796e768, merged after the v1.2.0 tag. The archived v1.2.0 release is tag v1.2.0, commit 34aa4e0.';

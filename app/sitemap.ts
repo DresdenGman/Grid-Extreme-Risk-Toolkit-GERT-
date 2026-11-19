@@ -14,10 +14,11 @@ const routes = [
   '/events/polar-vortex',
   '/about',
   '/research',
+  '/changelog',
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://gert-d.vercel.app';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://gertgrid.space';
   const lastModified = new Date('2026-11-17T00:00:00.000Z');
 
   return routes.map((route) => ({

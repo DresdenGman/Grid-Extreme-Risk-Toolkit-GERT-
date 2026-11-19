@@ -9,7 +9,7 @@ import { api } from '@/lib/api';
 import type { ProductStatus } from '@/lib/types';
 
 const navItems = [
-  { name: 'Historical Lab', href: '/', icon: History },
+  { name: 'Historical Lab', href: '/history', icon: History },
   { name: 'Grid Notes', href: '/briefs/winter-load', icon: BookOpen },
   { name: 'Live Monitor', href: '/monitor', icon: LayoutDashboard },
   { name: 'Scenario Lab', href: '/scenario', icon: CloudLightning },
@@ -40,7 +40,7 @@ export default function Sidebar() {
   }, []);
 
   const isHealthy = status?.status === 'operational';
-  const isHistorical = pathname === '/' || pathname === '/history';
+  const isHistorical = pathname === '/history';
   const isHistoricalContent = isHistorical || pathname.startsWith('/briefs/');
   const modelLabel = status?.model_status === 'validated_production'
     ? 'VALIDATED'
@@ -87,7 +87,7 @@ export default function Sidebar() {
           return (
             <Link
               key={item.href}
-              href={presentationMode && !['/', '/review', '/community', '/briefs/winter-load'].includes(item.href) ? `${item.href}?demo=1` : item.href}
+              href={presentationMode && !['/history', '/review', '/community', '/briefs/winter-load'].includes(item.href) ? `${item.href}?demo=1` : item.href}
               className={clsx(
                 "group flex items-center gap-3 border px-3 py-3 text-sm font-medium transition-all duration-200",
                 isActive

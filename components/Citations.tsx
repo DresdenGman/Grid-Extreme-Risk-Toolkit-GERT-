@@ -1,4 +1,4 @@
-import { DATASET_DOI, DATASET_PUBLISHED, DATASET_VERSION, doiUrl, PRODUCT_NAME, SOFTWARE_CONCEPT_DOI, SOFTWARE_PUBLISHED, SOFTWARE_VERSION, TEST_RUN } from '@/lib/citations';
+import { CI_ARCHIVE_NOTE, DATASET_DOI, DATASET_PUBLISHED, DATASET_VERSION, doiUrl, PRODUCT_NAME, SOFTWARE_CONCEPT_DOI, SOFTWARE_PUBLISHED, SOFTWARE_VERSION } from '@/lib/citations';
 
 export function Citations() {
   return (
@@ -13,7 +13,7 @@ export function Citations() {
         {' '}({DATASET_VERSION}, published {DATASET_PUBLISHED}).
       </p>
       <p className="mt-2 max-w-3xl" data-testid="test-count-citation">
-        Automated tests passing on {TEST_RUN.asOf}: {TEST_RUN.backend} backend and {TEST_RUN.frontend} frontend.
+        {CI_ARCHIVE_NOTE}
       </p>
     </footer>
   );
