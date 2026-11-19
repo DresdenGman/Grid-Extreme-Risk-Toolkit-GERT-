@@ -30,7 +30,7 @@
             "onAutoForward": "ignore"
         }
     },
-    "postCreateCommand": "python3 -m venv .venv && .venv/bin/pip install --quiet --upgrade pip && .venv/bin/pip install -r requirements.txt && npm install && .venv/bin/python scripts/verify_historical_report.py --case summer-2023 --capacity 80000 --reduction 5",
+    "postCreateCommand": "python3 -m venv .venv && .venv/bin/pip install --quiet --upgrade pip && .venv/bin/pip install -r requirements.txt && npm ci && .venv/bin/python scripts/verify_historical_report.py --case summer-2023 --capacity 80000 --reduction 5",
     "postStartCommand": "bash .devcontainer/start-app.sh",
     "postAttachCommand": "bash .devcontainer/start-app.sh"
 }

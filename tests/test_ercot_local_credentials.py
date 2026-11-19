@@ -23,7 +23,9 @@ def test_parse_credentials_rejects_incomplete_or_unknown_values(text: str) -> No
         parse_credentials(text)
 
 
-def test_load_local_credentials_rejects_symbolic_link(tmp_path: Path) -> None:
+def test_load_local_credentials_rejects_symbolic_link(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    for key in ("ERCOT_API_USERNAME", "ERCOT_API_PASSWORD", "ERCOT_API_SUBSCRIPTION_KEY"):
+        monkeypatch.delenv(key, raising=False)
     target = tmp_path / "target"
     target.write_text(
         "ERCOT_API_USERNAME=u\nERCOT_API_PASSWORD=p\nERCOT_API_SUBSCRIPTION_KEY=k\n"
