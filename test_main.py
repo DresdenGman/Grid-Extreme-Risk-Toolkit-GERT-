@@ -17,6 +17,22 @@ from services.region import get_region_capacity
 
 client = TestClient(app)
 
+
+@pytest.fixture(autouse=True)
+def _reset_ercot_shared_token():
+    """Drop any cached ERCOT token before and after each test.
+
+    The cache is process-wide. Leaving it set would let one test's token
+    satisfy the next test, and a failed assertion could print that value.
+    """
+    from data.ercot import ERCOTAdapter
+
+    ERCOTAdapter._shared_id_token = None
+    ERCOTAdapter._shared_token_expires_at = None
+    yield
+    ERCOTAdapter._shared_id_token = None
+    ERCOTAdapter._shared_token_expires_at = None
+
 # ==========================
 # Unit Tests: Model Logic
 # ==========================
@@ -160,8 +176,10 @@ def test_api_predict_flow():
     assert data["diagnostics"]["backend_type"] == "stub"
     assert data["diagnostics"]["load_data_source"] in {
         "official_live",
-        "estimated_fallback",
+        "live_load_unavailable",
     }
+    if data["diagnostics"]["load_data_source"] != "official_live":
+        assert "real_load_mw" not in data["diagnostics"]
 
 
 def test_health_reports_app_env():
@@ -227,13 +245,15 @@ def test_ercot_token_is_cached(monkeypatch):
     assert client.calls == 1
 
 
-def test_ercot_missing_credentials_returns_estimated_fallback(monkeypatch):
-    from data.ercot import ERCOTAdapter
-
+def test_ercot_missing_credentials_returns_503(monkeypatch):
     for key in ("ERCOT_API_USERNAME", "ERCOT_API_PASSWORD", "ERCOT_API_SUBSCRIPTION_KEY"):
         monkeypatch.delenv(key, raising=False)
-    load = asyncio.run(ERCOTAdapter().fetch_current_load("ERCOT_NORTH"))
-    assert load.source == "estimated_fallback"
+    response = client.get("/load/current", params={"region": "ERCOT_NORTH"})
+    assert response.status_code == 503
+    body = response.json()
+    assert body["error"] == "live_load_unavailable"
+    assert "unavailable" in body["detail"].lower()
+    assert "current_load_mw" not in body
 
 
 def test_api_predict_rejects_invalid_region():

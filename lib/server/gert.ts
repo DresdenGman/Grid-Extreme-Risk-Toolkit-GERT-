@@ -297,23 +297,6 @@ async function fetchErcotContext(): Promise<GridContext> {
   return value;
 }
 
-function estimatedContext(): GridContext {
-  const hour = Number(
-    new Intl.DateTimeFormat('en-US', {
-      timeZone: 'America/Chicago',
-      hour: '2-digit',
-      hour12: false,
-    }).format(new Date()),
-  );
-  return {
-    loadMw: 45_000 + 15_000 * Math.sin(((hour - 6) * Math.PI) / 12),
-    capacityMw: CONFIGURED_CAPACITY_MW,
-    dataSource: 'estimated_fallback',
-    capacitySource: 'configured_reference',
-    capacityBasis: 'configured ERCOT system reference',
-  };
-}
-
 function clearSkyIrradiance(
   timestamp: Date,
   latitude: number,
@@ -584,7 +567,13 @@ export async function handleGertRequest(
     try {
       context = await fetchErcotContext();
     } catch {
-      context = estimatedContext();
+      return json(
+        {
+          error: 'live_load_unavailable',
+          detail: 'Official ERCOT load is unavailable.',
+        },
+        503,
+      );
     }
     return json({
       region: 'ERCOT_SYSTEM',

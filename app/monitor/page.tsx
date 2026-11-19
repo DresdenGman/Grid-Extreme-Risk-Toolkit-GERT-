@@ -41,7 +41,7 @@ function sourceLabel(provenance: Provenance | null) {
 
 function gridSourceLabel(context: GridLoadResponse | null, contextError: string | null) {
   if (context?.data_source === 'official_live') return 'OFFICIAL ERCOT SYSTEM CONTEXT';
-  if (context) return 'ESTIMATED GRID CONTEXT';
+  if (contextError?.includes('load')) return 'live data unavailable';
   if (contextError) return `GRID CONTEXT UNAVAILABLE — ${contextError}`;
   return 'GRID CONTEXT SYNCING';
 }
@@ -95,10 +95,11 @@ export default function MonitorPage() {
       failures.push('weather');
     }
 
-    if (loadResult.status === 'fulfilled') {
+    if (loadResult.status === 'fulfilled' && loadResult.value.data.data_source === 'official_live') {
       setGridContext(loadResult.value.data);
       setLastUpdated(new Date(loadResult.value.data.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     } else {
+      setGridContext(null);
       failures.push('load');
     }
 
@@ -191,11 +192,17 @@ export default function MonitorPage() {
             <span className="technical-label text-[#87847e]">Target</span>
             <span className="font-mono text-xs text-[#454545]">T+01:00</span>
             <span className="h-3 w-px bg-black/15" />
-            <span className="font-mono text-xs text-[#454545]">Updated {lastUpdated}</span>
+            <span className="font-mono text-xs text-[#454545]">{contextError?.includes('load') ? 'live data unavailable' : `Updated ${lastUpdated}`}</span>
           </div>
         </div>
       </header>
 
+      {!presentationMode && contextError?.includes('load') && (
+        <div role="status" className="reveal border border-[#9a6200] bg-[#f3c64d] px-4 py-4 text-sm text-[#141414]">
+          <p className="font-semibold tracking-wide">live data unavailable</p>
+          <p className="mt-1 leading-6">No official ERCOT load was returned, so no substitute number is shown.</p>
+        </div>
+      )}
       {!presentationMode && error && (
         <div role="status" className="reveal flex items-start gap-3 border border-[#9a6200]/45 bg-[#9a6200]/10 px-4 py-3 text-sm text-[#5f4700]">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
@@ -281,7 +288,7 @@ export default function MonitorPage() {
             </div>
           </div>
           <div className="grid flex-1 grid-cols-2">
-            <MetricCell label="Current system load" value={gridContext ? `${(gridContext.current_load_mw / 1000).toFixed(1)} GW` : '—'} icon={<Radio />} />
+            <MetricCell label="Current system load" value={officialLoad && gridContext ? `${(gridContext.current_load_mw / 1000).toFixed(1)} GW` : contextError?.includes('load') ? 'live data unavailable' : '—'} icon={<Radio />} />
             <MetricCell label="Available capacity" value={capacity !== null ? `${(capacity / 1000).toFixed(1)} GW` : '—'} icon={<Gauge />} />
             <MetricCell label="Expected / P50" value={data ? `${(data.q50_load_mw / 1000).toFixed(1)} GW` : '—'} icon={<Activity />} />
             <MetricCell label="Extreme / P99" value={data ? `${(data.q99_load_mw / 1000).toFixed(1)} GW` : '—'} icon={<Zap />} />
@@ -342,7 +349,7 @@ export default function MonitorPage() {
       </section>
 
       <section className="grid gap-px overflow-hidden border border-[#141414] bg-[#141414] shadow-[5px_5px_0_#ff4d00] md:grid-cols-4">
-        <EvidenceCell icon={<Database />} title="Load context" value={presentationMode ? 'Simulated peak-day load' : officialLoad ? 'Official ERCOT live' : gridContext ? 'Estimated fallback' : 'Unavailable'} verified={!presentationMode && officialLoad} />
+        <EvidenceCell icon={<Database />} title="Load context" value={presentationMode ? 'Simulated peak-day load' : officialLoad ? 'Official ERCOT live' : contextError?.includes('load') ? 'live data unavailable' : 'Unavailable'} verified={!presentationMode && officialLoad} />
         <EvidenceCell icon={<ShieldCheck />} title="Capacity basis" value={presentationMode ? 'Simulated adequacy margin' : officialCapacity ? gridContext?.capacity_basis ?? 'ERCOT adequacy' : gridContext?.capacity_basis ?? 'Unavailable'} verified={!presentationMode && officialCapacity} />
         <EvidenceCell icon={<Cpu />} title="Model artifact" value={presentationMode ? 'Presentation candidate' : backendReal ? data?.diagnostics.model_version ?? 'Trained' : 'Stub / demo'} verified={!presentationMode && backendReal} />
         <EvidenceCell icon={<Braces />} title="Decision contract" value="P50 → P99 + provenance" verified />
