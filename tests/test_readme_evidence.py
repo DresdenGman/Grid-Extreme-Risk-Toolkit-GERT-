@@ -25,6 +25,24 @@ def test_readme_gate_table_matches_evidence_json():
     assert evidence["quantile_crossings"] == 0
 
 
+def test_readme_hero_matches_the_community_ledger():
+    hero = README.split("## Start here", 1)[0]
+    assert "Grid Extreme Risk Toolkit (GERT)" in hero
+    assert "115+" not in hero
+    assert "57" not in hero
+    assert "0 independent retests" in hero
+    assert "4 organizer-forwarded reports" in hero
+    assert "2 hands-on core completions" in hero
+    assert "organizer-reported, unverified" in hero
+    assert "10.5281/zenodo.23982226" in README
+    assert "10.5281/zenodo.22975251" in README
+    assert "+75.8%" not in README
+    citation = (ROOT / "lib" / "citations.ts").read_text(encoding="utf-8")
+    assert "backend: 142" in citation
+    assert "frontend: 51" in citation
+    assert "Automated tests passing on 2026-11-17: 142 backend and 51 frontend." in README
+
+
 def _checker(case: str, capacity: int, reduction: int) -> dict:
     out = subprocess.run(
         [sys.executable, "scripts/verify_historical_report.py",

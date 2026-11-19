@@ -30,7 +30,7 @@ export default function Navbar() {
           <div className="grid h-8 w-8 place-items-center border border-[#141414] bg-[#141414]">
             <Activity className="h-4 w-4 text-[#ff4d00]" />
           </div>
-          <div><h1 className="display-serif text-lg text-[#141414]">GERT</h1><p className="technical-label text-[8px] text-[#6d6b66]">Tail-risk intelligence</p></div>
+          <div><h1 className="display-serif text-lg text-[#141414]">GERT</h1><p className="technical-label text-[8px] text-[#6d6b66]">Grid Extreme Risk Toolkit</p></div>
         </div>
         <button aria-label={isOpen ? 'Close navigation' : 'Open navigation'} onClick={() => setIsOpen(!isOpen)} className="border border-[#141414] p-2 text-[#141414]">
           {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

@@ -14,16 +14,16 @@ not done.
 | Scientific method | Preregistered validation gates; pass/fail decided by numbers fixed in advance; failures published | Met for process — the v1.4 candidate was rejected by its own gate and the record is public ([decision record](docs/DECISION_RECORD_ERCOT_v1_4.md)). The v1.5 scores are evidence only and do not package a model ([decision record](docs/DECISION_RECORD_ERCOT_v1_5.md)). No candidate has passed yet |
 | Integrity & security | Every public claim traceable to a checked artifact; dependency audit green | Met as of v1.2 (see [CHANGELOG](CHANGELOG.md)); a drift-guard test fails CI if the README evidence tables diverge from the evidence files |
 | Product | A stranger can reproduce the core calculation unaided in ~15 minutes; the hosted demo is honest about what is gated | Mostly met — reproduction path and labeled demo mode are in place; live inference stays gated (HTTP 503) until a candidate passes |
-| Teaching impact | Real sessions with counted participants and published feedback, including the weak points | Two pilot sessions run (115+ participants); feedback report published ([docs/FEEDBACK.md](docs/FEEDBACK.md)); third-party adoption beyond author-run sessions has not happened yet |
-| Independent validation | Replication by people other than the author; citable archive | Started — one independent reproduction on record, Zenodo DOI [10.5281/zenodo.22975251](https://doi.org/10.5281/zenodo.22975251), listings on OER Commons and MERLOT; scale is the gap |
+| Teaching impact | Real sessions with counted participants and published feedback, including the weak points | Public ledger: 4 organizer-forwarded reports, 2 hands-on core completions, 0 independent retests (Community evidence page, updated September 25, 2026). Those reports do not establish adoption or learning effectiveness. [docs/FEEDBACK.md](docs/FEEDBACK.md) is an organizer-reported, unverified survey summary |
+| Independent validation | Replication by people other than the author; citable archive | Not established. The dataset archive [10.5281/zenodo.22975251](https://doi.org/10.5281/zenodo.22975251) is the author's own record (v1, published 2026-09-26) and includes a Python checker separate from the browser code. Author-submitted listings were found on MERLOT (material 824240305, added September 25, 2026, submitter Dresden Goehner) and, by search on November 17, 2026, on OER Commons (same title, author Dresden Goehner, date added September 25, 2026). A listing is not an independent replication |
 | Sustainability | A stated model for who benefits, who hosts or pays, and why the project continues without depending on one person's spare time | Not yet — see "Later" below; this page deliberately does not invent one |
 | Community | Contributors beyond the author; maintained release cadence | Early — contributions and reviews welcome; release cadence formalized from v1.2 |
 
 ## Now
 
-- Publish the Historical Lab pilot feedback report (57 responses) with method
-  and limitations — done alongside this roadmap in `docs/FEEDBACK.md`, with
-  aggregate data and the analysis script under `data/feedback/`.
+- Keep the organizer-reported, unverified survey summary in
+  `docs/FEEDBACK.md`, with its method and limitations. The repository holds
+  `data/feedback/summary.json` and the analysis script, not the raw responses.
 - Keep the changelog and releases current from v1.2 onward.
 
 ## Next

@@ -8,6 +8,7 @@ import {
   Scale,
 } from 'lucide-react';
 import type { Metadata } from 'next';
+import { SisterBenchmark } from '@/components/SisterBenchmark';
 
 export const metadata: Metadata = {
   title: 'Open Research — GERT',
@@ -94,7 +95,7 @@ export default function ResearchPage() {
           </div>
           <h2 className="display-serif mt-6 text-3xl tracking-tight">The latest model candidate is not production-authorized.</h2>
           <p className="mt-4 max-w-3xl text-sm leading-6 text-[#d0cfca]">
-            It showed positive pinball skill but missed predeclared calibration tolerances. Live operating context remains useful; probabilistic prediction stays gated until a frozen candidate passes every promotion requirement.
+            It showed positive pinball skill but missed predeclared calibration tolerances. Probabilistic prediction stays gated until a frozen candidate passes every promotion requirement.
           </p>
         </div>
 
@@ -111,6 +112,8 @@ export default function ResearchPage() {
           </p>
         </div>
       </section>
+
+      <SisterBenchmark />
     </div>
   );
 }

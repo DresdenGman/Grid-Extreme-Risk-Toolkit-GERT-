@@ -1,0 +1,36 @@
+{
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python"
+            ],
+            "settings": {
+                "task.allowAutomaticTasks": "on"
+            }
+        }
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "lts"
+        }
+    },
+    "forwardPorts": [
+        3000,
+        8000
+    ],
+    "image": "mcr.microsoft.com/devcontainers/python:3.12",
+    "name": "GERT \u2014 Grid Extreme Risk Toolkit",
+    "portsAttributes": {
+        "3000": {
+            "label": "GERT web app \u2014 Historical Lab",
+            "onAutoForward": "openPreview"
+        },
+        "8000": {
+            "label": "GERT API",
+            "onAutoForward": "ignore"
+        }
+    },
+    "postCreateCommand": "python3 -m venv .venv && .venv/bin/pip install --quiet --upgrade pip && .venv/bin/pip install -r requirements.txt && npm ci && .venv/bin/python scripts/verify_historical_report.py --case summer-2023 --capacity 80000 --reduction 5",
+    "postStartCommand": "bash .devcontainer/start-app.sh",
+    "postAttachCommand": "bash .devcontainer/start-app.sh"
+}

@@ -63,7 +63,12 @@ export default function MonitorPage() {
   const [presentationMode, setPresentationMode] = useState(false);
   const mountedRef = useRef(true);
 
-  useEffect(() => () => { mountedRef.current = false; }, []);
+  useEffect(() => {
+    // A simulated remount runs cleanup before the effect again. Mark the
+    // instance active on every run so the live response is still applied.
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   useEffect(() => {
     const enabled = new URLSearchParams(window.location.search).get('demo') === '1';
@@ -178,7 +183,7 @@ export default function MonitorPage() {
         <div>
           <div className="mb-3 flex items-center gap-2 text-[#ff4d00]">
             <Radio className="h-3.5 w-3.5" />
-            <span className="technical-label">ERCOT / Operational tail-risk intelligence</span>
+            <span className="technical-label">ERCOT / Live monitor</span>
           </div>
           <h1 className="display-serif max-w-4xl text-[clamp(2.1rem,4.6vw,4.9rem)] leading-[0.93] tracking-[-0.055em] text-[#141414]">
             See the grid edge<br />before it becomes the event.
@@ -206,7 +211,7 @@ export default function MonitorPage() {
       {!presentationMode && error && (
         <div role="status" className="reveal flex items-start gap-3 border border-[#9a6200]/45 bg-[#9a6200]/10 px-4 py-3 text-sm text-[#5f4700]">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
-          <p><strong>Prediction layer gated.</strong> {error} Official grid context remains visible independently when available.</p>
+          <p><strong>Prediction layer gated.</strong> {error} Official grid context is shown only when an official source responds.</p>
         </div>
       )}
 
