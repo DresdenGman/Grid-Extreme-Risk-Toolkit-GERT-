@@ -41,7 +41,7 @@ function sourceLabel(provenance: Provenance | null) {
 
 function gridSourceLabel(context: GridLoadResponse | null, contextError: string | null) {
   if (context?.data_source === 'official_live') return 'OFFICIAL ERCOT SYSTEM CONTEXT';
-  if (context?.data_source === 'estimated_fallback') return 'ESTIMATE — NOT AN OFFICIAL ERCOT READING';
+  if (contextError?.includes('load')) return 'live data unavailable';
   if (contextError) return `GRID CONTEXT UNAVAILABLE — ${contextError}`;
   return 'GRID CONTEXT SYNCING';
 }
@@ -101,16 +101,13 @@ export default function MonitorPage() {
       failures.push('weather');
     }
 
-    if (loadResult.status === 'fulfilled') {
+    if (loadResult.status === 'fulfilled' && loadResult.value.data.data_source === 'official_live') {
       const payload = loadResult.value.data;
       setGridContext(payload);
-      if (payload.data_source === 'official_live') {
-        setLoadState('official');
-        setLastUpdated(new Date(payload.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-      } else {
-        setLoadState('estimate');
-      }
+      setLoadState('official');
+      setLastUpdated(new Date(payload.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     } else {
+      setGridContext(null);
       setLoadState('unavailable');
       failures.push('load');
     }
@@ -171,7 +168,6 @@ export default function MonitorPage() {
   const marginState = marginMw === null ? 'AWAITING MODEL' : marginMw < 0 ? 'CAPACITY BREACH' : marginMw < 2000 ? 'TIGHT MARGIN' : 'BUFFER INTACT';
   const backendReal = data?.diagnostics.backend_type === 'real';
   const officialLoad = data?.diagnostics.load_data_source === 'official_live' || gridContext?.data_source === 'official_live';
-  const estimatedLoad = !presentationMode && gridContext?.data_source === 'estimated_fallback';
   const officialCapacity = data?.diagnostics.capacity_data_source === 'official_adequacy' || gridContext?.capacity_source === 'official_adequacy';
 
   const refreshProduct = async () => {
@@ -210,16 +206,16 @@ export default function MonitorPage() {
                 ? `Updated ${lastUpdated}`
                 : loadState === 'pending'
                   ? 'Checking official load'
-                  : 'Official load unavailable'}
+                  : 'live data unavailable'}
             </span>
           </div>
         </div>
       </header>
 
-      {!presentationMode && loadState === 'estimate' && (
+      {!presentationMode && loadState === 'unavailable' && (
         <div role="status" className="reveal border border-[#9a6200] bg-[#f3c64d] px-4 py-4 text-sm text-[#141414]">
-          <p className="font-semibold tracking-wide">ESTIMATE — not an official ERCOT reading.</p>
-          <p className="mt-1 leading-6">No official load is available. The fallback megawatt figure is withheld, so it is not shown beside live weather or stamped as an update.</p>
+          <p className="font-semibold tracking-wide">live data unavailable</p>
+          <p className="mt-1 leading-6">No official ERCOT load was returned, so no substitute number is shown.</p>
         </div>
       )}
 
@@ -308,7 +304,7 @@ export default function MonitorPage() {
             </div>
           </div>
           <div className="grid flex-1 grid-cols-2">
-            <MetricCell label="Current system load" value={officialLoad && gridContext ? `${(gridContext.current_load_mw / 1000).toFixed(1)} GW` : estimatedLoad ? 'Estimate withheld' : '—'} icon={<Radio />} />
+            <MetricCell label="Current system load" value={officialLoad && gridContext ? `${(gridContext.current_load_mw / 1000).toFixed(1)} GW` : loadState === 'unavailable' ? 'live data unavailable' : '—'} icon={<Radio />} />
             <MetricCell label="Available capacity" value={(presentationMode || officialCapacity) && capacity !== null ? `${(capacity / 1000).toFixed(1)} GW` : '—'} icon={<Gauge />} />
             <MetricCell label="Expected / P50" value={data ? `${(data.q50_load_mw / 1000).toFixed(1)} GW` : '—'} icon={<Activity />} />
             <MetricCell label="Extreme / P99" value={data ? `${(data.q99_load_mw / 1000).toFixed(1)} GW` : '—'} icon={<Zap />} />
@@ -369,7 +365,7 @@ export default function MonitorPage() {
       </section>
 
       <section className="grid gap-px overflow-hidden border border-[#141414] bg-[#141414] shadow-[5px_5px_0_#ff4d00] md:grid-cols-4">
-        <EvidenceCell icon={<Database />} title="Load context" value={presentationMode ? 'Simulated peak-day load' : officialLoad ? 'Official ERCOT live' : estimatedLoad ? 'Estimated fallback withheld' : 'Unavailable'} verified={!presentationMode && officialLoad} />
+        <EvidenceCell icon={<Database />} title="Load context" value={presentationMode ? 'Simulated peak-day load' : officialLoad ? 'Official ERCOT live' : loadState === 'unavailable' ? 'live data unavailable' : 'Unavailable'} verified={!presentationMode && officialLoad} />
         <EvidenceCell icon={<ShieldCheck />} title="Capacity basis" value={presentationMode ? 'Simulated adequacy margin' : officialCapacity ? gridContext?.capacity_basis ?? 'ERCOT adequacy' : gridContext?.capacity_source === 'configured_reference' ? 'Configured reference, not a live reading' : 'Unavailable'} verified={!presentationMode && officialCapacity} />
         <EvidenceCell icon={<Cpu />} title="Model artifact" value={presentationMode ? 'Presentation candidate' : backendReal ? data?.diagnostics.model_version ?? 'Trained' : 'Stub / demo'} verified={!presentationMode && backendReal} />
         <EvidenceCell icon={<Braces />} title="Decision contract" value="P50 → P99 + provenance" verified />
