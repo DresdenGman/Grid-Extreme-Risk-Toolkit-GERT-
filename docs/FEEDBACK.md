@@ -1,9 +1,16 @@
 # Historical Lab pilot feedback
 
-Results of the participant feedback survey for the GERT Historical Lab pilot
-sessions. Published in full, including the weak points; the aggregate data
-and the script that produces it are in
-[`data/feedback/`](../data/feedback/).
+**Organizer-reported, unverified.** The participation total (115+) and the
+analyzed-response total (57) below come from the session organizer. This
+repository stores only
+[`data/feedback/summary.json`](../data/feedback/summary.json) and
+[`analyze_feedback.py`](../data/feedback/analyze_feedback.py). It does not
+include the raw survey responses, so these totals and the tables derived
+from the summary cannot be checked against individual answers.
+
+The public counted record is the Community evidence page: 4
+organizer-forwarded reports, 2 hands-on core completions, and 0 independent
+retests. Those reports do not establish adoption or learning effectiveness.
 
 ## Method
 
@@ -21,7 +28,7 @@ and the script that produces it are in
   summarized thematically; quotes below are used only from the 51 respondents
   (89.5%) who agreed to anonymous quotation, and are quoted anonymously.
 
-## Who responded (n = 57)
+## Who responded
 
 | Question | Result |
 | --- | --- |
@@ -29,7 +36,7 @@ and the script that produces it are in
 | Session | Session 1 (May 2026) 27 (47.4%) · Session 2 (fall 2026) 26 (45.6%) · Volunteer run 4 (7.0%) |
 | Prior energy/grid experience | None 26 (45.6%) · A little 23 (40.4%) · A lot 8 (14.0%) |
 
-## Ratings (1–5 scale, n = 57 each)
+## Ratings (1–5 scale)
 
 | Item | Mean | Distribution (2/3/4/5; no 1s were given) |
 | --- | --- | --- |

@@ -1,21 +1,29 @@
-![GERT — Grid Extreme Risk Toolkit](docs/assets/hero.png)
+# Grid Extreme Risk Toolkit (GERT)
+
+![Grid Extreme Risk Toolkit (GERT)](docs/assets/hero.png)
 
 [![CI](https://github.com/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-/actions/workflows/ci.yml/badge.svg)](https://github.com/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/github/license/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-)](LICENSE)
 [![Software DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23982226.svg)](https://doi.org/10.5281/zenodo.23982226)
 [![Dataset DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22975251.svg)](https://doi.org/10.5281/zenodo.22975251)
 [![Live site](https://img.shields.io/badge/live-gert--d.vercel.app-orange)](https://gert-d.vercel.app)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-)
 
 **Probabilistic grid-risk decision support with tail-risk analysis, calibration gates, and explicit data/model provenance.**
 
-| 216 | 115+ participants | Skill is not enough | Archived |
+**Run it in your browser:** [Open in GitHub Codespaces](https://codespaces.new/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-) — nothing to install; the environment sets itself up, recomputes one Historical Lab case as a smoke check, and the app starts on its own.
+
+| 216 hours | Gate rejected | 0 independent retests | Two DOIs |
 | --- | --- | --- | --- |
-| recorded ERCOT hours in the public Historical Lab — every number on this page can be recomputed from them | ran the lab in two pilot sessions; **57** returned the survey, and their criticism is printed below, not buried | the latest model candidate scored pinball skill **+0.76 to +0.84** — and was **rejected** for missing its calibration gates | software and dataset carry separate Zenodo DOIs (badges above); releases are versioned and citable |
+| recorded ERCOT hours in the public Historical Lab — every number in the lab tables below can be recomputed from them | `ercot-delta-quantile-v1.4` scored pinball skill **+0.76 to +0.84** and was **rejected** for missing its calibration gates | Community ledger, updated September 25, 2026: 4 organizer-forwarded reports, 2 hands-on core completions, 1 script-assisted walkthrough, 2 feedback-linked changes. Those reports do not establish adoption or learning effectiveness | Software concept DOI [10.5281/zenodo.23982226](https://doi.org/10.5281/zenodo.23982226) (v1.2.0, published 2026-11-05). Dataset DOI [10.5281/zenodo.22975251](https://doi.org/10.5281/zenodo.22975251) (v1, published 2026-09-26) |
+
+The counted public record is the [Community evidence](https://gert-d.vercel.app/community) page. Survey notes in [docs/FEEDBACK.md](docs/FEEDBACK.md) are organizer-reported, unverified.
 
 ## Start here
 
 | If you want to… | Go here | Time |
 | --- | --- | --- |
+| Run the full app (web + API) in your browser, nothing to install | [Open in GitHub Codespaces](https://codespaces.new/DresdenGman/Grid-Extreme-Risk-Toolkit-GERT-) — setup is automatic and ends by recomputing one Historical Lab case as a smoke check; the app then starts on its own — just trust the folder and allow automatic tasks when VS Code asks (no command to type; `bash start.sh` restarts it) | a few min to build |
 | Reproduce the Historical Lab calculations yourself | [Colab reproduction notebook](docs/notebooks/README.md) or [reproduction guide](docs/HISTORICAL_LAB.md) | ~15 min |
 | Review the evidence, including why the latest model candidate was rejected | [Evidence page](https://gert-d.vercel.app/review) and the [v1.4 decision record](docs/DECISION_RECORD_ERCOT_v1_4.md) | ~10 min |
 | Run GERT with a class or group | [20-minute workshop plan](docs/WORKSHOP.md) | 20 min |
@@ -64,16 +72,19 @@ The minimum uniform reduction is a property of the recorded peak (85,464 MW) aga
 [Review it in 10 minutes](https://gert-d.vercel.app/review) ·
 [Reproduce the calculations](docs/HISTORICAL_LAB.md) ·
 [Run a 20-minute workshop](docs/WORKSHOP.md) ·
-[Pilot feedback — 57 responses](docs/FEEDBACK.md)
+[Community evidence](https://gert-d.vercel.app/community) ·
+[Organizer-reported survey notes](docs/FEEDBACK.md)
 
 Select a case, set an assumed capacity and a uniform load reduction, compare outcomes, then export the hourly CSV and a JSON report with sources, assumptions, and checksums. This is deterministic historical analysis: capacity and interventions are counterfactual assumptions, and the calculated gap energy is not a probabilistic forecast, expected unserved energy, or realized savings. Reviewers can use the Historical Lab without credentials or a model server.
 
-## What participants said
+## Organizer-reported survey notes
 
-![Mean participant ratings: overall 4.33, engaging 4.23, instructions 4.11, checker ease 3.89 of 5](docs/assets/feedback-chart.png)
+The chart and quotation below are organizer-reported, unverified. Raw responses are not in this repository. The public count of trials is the Community evidence page, not this chart.
+
+![Mean participant ratings from the organizer-reported summary: overall 4.33, engaging 4.23, instructions 4.11, checker ease 3.89 of 5](docs/assets/feedback-chart.png)
 
 > "The checker tool's validation logic felt like a black box; it was hard to deduce why an hour with 94% peak demand was graded incorrect."
-> — pilot participant, quoted with consent ([full feedback report](docs/FEEDBACK.md))
+> — quoted with consent in the organizer-reported summary ([full note](docs/FEEDBACK.md))
 
 That criticism was acted on in the open: the checker now explains every rejection field by field — expected value, submitted value, difference, and the likely cause — and the lab page works a real example end to end before asking anyone to trust it.
 
@@ -238,6 +249,14 @@ CI repeats the tests, typecheck, dependency audits, production build, container 
 - `GET /model/evidence` — versioned sanitized candidate evaluation.
 - `GET /load/current?region=ERCOT_SYSTEM` — current operating context.
 - `POST /predict` — probabilistic inference; gated in production without a validated artifact.
+
+## Citation
+
+Grid Extreme Risk Toolkit (GERT).
+
+- Software concept DOI: [10.5281/zenodo.23982226](https://doi.org/10.5281/zenodo.23982226) (v1.2.0, published 2026-11-05).
+- Dataset DOI: [10.5281/zenodo.22975251](https://doi.org/10.5281/zenodo.22975251) (v1, published 2026-09-26).
+- Automated tests passing on 2026-11-17: 142 backend and 51 frontend.
 
 ## License
 

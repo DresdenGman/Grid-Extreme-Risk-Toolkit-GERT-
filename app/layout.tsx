@@ -1,14 +1,21 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import React from 'react';
+import { PRODUCT_NAME } from '@/lib/citations';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://gert-d.vercel.app';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: 'GERT — Grid Extreme Risk Intelligence',
+  title: PRODUCT_NAME,
   description: 'Explore historical ERCOT load, compare capacity assumptions, and reproduce grid-risk calculations with downloadable evidence.',
-  applicationName: 'GERT',
+  applicationName: PRODUCT_NAME,
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+  },
   keywords: [
     'power grid risk',
     'ERCOT',
@@ -19,14 +26,14 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'Dresden Goehner' }],
   openGraph: {
-    title: 'GERT — Grid Extreme Risk Intelligence',
-    description: 'Applied-mathematics decision intelligence for power-system tail risk, capacity stress and extreme events.',
-    images: [{ url: '/og.png', width: 1731, height: 909, alt: 'GERT — Grid Extreme Risk Intelligence' }],
+    title: PRODUCT_NAME,
+    description: 'Evidence-first decision support for power-system tail risk, capacity stress and extreme events.',
+    images: [{ url: '/og.png', width: 1731, height: 909, alt: PRODUCT_NAME }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'GERT — Grid Extreme Risk Intelligence',
-    description: 'Applied-mathematics decision intelligence for power-system tail risk, capacity stress and extreme events.',
+    title: PRODUCT_NAME,
+    description: 'Evidence-first decision support for power-system tail risk, capacity stress and extreme events.',
     images: ['/og.png'],
   },
 };
@@ -34,7 +41,7 @@ export const metadata: Metadata = {
 const softwareApplicationJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'SoftwareApplication',
-  name: 'GERT — Grid Extreme Risk Toolkit',
+  name: PRODUCT_NAME,
   applicationCategory: 'ScientificApplication',
   operatingSystem: 'Web',
   url: siteUrl,
