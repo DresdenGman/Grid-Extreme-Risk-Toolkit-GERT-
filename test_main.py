@@ -230,9 +230,8 @@ def test_ercot_token_is_cached(monkeypatch):
 def test_ercot_missing_credentials_returns_estimated_fallback(monkeypatch):
     from data.ercot import ERCOTAdapter
 
-    monkeypatch.delenv("ERCOT_API_USERNAME", raising=False)
-    monkeypatch.delenv("ERCOT_API_PASSWORD", raising=False)
-    monkeypatch.delenv("ERCOT_API_SUBSCRIPTION_KEY", raising=False)
+    for key in ("ERCOT_API_USERNAME", "ERCOT_API_PASSWORD", "ERCOT_API_SUBSCRIPTION_KEY"):
+        monkeypatch.delenv(key, raising=False)
     load = asyncio.run(ERCOTAdapter().fetch_current_load("ERCOT_NORTH"))
     assert load.source == "estimated_fallback"
 
