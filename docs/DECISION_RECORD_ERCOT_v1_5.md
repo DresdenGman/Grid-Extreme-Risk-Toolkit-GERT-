@@ -82,7 +82,7 @@ the calibration offsets cannot be recomputed from their inputs.
 
 What was added here is the published aggregate bundle, a SHA-256 manifest, and
 `scripts/recompute_ercot_v1_5_evidence.py`. The script recomputes every derived
-number from those aggregates and checks the hashes. It recomputes derived numbers from the published aggregates. The 2026-11-17 regeneration, recorded below, added hourly rows and did not reproduce the evaluation scores, so the evidence-bundle gate stays **not passed**.
+number from those aggregates and checks the hashes. The 2026-11-17 regeneration, recorded below, added hourly rows and did not reproduce the evaluation scores, so the evidence-bundle gate stays **not passed**.
 
 ### Feature availability was over-claimed. Confirmed.
 
