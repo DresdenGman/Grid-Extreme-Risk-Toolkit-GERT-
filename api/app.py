@@ -63,7 +63,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Grid Extreme Risk Toolkit API",
         description=f"Backend for GERT. Running Mode: {config.model_backend.upper()}",
-        version="1.0.0",
+        version="1.2.0",
         lifespan=lifespan,
     )
 
