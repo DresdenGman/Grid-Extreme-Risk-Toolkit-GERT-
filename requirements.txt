@@ -7,6 +7,6 @@ slowapi==0.1.10
 sqlalchemy==2.0.52
 psycopg2-binary==2.9.12
 joblib==1.5.3
-numpy==1.26.4
+numpy==2.5.5
 scipy==1.14.1
 scikit-learn==1.9.0
