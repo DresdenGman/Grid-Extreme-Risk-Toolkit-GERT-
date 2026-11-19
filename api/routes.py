@@ -7,7 +7,7 @@ import os
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.orm import Session
 
 import generate_bulletin
@@ -211,6 +211,14 @@ async def get_current_load(region: str, request: Request):
     try:
         adapter = get_data_adapter(region)
         load_data = await adapter.fetch_current_load(region)
+        if region.startswith("ERCOT") and load_data.source == "estimated_fallback":
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "error": "live_load_unavailable",
+                    "detail": "Official ERCOT load is unavailable.",
+                },
+            )
         return {
             "region": region,
             "current_load_mw": load_data.current_load_mw,
@@ -253,6 +261,11 @@ async def predict_risk(req: PredictRequest, request: Request, db: Session = Depe
         try:
             adapter = get_data_adapter(req.region)
             real_load = await adapter.fetch_current_load(req.region)
+            if (
+                real_load.source == "estimated_fallback"
+                and str(req.region).startswith("ERCOT")
+            ):
+                real_load = None
             # Save grid load data to database
             try:
                 GridLoadRepository.create(
@@ -325,7 +338,11 @@ async def predict_risk(req: PredictRequest, request: Request, db: Session = Depe
             result.diagnostics["capacity_data_source"] = real_load.capacity_source
             result.diagnostics["capacity_basis"] = real_load.capacity_basis
         else:
-            result.diagnostics["load_data_source"] = "estimated_fallback"
+            result.diagnostics["load_data_source"] = (
+                "live_load_unavailable"
+                if str(req.region).startswith("ERCOT")
+                else "estimated_fallback"
+            )
             result.diagnostics["capacity_data_source"] = "configured_reference"
             result.diagnostics["capacity_basis"] = "configured regional reference"
         

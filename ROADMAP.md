@@ -28,11 +28,12 @@ not done.
 
 ## Next
 
-- **A v1.5 ERCOT candidate, judged by the same preregistered gate as v1.4.**
-  The preregistration (data window, thresholds, baseline) is written before
-  training. The outcome is published either way: a pass unlocks the gated
-  inference endpoints; a fail produces a second decision record and a deeper
-  tail-sample analysis. No threshold changes after the fact.
+- **Publish the v1.5 record (pull request #23, under review).** The v1.5
+  preregistration was committed on 2026-11-05, after its evaluation window
+  closed on 2026-11-01, so it is a retrospective freeze. The scores used
+  realized ERA5 weather and are an upper bound. The evidence-bundle and
+  feature-availability gates are not passed. The candidate is not packaged,
+  and the inference endpoints stay gated. No threshold changes after the fact.
 - Follow through on the tail-sample diagnostic: the q99 band is the known
   weak point (small effective tail sample), so candidate design starts there.
 

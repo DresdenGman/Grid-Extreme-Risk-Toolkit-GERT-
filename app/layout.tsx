@@ -3,7 +3,7 @@ import './globals.css';
 import React from 'react';
 import { PRODUCT_NAME } from '@/lib/citations';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://gert-d.vercel.app';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://gertgrid.space';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
