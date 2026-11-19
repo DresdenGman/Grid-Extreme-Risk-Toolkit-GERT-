@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { HomepageCopy, Span } from '@/lib/homepage/copy';
 import type { FigureView } from '@/lib/homepage/figure';
 import type { Citation } from '@/lib/homepage/types';
+import { CI_ARCHIVE_NOTE } from '@/lib/citations';
 import { CoverageFigure } from './CoverageFigure';
 import { AsOf, Facts, HeroFoot, OperationalProvider } from './Operational';
 import { ToolIndex } from './ToolIndex';
@@ -135,6 +136,7 @@ export function Poster({
                 Dataset DOI{' '}
                 <a href={`https://doi.org/${citation.datasetDoi}`}>{citation.datasetDoi}</a>
               </p>
+              <p>{CI_ARCHIVE_NOTE}</p>
             </div>
             <p className={styles.end}>{copy.closer}</p>
           </footer>

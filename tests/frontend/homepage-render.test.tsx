@@ -44,6 +44,8 @@ describe('homepage poster', () => {
     expect(screen.getByText(/Q90, Q95, and Q99 missed it/)).toBeInTheDocument();
     expect(screen.getByText('PR #23, unmerged. Not packaged.')).toBeInTheDocument();
     expect(screen.getAllByText(/v1.5 is evidence only and is not packaged/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/141 backend and 50 frontend passed in CI on 2026-11-05 on main commit 796e768, merged after the v1.2.0 tag/)).toBeInTheDocument();
+    expect(screen.getByText(/The archived v1.2.0 release is tag v1.2.0, commit 34aa4e0/)).toBeInTheDocument();
     expect(screen.getAllByText('UNAVAILABLE')).toHaveLength(3);
     expect(screen.getByText(/As of UNAVAILABLE/)).toBeInTheDocument();
     expect(screen.queryByText(/32°/)).not.toBeInTheDocument();
