@@ -1,6 +1,6 @@
 # Offline-only ERCOT training environment. Do not add these to the Railway
 # runtime image until an ERCOT artifact is ready for production review.
-numpy==1.26.4
+numpy==2.5.5
 scipy==1.14.1
 pandas==2.3.3
 scikit-learn==1.9.0
