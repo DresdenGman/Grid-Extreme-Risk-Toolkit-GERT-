@@ -8,6 +8,11 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- One-click GitHub Codespaces environment. The dev container installs Python
+  and Node dependencies, recomputes one Historical Lab case (summer-2023,
+  80,000 MW, 5%) as a smoke check, and starts the web app and API. README
+  gains a Codespaces badge and a "Start here" row.
+- Weekly Dependabot updates for npm, pip, and GitHub Actions.
 - Zenodo software archive for the 1.2.0 release: version DOI
   10.5281/zenodo.23982227, concept DOI 10.5281/zenodo.23982226. The README
   badge row now labels the software and dataset DOIs separately, and
@@ -15,6 +20,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- README and the live tool aligned with the evidence that can be checked
+  (#25). The README leads with the Historical Lab, the rejected v1.4 gate,
+  and the community ledger. Survey totals stay labeled organizer-reported
+  and unverified. The app cites the Zenodo records and explains why scenario
+  analysis is off.
+- `package.json` and the API version now read 1.2.0, matching the release.
+- The dev container uses `npm ci`.
 - GitHub homepage re-skinned: new hero banner and five evidence posters in
   the Swiss light-poster tradition — dark grounds and one white sheet, a
   single luminous subject per poster, grotesque type set quietly, red
@@ -27,6 +39,14 @@ All notable changes to this project are documented here. The format follows
   checked against the repository's evidence bundle before publication;
   no figures changed, and the README drift-guard test still passes. This
   superseded a brief Bauhaus treatment before it was ever released.
+
+### Fixed
+
+- Frontend `next` 16.4.6. `npm audit --audit-level=high` reports no high
+  findings. The picomatch advisory GHSA-fc5q-39xc-vjpf was withdrawn on
+  2026-11-18; the lockfile already resolved picomatch 4.0.7.
+- Credential tests no longer depend on ERCOT credentials set in the
+  environment.
 
 ## [1.2.0] - 2026-11-05
 
