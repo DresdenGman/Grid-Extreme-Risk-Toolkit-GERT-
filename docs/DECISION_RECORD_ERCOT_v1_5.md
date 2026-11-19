@@ -82,8 +82,7 @@ the calibration offsets cannot be recomputed from their inputs.
 
 What was added here is the published aggregate bundle, a SHA-256 manifest, and
 `scripts/recompute_ercot_v1_5_evidence.py`. The script recomputes every derived
-number from those aggregates and checks the hashes. It does not, and cannot,
-reconstruct the missing rows. The evidence-bundle gate stays **not passed**.
+number from those aggregates and checks the hashes. It recomputes derived numbers from the published aggregates. The 2026-11-17 regeneration, recorded below, added hourly rows and did not reproduce the evaluation scores, so the evidence-bundle gate stays **not passed**.
 
 ### Feature availability was over-claimed. Confirmed.
 
@@ -234,9 +233,7 @@ NP6-346-CD columns NORTH, SOUTH, WEST, and HOUSTON.
 
 The evidence-bundle gate stays not passed. The feature-availability gate
 stays not passed because the published evaluation used realized ERA5.
-The status stays evidence only, and the endpoints stay gated. This attempt
-is recorded in `evidence/ercot_v1_5/manifest.json` under
-`regeneration_attempt`.
+The status stays evidence only, and the endpoints stay gated. This attempt is recorded in evidence/ercot_v1_5/manifest.json under regeneration_attempt. The 2026-11-17 regeneration is the next section. It does not change this attempt.
 
 ## Regeneration from the frozen configuration (2026-11-17)
 

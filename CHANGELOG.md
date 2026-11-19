@@ -18,9 +18,7 @@ All notable changes to this project are documented here. The format follows
   meet the numeric coverage, skill, crossing, and finiteness checks. The
   candidate is evidence only, not packaged, and the prediction endpoints stay
   gated. The evidence-bundle and feature-availability gates are not passed.
-  Record: `docs/DECISION_RECORD_ERCOT_v1_5.md`. Derived numbers are
-  recomputed by `scripts/recompute_ercot_v1_5_evidence.py` from
-  `evidence/ercot_v1_5/`; the hourly rows were not archived.
+  Record: `docs/DECISION_RECORD_ERCOT_v1_5.md`. Derived numbers are recomputed by scripts/recompute_ercot_v1_5_evidence.py from evidence/ercot_v1_5/. Hourly rows and the model artifact were regenerated on 2026-11-17 (30 of 55 published values matched); the evidence-bundle gate stays not passed.
 - Draft forecast-weather preregistration, not approved and not run:
   `docs/PREREGISTRATION_ERCOT_FORECAST_WEATHER_DRAFT.md`.
 - Regeneration of the v1.5 hourly bundle was attempted on 2026-11-11 and
