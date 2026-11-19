@@ -32,7 +32,7 @@ not moved.
 
 ## Published point estimates (unchanged)
 
-Blind window 2026-10-05 00:00 UTC through 2026-11-01 23:00 UTC, 672 hours.
+Evaluation window 2026-10-05 00:00 UTC through 2026-11-01 23:00 UTC, 672 hours. This record does not call the window blind. The preregistration was committed after the window closed (see "The preregistration is a retrospective freeze").
 Chosen multiplier ×1.00 at q50, q90, q95, and q99. Figures below are rounded;
 exact values are in the evidence JSON.
 
@@ -119,6 +119,19 @@ twelve minutes after the preregistration. Git does not show whether the
 series had been inspected before the preregistration commit. What it shows
 is that the freeze was written after the hours being scored had already
 occurred.
+
+### Wording in the published evidence files
+
+The `data_provenance` field in `evidence/ercot_v1_5/measurements.json` says
+"Model and calibration parameters were frozen before the evaluation window
+was touched." So does the same field in `evidence/ercot_v1_5_validation.json`.
+The preregistration's original text calls the evaluation window "frozen, blind".
+The repository cannot verify these statements. The preregistration was
+committed on 2026-11-05, after the window closed on 2026-11-01, and no
+earlier timestamped freeze exists. `measurements.json` is the published
+record and is not edited. Read those sentences as the original claim, not
+as established fact. The decision does not depend on them: the
+evidence-bundle and feature-availability gates are not passed either way.
 
 ### Q95 has 29 exceedances and Q99 has 8. Confirmed as the unique counts consistent with the published coverages. The Q99 gate's low power is confirmed.
 

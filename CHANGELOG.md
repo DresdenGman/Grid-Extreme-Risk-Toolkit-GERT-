@@ -14,11 +14,21 @@ All notable changes to this project are documented here. The format follows
   CITATION.cff records the concept DOI and the 1.2.0 release date.
 - ERCOT v1.5 candidate (`ercot-lag-residual-gbt-v1.5-candidate`): per-quantile
   grid recalibration on 2026-09-07 → 2026-10-04, scored on 2026-10-05 →
-  2026-11-01 (672 hours) with realized ERA5 weather. Published point estimates
-  meet the numeric coverage, skill, crossing, and finiteness checks. The
-  candidate is evidence only, not packaged, and the prediction endpoints stay
-  gated. The evidence-bundle and feature-availability gates are not passed.
-  Record: `docs/DECISION_RECORD_ERCOT_v1_5.md`. Derived numbers are recomputed by scripts/recompute_ercot_v1_5_evidence.py from evidence/ercot_v1_5/. Hourly rows and the model artifact were regenerated on 2026-11-17 (30 of 55 published values matched); the evidence-bundle gate stays not passed.
+  2026-11-01 (672 hours) with realized ERA5 weather, so the scores are an
+  optimistic upper bound. Published point estimates meet the numeric
+  coverage, skill, crossing, and finiteness checks. The evidence-bundle and
+  feature-availability gates are not passed. The candidate is evidence only,
+  not packaged, and the prediction endpoints stay gated. The preregistration
+  was committed on 2026-11-05, after the window closed. Record:
+  `docs/DECISION_RECORD_ERCOT_v1_5.md`. Derived numbers are recomputed by
+  `scripts/recompute_ercot_v1_5_evidence.py` from `evidence/ercot_v1_5/`.
+- Regeneration of the v1.5 hourly rows and model artifact from the frozen
+  configuration, 2026-11-17 (`evidence/ercot_v1_5/regeneration_2026_11_17/`).
+  30 of 55 published values reproduced: every calibration-window value, and
+  no evaluation-window score (q50 MAE 311.05 MW against the published
+  321.70 MW). The cause cannot be identified because the original rows were
+  not archived. Published numbers were not replaced. Both gates stay not
+  passed.
 - Draft forecast-weather preregistration, not approved and not run:
   `docs/PREREGISTRATION_ERCOT_FORECAST_WEATHER_DRAFT.md`.
 - Regeneration of the v1.5 hourly bundle was attempted on 2026-11-11 and

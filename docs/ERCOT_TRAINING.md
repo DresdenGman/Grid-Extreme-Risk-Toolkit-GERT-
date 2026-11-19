@@ -67,7 +67,7 @@ breaks.
 ## Latest locked holdout result
 
 The 2025 holdout contains 8,760 hours and is not used for fitting or
-calibration. The current `v1.2.0-candidate` improved pinball loss versus the
+calibration. The `v1.2.0-candidate` (an earlier research model, unrelated to the 1.2.0 software release) improved pinball loss versus the
 trend-adjusted month/hour climatology at every served quantile and achieved a
 q50 MAE of 1,644.26 MW. Its q50/q90/q95/q99 empirical coverages were
 0.5009/0.9376/0.9752/0.9974. The candidate did **not** pass the predeclared
